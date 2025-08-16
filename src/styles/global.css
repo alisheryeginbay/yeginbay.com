@@ -8,7 +8,6 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --background: oklch(0.21 0 0);
-    --foreground: oklch(0.9282 0.0171 76.11);
     --foreground: oklch(1 0.0171 76.11);
     --foreground-secondary: oklch(0.8049 0.0313 83.62);
   }
