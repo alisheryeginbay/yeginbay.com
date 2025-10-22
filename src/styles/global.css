@@ -1,45 +1,47 @@
 @import "tailwindcss";
 
 :root {
-	--foreground: oklch(0.12 0.005 88.23);
-	--foreground-secondary: oklch(0.25 0.005 88.23);
+    --foreground: oklch(0.12 0.005 88.23);
+    --foreground-secondary: oklch(0.25 0.005 88.23);
 }
 
 @media (prefers-color-scheme: dark) {
-	:root {
-		--background: oklch(0.21 0 0);
-		--foreground: oklch(1 0.0171 76.11);
-		--foreground-secondary: oklch(0.8049 0.0313 83.62);
-	}
+    :root {
+        --background: oklch(0.21 0 0);
+        --foreground: oklch(1 0.0171 76.11);
+        --foreground-secondary: oklch(0.8049 0.0313 83.62);
+    }
 }
 
 @theme {
-	--color-background: var(--background);
-	--color-foreground: var(--foreground);
-	--font-serif: var(--font-spectral);
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --font-serif: var(--font-spectral);
 }
 
-body {
-	@apply bg-background text-foreground antialiased;
-}
+@layer base {
+    a {
+        @apply underline underline-offset-2;
+    }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-	@apply font-bold mb-[0.5em];
-}
+    p {
+        @apply mb-[1em] text-foreground leading-relaxed;
+    }
 
-h1 {
-	@apply text-2xl;
-}
+    body {
+        @apply bg-background text-foreground antialiased;
+    }
 
-p {
-	@apply mb-[1em] text-foreground leading-relaxed;
-}
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        @apply font-bold mb-[0.5em];
+    }
 
-a {
-	@apply underline underline-offset-2;
+    h1 {
+        @apply text-2xl;
+    }
 }
