@@ -15,7 +15,8 @@ const { Content } = await render(post);
 ---
 
 <BaseLayout title={post.data.title} description={post.data.description} titleSuffix={false}>
-	<article>
+	<article class="relative">
+		<div class="fixed top-0 left-0 right-0 h-16 bg-gradient-to-b from-background to-transparent pointer-events-none z-10" />
 		<h1 class="font-serif">{post.data.title}</h1>
 		<p class="text-sm text-foreground-secondary">
 			{
