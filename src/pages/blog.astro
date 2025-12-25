@@ -13,10 +13,10 @@ const posts = (await getCollection("blog")).sort(
 		posts.length === 0 ? (
 			<p>No posts yet.</p>
 		) : (
-			<ul class="list-none p-0 m-0">
+			<ul class="list-none p-0 m-0 group/list">
 				{posts.map((post) => (
-					<li class="mb-2">
-						<a href={`/blog/${post.id}`} class="flex justify-between items-baseline gap-4">
+					<li class="group/item">
+						<a href={`/blog/${post.id}`} class="flex justify-between items-baseline gap-4 no-underline py-4 px-3 -mx-3 rounded-lg hover:bg-foreground/5 transition-all group-hover/list:opacity-50 group-hover/item:!opacity-100">
 							<span>{post.data.title}</span>
 							<span class="text-sm text-foreground-secondary whitespace-nowrap">
 								{post.data.pubDate.toLocaleDateString("en-US", {
