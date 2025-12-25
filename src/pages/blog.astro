@@ -8,7 +8,7 @@ const posts = (await getCollection("blog")).sort(
 ---
 
 <BaseLayout title="Blog">
-	<h1><a href="/" class="no-underline">Alisher Yeginbay</a></h1>
+	<h1 class="font-serif"><a href="/" class="no-underline">Alisher Yeginbay</a></h1>
 	{
 		posts.length === 0 ? (
 			<p>No posts yet.</p>

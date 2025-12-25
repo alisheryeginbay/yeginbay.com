@@ -18,6 +18,7 @@
     --color-foreground: var(--foreground);
     --color-foreground-secondary: var(--foreground-secondary);
     --font-sans: var(--font-inter);
+    --font-serif: var(--font-spectral);
 }
 
 @layer base {
@@ -48,5 +49,14 @@
 
     h2 {
         @apply text-xl;
+    }
+
+    .prose h1,
+    .prose h2,
+    .prose h3,
+    .prose h4,
+    .prose h5,
+    .prose h6 {
+        @apply font-serif;
     }
 }

@@ -16,7 +16,7 @@ const { Content } = await render(post);
 
 <BaseLayout title={post.data.title} description={post.data.description} titleSuffix={false}>
 	<article>
-		<h1>{post.data.title}</h1>
+		<h1 class="font-serif">{post.data.title}</h1>
 		<p class="text-sm text-foreground-secondary">
 			{
 				post.data.pubDate.toLocaleDateString("en-US", {

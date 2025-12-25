@@ -22,6 +22,11 @@ export default defineConfig({
         name: "Inter",
         cssVariable: "--font-inter",
       },
+      {
+        provider: fontProviders.google(),
+        name: "Spectral",
+        cssVariable: "--font-spectral",
+      },
     ],
   },
 });
