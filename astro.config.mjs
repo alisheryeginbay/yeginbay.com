@@ -1,3 +1,4 @@
+import mdx from "@astrojs/mdx";
 import vercel from "@astrojs/vercel";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig, fontProviders } from "astro/config";
@@ -5,6 +6,7 @@ import { defineConfig, fontProviders } from "astro/config";
 // https://astro.build/config
 export default defineConfig({
   site: "https://yeginbay.com",
+  integrations: [mdx()],
   adapter: vercel({
     webAnalytics: {
       enabled: true,

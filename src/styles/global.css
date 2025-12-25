@@ -8,14 +8,15 @@
 @media (prefers-color-scheme: dark) {
     :root {
         --background: oklch(0.21 0 0);
-        --foreground: oklch(1 0.0171 76.11);
-        --foreground-secondary: oklch(0.8049 0.0313 83.62);
+        --foreground: oklch(1 0 76.11);
+        --foreground-secondary: oklch(0.8049 0 83.62);
     }
 }
 
 @theme {
     --color-background: var(--background);
     --color-foreground: var(--foreground);
+    --color-foreground-secondary: var(--foreground-secondary);
     --font-sans: var(--font-inter);
 }
 
@@ -28,7 +29,7 @@
         @apply mb-[1em] text-foreground leading-relaxed;
     }
 
-    body {
+    html {
         @apply bg-background text-foreground antialiased;
     }
 
@@ -43,5 +44,9 @@
 
     h1 {
         @apply text-2xl;
+    }
+
+    h2 {
+        @apply text-xl;
     }
 }
