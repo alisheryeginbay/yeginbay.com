@@ -1,0 +1,290 @@
+@font-face {
+  font-family: "Brygada 1918";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/brygada1918-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Brygada 1918";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/brygada1918-600.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Brygada 1918";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/brygada1918-700.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Source Serif 4";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/sourceserif4-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Source Serif 4";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/sourceserif4-italic-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Source Serif 4";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/sourceserif4-600.woff2") format("woff2");
+}
+
+:root {
+  color-scheme: light;
+  --font-heading: "Brygada 1918", Georgia, "Times New Roman", serif;
+  --font-body: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --bg: #fdfdfc;
+  --fg: #1a1a1a;
+  --muted: #6b6b6b;
+  --link: #9B4F96;
+  --rule: #e4e4e0;
+  --max: 40rem;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  padding: 0 1.25rem;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 19px;
+  line-height: 1.65;
+}
+
+h1, h2, h3, h4, h5, h6,
+.site-title {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.site-header,
+main {
+  max-width: var(--max);
+  margin: 0 auto;
+}
+
+.site-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 2.5rem 0 1.5rem;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 2rem;
+}
+
+.site-title {
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--fg);
+}
+
+.site-header nav a {
+  margin-left: 1.25rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.site-header nav a:hover { text-decoration: underline; }
+
+main { min-height: 60vh; padding-bottom: 3rem; }
+
+.post-list {
+  list-style: disc;
+  padding-left: 1.25rem;
+  margin: 0;
+}
+
+.post-list li {
+  padding: 0.35rem 0;
+}
+
+.post-list a {
+  color: var(--fg);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.post-list a:hover { text-decoration: underline; }
+
+.post-list time {
+  margin-left: 0.6rem;
+}
+
+.post-list time,
+.post time {
+  color: var(--muted);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.post h1 {
+  margin-bottom: 0.25rem;
+}
+
+.post-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0.6rem 0 0;
+}
+
+.post-tags li {
+  color: var(--muted);
+  font-size: 0.8rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 0.1rem 0.6rem;
+}
+
+.post-content {
+  margin-top: 1.5rem;
+}
+
+.post-content h2,
+.post-content h3 {
+  margin-top: 2rem;
+}
+
+.post-content pre {
+  background: var(--rule);
+  padding: 1rem;
+  overflow-x: auto;
+  border-radius: 4px;
+}
+
+.post-content code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+}
+
+.post-content pre code {
+  background: none;
+}
+
+.post-content a { color: var(--link); }
+
+.post-content .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.25rem 0;
+}
+
+.post-content .footnotes {
+  margin-top: 2.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.post-content .footnotes hr { display: none; }
+
+.post-content blockquote {
+  margin: 1rem 0;
+  padding-left: 1rem;
+  border-left: 2px solid var(--rule);
+  color: var(--muted);
+}
+
+.post-content img { max-width: 100%; }
+
+.post-content figure {
+  margin: 1.5rem 0;
+}
+
+.post-content figcaption {
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+.attn-viz {
+  margin: 2rem 0;
+  max-width: 100%;
+}
+
+.attn-viz-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.attn-viz-controls select {
+  font: inherit;
+  font-size: 0.85rem;
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 0.2rem 0.4rem;
+}
+
+.attn-viz-grid {
+  overflow-x: auto;
+}
+
+.attn-viz-table {
+  border-collapse: collapse;
+  font-size: 0.7rem;
+}
+
+.attn-viz-table th,
+.attn-viz-table td {
+  padding: 0;
+  text-align: center;
+}
+
+.attn-viz-table thead th {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  color: var(--muted);
+  font-weight: 400;
+  padding-bottom: 0.25rem;
+  max-height: 5rem;
+}
+
+.attn-viz-table tbody th {
+  color: var(--muted);
+  font-weight: 400;
+  text-align: right;
+  padding-right: 0.4rem;
+  white-space: nowrap;
+}
+
+.attn-viz-table td {
+  width: 1.4rem;
+  height: 1.4rem;
+  border: 1px solid var(--bg);
+}
+
+.attn-viz-caption {
+  margin-top: 0.5rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}

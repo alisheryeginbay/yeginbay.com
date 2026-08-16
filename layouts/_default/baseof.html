@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }} · {{ site.Title }}{{ end }}</title>
+  <meta name="description" content="{{ if .Description }}{{ .Description }}{{ else }}{{ site.Params.description }}{{ end }}">
+  <link rel="stylesheet" href="{{ "css/style.css" | absURL }}">
+  <link rel="alternate" type="application/rss+xml" href="{{ "index.xml" | absURL }}" title="{{ site.Title }}">
+  {{ if .HasShortcode "attention-viz" }}
+  <script defer src="{{ "js/attention-viz.js" | absURL }}"></script>
+  {{ end }}
+  {{ $hasMath := and .IsPage (strings.Contains .RawContent "$$") }}
+  {{ if $hasMath }}
+  <link rel="stylesheet" href="{{ "vendor/katex/katex.min.css" | absURL }}">
+  {{ end }}
+</head>
+<body>
+  <header class="site-header">
+    <a class="site-title" href="{{ "/" | absURL }}">{{ site.Title }}</a>
+    <nav>
+      <a href="{{ "/contact/" | absURL }}">Contact</a>
+    </nav>
+  </header>
+  <main>
+    {{ block "main" . }}{{ end }}
+  </main>
+  {{ if $hasMath }}
+  <script defer src="{{ "vendor/katex/katex.min.js" | absURL }}"></script>
+  <script defer src="{{ "vendor/katex/auto-render.min.js" | absURL }}" onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}]});"></script>
+  {{ end }}
+</body>
+</html>

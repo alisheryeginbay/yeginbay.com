@@ -1,0 +1,15 @@
+baseURL = "https://yeginbay.com/"
+locale = "en-us"
+title = "Alisher Yeginbay"
+
+[params]
+  description = "Notes and writing."
+
+[markup.org]
+  # keep TOC/heading behavior default; org files are parsed natively by Hugo
+
+[taxonomies]
+  tag = "tags"
+
+[permalinks]
+  posts = "/:filename/"
