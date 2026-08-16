@@ -3,6 +3,7 @@
 .hugo_build.lock
 .DS_Store
 /old-content/
+/node_modules/
 
 # Emacs backup/autosave files
 *~

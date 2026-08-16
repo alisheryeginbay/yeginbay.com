@@ -1,0 +1,11 @@
+{
+  "name": "yeginbay-com",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "hugo && bun scripts/inject-favicons.mjs"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0"
+  }
+}
