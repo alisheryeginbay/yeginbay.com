@@ -1,0 +1,14 @@
+#+title: Superposition, Briefly
+#+date: 2026-04-26
+#+tags[]: technical
+#+tags[]: interpretability
+
+It would be great for interpretability purposes if neurons of a neural network could cleanly represent features. Practically, this might be true for some cases, but not always. The problem is that inputs might have a very wide range of features — this is especially true for neural networks like large language models. In response to this, models end up representing more features than they have dimensions. This phenomenon is called superposition.
+
+Let's say we have a model with N-dimensional activation space. It would be fair to claim that this model can cleanly represent N distinct features in its activation space — mathematically speaking, it can have N orthogonal vectors. But because empirically models might be covering way more features than they have dimensions, the model faces a problem of representing each feature in N-dimensional constrained space.
+
+To address this, models use superposition and represent features in [[https://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma]["almost" orthogonal vectors]]. However, this comes at a cost: interference. Directions will always be interfering with each other to some degree. The reason it works is that generally not all features are active at the same time — in other words, feature activations are often /sparse/.
+
+We also observe that neurons might be either monosemantic or polysemantic because of superposition. Monosemantic neurons activate for a single feature; polysemantic neurons activate for several unrelated features. When superposed, features are often stored along directions that do not align with the neuron basis — that's why we observe polysemanticity.
+
+Since directions in the activations might not correspond cleanly to a single feature, we still need to somehow interpret all these messy superposed representations. Sparse Autoencoders (SAEs) address this by learning a dictionary of sparse features across all activation vectors and decomposing the superposed representations into more interpretable components.

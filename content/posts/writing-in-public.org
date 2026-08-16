@@ -1,0 +1,22 @@
+#+title: Writing in Public
+#+date: 2026-08-12
+#+tags[]: personal
+#+tags[]: writing
+
+It's much easier to /think/ about writing than /actually/ writing. It's been a while since I wrote [[/the-blank-page-and-me/][the post on starting this blog]]. I've written a few personal write-ups and [[/tags/interpretability/][technical posts on interpretability]]. But I believe I could've done much more.
+
+It's unsustainable in the long-term--at least for me--to constantly learn and do any intellectual work solely by having technical curiousity. There are other crucial components for being motivated as well: social belonging, seeing progress, and maintaining basics (physical and mental health).
+
+I believe writing is one of the highest leverage things you can do to cover things above--except, maybe, for the maintaining basics, though social belonging has big impact on mental health.
+
+* Why you should be writing?
+You force yourself to think more clearly on the topic. By doing so you see the gaps you currently have in your understanding. The act of verbalizing your thoughts is always hard yet significantly valuable.
+
+Writing is a great medium for seeing progress. The natural lens here is seeing how your knowledge accumulates. It's hard to introspect on what you know. Handily, write-ups are great for having visible artifacts of your knowledge. Also, seeing the number of posts going up is pretty satisfying!
+
+Writing in public also helps you to signal good competence. This is especially useful for getting into programs, fellowships, and for your career in general! These kind of payoffs, consequently, help you to socialize, be a part of something big, and get a lot of valuable insights from mentors, researchers, and other peers.
+
+* Acting & take-away
+I think the most important thing here is building a habit. I'll be writing daily; but I'm not sure if writing /and/ publishing in the same day is great for the quality. Because the required amount of effort is variable, I'll be taking weekly write-ups as a minimal baseline. If I have the energy to write more, great!
+
+As for the take-away, I think it's sometimes valuable to reflect on actions you are taking towards your goal: What's working? What's not? How can I improve? What should I fix? This write-up is my attempt in putting into words the reasons of why I should be writing more--that is, reflect on why writing brings me closer towards my goal.

@@ -1,0 +1,77 @@
+#+title: Building AI Agent Memory
+#+date: 2026-05-07
+#+tags[]: technical
+
+I recently built [[https://github.com/alisheryeginbay/ai-agent-memory][a memory service]] for an AI agent as part of a coding challenge. This post walks through the design space such a system operates in.
+
+* The Problem
+
+LLMs are stateless. They start from a blank context every time you call them, i.e. they forget everything between sessions. The way to address this problem is to provide a memory solution for an agent.
+
+On the higher level, a memory layer is pretty simple. It sits between your app and the LLM, and automatically extracts, stores and pulls (if needed) various facts from conversations.
+
+The most straightforward solution would be to just provide full history chat into the context so that LLM can "think" of the relevant information. But this approach becomes terrible as the chat history starts growing: the LLM loses focus, tokens explode, etc.
+
+So we need some way of extracting concise and atomic facts from the conversations, storing them, and being able to semantically search for the ones that are related to the prompt.
+
+* Solution Ideas
+
+There are various designs that try to achieve the goal of persisting memory. The pipeline I would be describing below is a synthesis of my own thinking and what I've learned from architectures of existing solutions like [[https://github.com/mem0ai/mem0][mem0]], [[https://github.com/vectorize-io/hindsight][Hindsight]], [[https://github.com/getzep/graphiti][Graphiti]].
+
+** Fact Extraction
+
+Let's start from how we extract the facts. For example, you have sent the following message: "Hey, <your_agent_name>, I'll be visiting Almaty in three days, can you help me to find some cool places to visit?". As the context in the chat might vary in a complex way, we'd want to use the LLM as our /intelligence layer/ to extract them. What prompt do we use to pull out the facts from the message? As you think through various possible examples, you may notice that this is not a trivial task. For instance, you may have prompts that result in following extractions:
+- "User will travel to Almaty"
+- "User will be in Almaty in 3 days"
+
+What's wrong with both? They're both vague. The first one has no mention of time at all; the second one has the timeline in relative numbers, which would not make any sense a few months later.
+
+So fact extraction requires really careful prompt engineering abilities that capture various nuances of the message in a clever way. The good example might be something like: "User's trip to Almaty starts on 2026-05-10". You can see the prompt I'm using in my project [[https://github.com/alisheryeginbay/ai-agent-memory/blob/42f593db11853c20a8c979ba1ca2944b4b4258d6/src/memory_service/extraction.py#L49][here]].
+
+As for the technical details, I use Anthropic's Claude Haiku 4.5 model as the extractor. I get the memories (facts) using the [[https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview][tool]] ~record_memories~ which returns memories in the array of ~{type, key, value, confidence}~ objects format, where:
+- *type* is fact/preference/opinion/event.
+- *key* is a unique ID for the memory. For example, ~city~.
+- *value* is the actual value. For example, ~Almaty~.
+- *confidence* is how certain was the LLM regarding the factuality of this memory. Ranges from 0 to 1.
+
+** Storage
+
+Once you have structured facts, where do they go? Several options exist, each fitting different requirements:
+- *Markdown files.* Simple, human-readable and great for structural/hierarchical memory that fits into the context.
+- *Knowledge graphs.* Great for storing memories around distinct and related entities/objects. More complex to build and maintain.
+- *Vector stores.* Embed each fact as a vector in semantic space. Cosine similarity misses keyword-heavy queries.
+
+I went with the third option, backed by Postgres + pgvector and Voyage's voyage-4-lite for embedding since the provided task and evals required semanticity (a way to connect two separate facts), supersession chains (for fact evolution) and structured memory lookups. Postgres let me handle relational rows, vector search and BM25 (keyword search) in one database.
+
+The flow: we turn structured memories into strings like "city: Almaty", and then turn them into vectors using an embedding model. Finally, we store them in a vector store. We also additionally store the original "citations" (or turns) where these facts came from.
+
+One of the interesting parts I built for storage is supersession. Facts, preferences and opinions can change over time. The user might say "I live in Astana" one day and "I live in Almaty" next month. To avoid duplications, we need to keep only one value for the key that refers to the same thing. We supersede (or replace) if the value is not matching the latest one, and insert a new one if it does not exist yet. Notably, this means that we should be really strict about keys, since the LLM may one day write ~city~ and ~current_city~ the other day if not prompted correctly, thus breaking the supersession.
+
+** Recall
+
+Let's assume that we need to recall all the important memories for some query. This implies that we need a way to rank and filter memories so that only significant ones are left.
+
+There are many ways to rank memories, e.g. BM25 (or keyword search) and vector search. Instead of choosing only one method, we can fuse several and get a single ranking using the method called [[https://medium.com/@devalshah1619/mathematical-intuition-behind-reciprocal-rank-fusion-rrf-explained-in-2-mins-002df0cc5e2a][Reciprocal Rank Fusion]] (RRF). RRF is a simple method to allow several rankings to achieve the consensus: each candidate gets 1/(k + rank) summed across both rankings (with k=60 as the literature default). I've used the hybrid version of vector and BM25 rankers.
+
+We then choose Top-K ones from these rankings and provide the context to the LLM:
+
+#+BEGIN_SRC md
+<user_memory>
+## Known facts about this user
+- Notion (employer)
+- Senior PM (role)
+- Berlin (city)
+
+## Preferences
+- Python for quick scripts (language_preference)
+- Cursor (ide_preference)
+- concise answers (communication_style_preference)
+...
+</user_memory>
+#+END_SRC
+
+* Summary
+
+This post covered one way of building an AI Agent memory using vectors and hybrid RRF ranking (BM25 + vector). The conceptual shape of the system: extract structured facts using an LLM with forced tool use, store them as embeddings in a hybrid-searchable backend, and retrieve them with rank fusion across semantic and keyword signals.
+
+That said, this post deals specifically with the memory component. Thus, its integration into apps is not covered and has its own design problem.

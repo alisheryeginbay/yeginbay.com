@@ -1,0 +1,17 @@
+#+title: Operation K #2: Habits
+#+date: 2026-07-09
+#+tags[]: korean
+
+안녕하세요 여러분!
+
+It's been about 3 weeks since the [[/operation-k-1-beginning/][Operation K #1]] blog post. This part isn't about Korean itself, but rather about learning. I decided to write about the thing that keeps language learning moving—habit.
+
+I noticed that I struggle with consistency /a lot/. I review my Anki cards daily, but I struggle to review the grammar lessons and do immersion. I do progress vocabulary-wise, but that's not the engine of the language learning process.
+
+Thus, I decided to look for ways to improve.
+
+One of the obvious ways is *scheduling* a concrete period of time during the day dedicated purposefully to a specific activity. This seems to work for some people, but, personally, I don't like having very specific time blocks.
+
+*[[https://www.lesswrong.com/posts/wJutA2czyFg6HbYoW/what-are-trigger-action-plans-taps][Trigger-Action Plans]]* (TAPs) seemed to be much more suitable for me. I usually do Anki in the morning, right after taking a cold shower. This is actually why doing Anki stuck—it was naturally integrated into the automatic part of my brain via a trigger: taking a shower. So the solution is creating TAPs for other activities. Currently, I read the grammar lessons right after doing Anki. Comprehensible input is a bit trickier since it requires 40–50 minutes of my time, which I don't really want taking up most of my morning energy, so I'm trying to do that after eating dinner.
+
+Anyway, consistency is the key!

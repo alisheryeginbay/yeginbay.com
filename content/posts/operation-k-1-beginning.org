@@ -1,0 +1,36 @@
+#+title: Operation K #1: Beginning
+#+date: 2026-06-18
+#+tags[]: korean
+
+This is the beginning of my Korean learning blog post series. I'll share my progress, updates on the learning approach and other Korean-related updates.
+
+* Introduction
+
+Learning a language is a long-term process. It's important to choose a plan that will yield good results in the future.
+
+What I can say for sure is that most of the internet guides are ambiguous or low quality. Choosing the right way to learn is really hard. Often while starting you might stumble upon many issues that will make you lose the motivation to learn. It's especially notable for Korean, since the community of Korean learners is not that developed compared to, e.g., Japanese learners' community.
+
+One of the future goals I'll try to achieve by writing the "Operation K" series is using my gained knowledge and experience to form a set of effective guides and advice on learning Korean.
+
+* Initial Progress
+
+This isn't my first attempt at learning Korean, so I have some hands-on experience with the language—it's mostly beginner-level stuff, though.
+
+The natural point to start learning Korean is Hangul. Hangul's a very easy writing system. I probably learned it in ~1 day. The important thing here is not to rely on romanization from the beginning.
+
+Now that you can read, you need to /understand/ what you are reading.
+
+Vocabulary is a component that /enables/ our comprehension. It's mostly done using SRS apps with the most popular being Anki. The typical way people use Anki: you choose a deck to build a foundation of the most frequent words and as you progress you start mining your own words.
+
+Choosing a good quality deck isn't a trivial task. From what I've read, these criteria matter:
+- Sorted by frequency.
+- Context (cards with sentence example).
+- Good-quality audio.
+
+I personally landed on [[https://ankiweb.net/shared/info/380675474][Korean Sentences]] deck with a few tweaks: new audio using HyperTTS (Naver) and card format.
+
+As for the grammar, I've been using [[https://www.howtostudykorean.com/][HTSK]]. It's text-heavy, but I think it has great explanations for each topic.
+
+The primary engine for improving language skills is /having a lot of comprehensible input/. I'm currently using the [[https://www.youtube.com/playlist?list=PLq3xYXNB0JzCwKxuSvTfErWMyr1Io3nmV][comprehensible input playlist]] from [[https://www.youtube.com/@ComprehensibleInputKorean][Comprehensible Input Korean]] channel. However, what I struggle with the most is having a persistent routine. Anki can be done in <15 minutes during the day; grammar is learning a rule, which takes ~20-30 minutes. These are not that time-consuming compared to engaging with 40-50 minute videos. I suppose the thing that might address this problem is keeping a scheduled block during the day.
+
+That's it for now. See you in the next post!

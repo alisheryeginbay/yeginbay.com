@@ -1,0 +1,64 @@
+#+title: Transformer Circuits
+#+date: 2026-04-11
+#+tags[]: technical
+#+tags[]: interpretability
+
+Mechanistic interpretability (often shortened to mechinterp) tries to understand what's actually happening inside transformers, rather than treating them as black boxes.
+
+The standard implementation of the transformer from the [[https://arxiv.org/abs/1706.03762][original transformers paper]] is not the most interpretable one. They use a computationally efficient form that obscures the structure. As described in more detail in [[https://transformer-circuits.pub/2021/framework/index.html]["A Mathematical Framework for Transformer Circuits"]], there's another way of doing the mathematically equivalent computations but in a more comprehensible way.
+
+* Residual stream
+
+Residual stream is a ~(seq_len, d_model)~ tensor which holds all the vector space within which we operate. We use it to store the information every component in our model decides to read and write. It's helpful to think of each layer as composing information and "talking" to each other through this stream. It begins with token embeddings and gets progressively read by and written to later components like attention heads, MLPs and finally the unembedding layer.
+
+* Attention pattern
+
+In standard implementation we find both query and key vectors for each one of these separately and only then multiply them together. Assuming $x_i$ and $x_j$ are all $(i, j)$ sequence pairs the standard attention pattern would look like this:
+
+$$ \begin{aligned}
+q &= x_i W_Q \\
+k &= x_j W_K \\
+A &= \text{softmax}\left(\frac{qk^T}{\sqrt{d_{\text{head}}}}\right)
+\end{aligned} $$
+
+However, instead of treating this as two separate transformations into query and key we can think of it as a single learned similarity function between tokens. Let's substitute the $q$ and $k$ directly in the $A$ formula:
+
+$$
+A = \text{softmax}\left(\frac{(x_i W_Q)(x_j W_K)^T}{\sqrt{d_{\text{head}}}}\right)
+$$
+
+Using the $(AB)^T = B^TA^T$ rule we get:
+$$ \begin{aligned}
+A &= \text{softmax}\left(\frac{x_i W_Q W_K^T x_j^T}{\sqrt{d_{\text{head}}}}\right) \\
+\end{aligned} $$
+
+Here, $W_Q W_K^T$ is the similarity function of shape ~(d_model, d_model)~ which we further notate with $W_{QK}$. This matrix shows that each head has learned a 'relevance' of every token to one another.
+
+$$ \begin{aligned}
+W_{QK} &= W_Q W_K^T \\
+A &= \text{softmax}\left(\frac{x_i W_{QK} x_j^T}{\sqrt{d_{\text{head}}}}\right)
+\end{aligned} $$
+
+For example, by visualizing $W_E W_{QK} W_E^T$ we can see what tokens tend to attend to each other. The intuition behind exactly this transformation ordering is that we want to see the notion of a 'relevance' within token embedding space.
+
+We can see that unnormalized form is a bit messy since it does not acknowledge sequence positions at all and shows token-identity-only attention. That said, we can view the normalized form to see which tokens stand out relative to each row's baseline.
+
+{{< attention-viz src="/data/transformer-circuits/attn_data.json" fields="Raw:qk_raw,Normalized:qk_norm" row-label="query" col-label="key" >}}
+
+For example, L10H2 seems to show strong semantic correlation between tokens "France" and "Paris", "king" and "queen" since they attend to each other strongly. There's also L10H6 which has even stronger attention between "France" and "Paris" which might show head's specialization in geography rather than gender. That said, since this decomposition ignores positional terms, these correlations are suggestive rather than conclusive. We'd need to verify against actual attention patterns on real inputs.
+
+* Value and Output Projection
+
+Another important clarification is that we use per-head projection instead of projecting one big concatenated result. Standard implementation is that we take the resulting ~(seq_len, d_head * n_heads)~ output, which is equal to ~(seq_len, d_model)~, and multiply it with one big ~W_O~ shaped ~(d_model, d_model)~. It might seem that this one big matrix is somehow entangling the information between heads but, in fact, the final projection is just total sum of each head's independent contribution. Instead of concatenating and projecting vectors $\begin{bmatrix} \text{head}_1 & \text{head}_2 & \cdots & \text{head}_{n_{\text{heads}}} \end{bmatrix}$ by every column of ~W_O~ we can independently do that directly on each head's output via smaller ~W_O~ shaped ~(d_head, d_model)~.
+
+While QK matrix was acting like a router of information, i.e /where/ to look at, $W_V W_O$ helps us to understand /what/ information is being read from or written to. We can think of both independent operations as both things at once.
+
+For instance, we can visualize the $W_E W_OV W_U$ to see what information tokens tend to push to write into the residual stream. We embed a single input token and unembed from the result to get a human-interpretable token which is being promoted by specific head. This is different from QK since we're /comparing/ two tokens there.
+
+{{< attention-viz src="/data/transformer-circuits/attn_data.json" field="ov" row-label="input" col-label="output" >}}
+
+From these heatmaps we can see that in L6H8 tokens "France" and "Paris", "king" and "queen" seem to promote each other. But this is also worth mentioning that these notions act as a fraction of the bigger picture, therefore we'd need to look at this from various angles as well.
+
+Note that all of the weights in the model are fixed since we're just introspecting already pre-trained model. We're replacing the internal activations' presentation form and not changing anything behaviourally (unless we want to also analyse the circuit by patching the specific component/components activations).
+
+What we've covered here are the building blocks of how individual attention heads read from and write to the residual stream. Yet, heads don't work in isolation and we still have a lot to discover: induction heads, composition, various circuit types and how it all works with MLPs.
