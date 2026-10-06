@@ -1,6 +1,7 @@
 baseURL = "https://yeginbay.com/"
 locale = "en-us"
 title = "Alisher Yeginbay"
+enableGitInfo = true
 
 [params]
   description = "Notes and writing."
