@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "hugo && bun scripts/inject-favicons.mjs"
+    "build": "hugo && bun scripts/inject-favicons.mjs && bun scripts/external-links.mjs"
   },
   "dependencies": {
     "cheerio": "^1.0.0"
