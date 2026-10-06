@@ -3,11 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "hugo && bun scripts/inject-favicons.ts && bun scripts/external-links.ts",
+    "build": "hugo && bun scripts/inject-favicons.ts && bun scripts/external-links.ts && bun scripts/render-math.ts",
     "typecheck": "tsc"
   },
   "dependencies": {
-    "cheerio": "^1.0.0"
+    "cheerio": "^1.0.0",
+    "katex": "0.18.4"
   },
   "devDependencies": {
     "@types/bun": "^1.4.2",

@@ -39,9 +39,8 @@ function headKeys(data: AttnData): string[] {
     });
 }
 
-function color(value: number, maxAbs: number): string {
+function color(value: number, maxAbs: number, bg: string): string {
   const t = maxAbs > 0 ? Math.max(-1, Math.min(1, value / maxAbs)) : 0;
-  const bg = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || "#fdfdfc";
   const mag = Math.abs(t);
   const to = t >= 0 ? "215, 69, 69" : "59, 111, 214";
   return "color-mix(in srgb, rgb(" + to + ") " + Math.round(mag * 85) + "%, " + bg + ")";
@@ -115,6 +114,7 @@ function render(root: HTMLElement, data: AttnData) {
       row.forEach((v) => { maxAbs = Math.max(maxAbs, Math.abs(v)); });
     });
 
+    const bg = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || "#fdfdfc";
     const n = matrix.length;
     let html = '<table class="attn-viz-table"><thead><tr><th></th>';
     for (let c = 0; c < n; c++) {
@@ -125,7 +125,7 @@ function render(root: HTMLElement, data: AttnData) {
       html += '<tr><th title="' + rowLabel + ": " + tokenLabel(r) + '">' + tokenLabel(r).trim() + "</th>";
       for (let c = 0; c < n; c++) {
         const v = matrix[r][c];
-        html += '<td style="background:' + color(v, maxAbs) + '" title="' + v.toFixed(3) + '"></td>';
+        html += '<td style="background:' + color(v, maxAbs, bg) + '" title="' + v.toFixed(3) + '"></td>';
       }
       html += "</tr>";
     }

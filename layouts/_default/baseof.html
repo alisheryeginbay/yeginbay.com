@@ -5,16 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }} · {{ site.Title }}{{ end }}</title>
   <meta name="description" content="{{ if .Description }}{{ .Description }}{{ else }}{{ site.Params.description }}{{ end }}">
-  <link rel="stylesheet" href="{{ "css/style.css" | absURL }}">
+  <link rel="preload" href="{{ "fonts/sourceserif4-400.woff2" | absURL }}" as="font" type="font/woff2" crossorigin>
+  {{- with resources.Get "css/style.css" | minify | fingerprint }}
+  <link rel="stylesheet" href="{{ .Permalink }}" integrity="{{ .Data.Integrity }}">
+  {{- end }}
   <link rel="alternate" type="application/rss+xml" href="{{ "index.xml" | absURL }}" title="{{ site.Title }}">
   {{ if .HasShortcode "attention-viz" }}
-  {{- with resources.Get "js/attention-viz.ts" | js.Build (dict "minify" hugo.IsProduction) }}
-  <script defer src="{{ .Permalink }}"></script>
+  {{- with resources.Get "js/attention-viz.ts" | js.Build (dict "minify" hugo.IsProduction) | fingerprint }}
+  <script defer src="{{ .Permalink }}" integrity="{{ .Data.Integrity }}"></script>
   {{- end }}
   {{ end }}
   {{ $hasMath := and .IsPage (strings.Contains .RawContent "$$") }}
   {{ if $hasMath }}
   <link rel="stylesheet" href="{{ "vendor/katex/katex.min.css" | absURL }}">
+  {{- if hugo.IsServer }}
+  {{- with resources.Get "js/math-preview.ts" | js.Build }}
+  <script defer src="{{ .Permalink }}"></script>
+  {{- end }}
+  {{- end }}
   {{ end }}
 </head>
 <body>
@@ -31,9 +39,5 @@
       {{ block "main" . }}{{ end }}
     </main>
   </div>
-  {{ if $hasMath }}
-  <script defer src="{{ "vendor/katex/katex.min.js" | absURL }}"></script>
-  <script defer src="{{ "vendor/katex/auto-render.min.js" | absURL }}" onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}]});"></script>
-  {{ end }}
 </body>
 </html>
