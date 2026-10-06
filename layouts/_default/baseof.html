@@ -15,6 +15,16 @@
   <script defer src="{{ .Permalink }}" integrity="{{ .Data.Integrity }}"></script>
   {{- end }}
   {{ end }}
+  {{- $faviconHosts := partialCached "favicon-hosts.html" . }}
+  {{- if hugo.IsServer }}
+  {{- if .IsPage }}
+  {{- with resources.Get "js/favicon-preview.ts" | js.Build }}
+  <script defer src="{{ .Permalink }}" data-hosts="{{ jsonify $faviconHosts }}"></script>
+  {{- end }}
+  {{- end }}
+  {{- else }}
+  {{- $_ := (resources.FromString "favicon-hosts.json" (jsonify $faviconHosts)).Publish }}
+  {{- end }}
   {{ $hasMath := and .IsPage (strings.Contains .RawContent "$$") }}
   {{ if $hasMath }}
   <link rel="stylesheet" href="{{ "vendor/katex/katex.min.css" | absURL }}">

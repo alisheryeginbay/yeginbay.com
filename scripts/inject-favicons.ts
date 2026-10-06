@@ -1,59 +1,28 @@
 #!/usr/bin/env bun
 // Post-processes Hugo's build output to add favicon icons next to external
-// links, gated by how often each domain is linked across the site's org
-// sources. Must run after `hugo build`.
-import { readFile, writeFile, glob } from "node:fs/promises";
+// links. The hosts that qualify are chosen by
+// layouts/partials/favicon-hosts.html, which Hugo publishes as
+// favicon-hosts.json. Must run after `hugo build`.
+import { readFile, writeFile, rm, glob } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import * as cheerio from "cheerio";
-import { CONTENT_DIR, PUBLIC_DIR, ROOT, getSiteHost, normalizeHost } from "./site.ts";
+import { ICON_SELECTOR, LINK_SELECTOR, SKIP_INSIDE, faviconHtml } from "../assets/js/favicons.ts";
+import { PUBLIC_DIR, normalizeHost } from "./site.ts";
 
-const CONFIG_PATH = path.join(ROOT, "scripts", "favicon-config.json");
-
-const URL_RE = /https?:\/\/[^\s\]\)"'<>]+/g;
-
-interface FaviconConfig {
-  minCount?: number;
-  allowlist?: string[];
-  blocklist?: string[];
-}
-
-async function countDomains(): Promise<Map<string, number>> {
-  const counts = new Map<string, number>();
-  for await (const file of glob("**/*.org", { cwd: CONTENT_DIR })) {
-    const text = await readFile(path.join(CONTENT_DIR, file), "utf8");
-    for (const raw of text.matchAll(URL_RE)) {
-      const host = normalizeHost(raw[0].replace(/[.,;:]+$/, ""));
-      if (!host) continue;
-      counts.set(host, (counts.get(host) ?? 0) + 1);
-    }
-  }
-  return counts;
-}
+const HOSTS_PATH = path.join(PUBLIC_DIR, "favicon-hosts.json");
 
 async function main() {
-  if (!existsSync(PUBLIC_DIR)) {
+  if (!existsSync(HOSTS_PATH)) {
     console.error(
-      `inject-favicons: ${PUBLIC_DIR} does not exist. Run "hugo build" first.`,
+      `inject-favicons: ${HOSTS_PATH} does not exist. Run "hugo build" first.`,
     );
     process.exit(1);
   }
 
-  const config: FaviconConfig = JSON.parse(await readFile(CONFIG_PATH, "utf8"));
-  const allowlist = new Set((config.allowlist ?? []).map((d) => d.toLowerCase()));
-  const blocklist = new Set((config.blocklist ?? []).map((d) => d.toLowerCase()));
-  const minCount = config.minCount ?? 2;
-
-  const ownHost = await getSiteHost();
-  const counts = await countDomains();
-
-  const qualifies = (host: string | null): host is string => {
-    if (!host) return false;
-    if (host === ownHost || host === "localhost") return false;
-    if (blocklist.has(host)) return false;
-    if (allowlist.has(host)) return true;
-    return (counts.get(host) ?? 0) >= minCount;
-  };
+  const hosts = new Set<string>(JSON.parse(await readFile(HOSTS_PATH, "utf8")));
+  // Only this script needs the list, so it isn't deployed.
+  await rm(HOSTS_PATH);
 
   let filesChanged = 0;
   let iconsAdded = 0;
@@ -66,17 +35,15 @@ async function main() {
     const $ = cheerio.load(html, { xmlMode: false });
     let changed = false;
 
-    $(".post-content a[href^='http']").each((_, el) => {
+    $(LINK_SELECTOR).each((_, el) => {
       const $a = $(el);
-      if ($a.closest("pre, code").length) return;
-      if ($a.find("img.favicon-icon").length) return;
+      if ($a.closest(SKIP_INSIDE).length) return;
+      if ($a.find(ICON_SELECTOR).length) return;
 
       const host = normalizeHost($a.attr("href")!);
-      if (!qualifies(host)) return;
+      if (!host || !hosts.has(host)) return;
 
-      $a.append(
-        `<img class="favicon-icon" src="https://www.google.com/s2/favicons?sz=32&domain=${host}" alt="" loading="lazy" decoding="async">`,
-      );
+      $a.append(faviconHtml(host));
       changed = true;
       iconsAdded += 1;
     });

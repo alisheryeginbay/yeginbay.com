@@ -1,0 +1,26 @@
+{{- /* Returns the external hosts whose links get a favicon: those linked at
+   least minCount times across the org sources, plus the allowlist, minus
+   the blocklist. Used by the dev preview script and, via a published JSON
+   file, by scripts/inject-favicons.ts. */ -}}
+{{- $config := os.ReadFile "scripts/favicon-config.json" | transform.Unmarshal -}}
+{{- $minCount := $config.minCount | default 2 -}}
+{{- $allow := apply ($config.allowlist | default slice) "lower" "." -}}
+{{- $block := apply ($config.blocklist | default slice) "lower" "." -}}
+{{- $ownHost := partial "normalize-host.html" site.BaseURL -}}
+
+{{- $counts := dict -}}
+{{- range partial "org-files.html" "content" -}}
+  {{- range findRE `https?://[^\s\])"'<>]+` (os.ReadFile .) -}}
+    {{- $host := partial "normalize-host.html" (replaceRE `[.,;:]+$` "" .) -}}
+    {{- with $host -}}
+      {{- $counts = merge $counts (dict . (add (index $counts . | default 0) 1)) -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+
+{{- $hosts := $allow -}}
+{{- range $host, $count := $counts -}}
+  {{- if ge $count $minCount -}}{{- $hosts = $hosts | append $host -}}{{- end -}}
+{{- end -}}
+{{- $hosts = complement $block (slice $ownHost "localhost") ($hosts | uniq) -}}
+{{- return sort $hosts -}}
