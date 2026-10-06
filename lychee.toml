@@ -1,0 +1,15 @@
+# Settings for the scheduled link check (.github/workflows/check-links.yml).
+# Paths that depend on the checkout location are passed on the command line.
+
+max_concurrency = 8
+timeout = 20
+max_retries = 2
+include_fragments = "anchor-only"
+
+# 429 means the site is rate limiting us, not that the link is gone.
+accept = ["200..=299", "429"]
+
+exclude = [
+  # Blocks automated requests, so it would always be reported.
+  '^https://(www\.)?(x|twitter)\.com/',
+]

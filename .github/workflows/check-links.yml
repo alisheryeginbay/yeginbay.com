@@ -1,0 +1,79 @@
+name: Check links
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays, 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: check-links
+  cancel-in-progress: true
+
+jobs:
+  check-links:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      LABEL: broken-links
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # enableGitInfo needs history for lastmod
+
+      - uses: peaceiris/actions-hugo@v3
+        with:
+          hugo-version: "0.167.0"
+          extended: true
+
+      - name: Build site
+        run: hugo --quiet
+
+      # Links to the site itself are checked against the build, so a page that
+      # was removed or renamed shows up before visitors hit it.
+      - name: Check links
+        id: lychee
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --no-progress
+            --root-dir ${{ github.workspace }}/public
+            --remap '^https://yeginbay\.com/(.*)$ file://${{ github.workspace }}/public/$1'
+            './public/**/*.html'
+          format: markdown
+          output: lychee/out.md
+          fail: false
+
+      # One issue tracks all broken links: it is opened or updated while links
+      # are broken, and closed once a run finds none.
+      - name: Report
+        run: |
+          # 2 means broken links; anything else nonzero means lychee itself
+          # failed, so fail the run instead of filing an empty report.
+          code='${{ steps.lychee.outputs.exit_code }}'
+          if [ "$code" != 0 ] && [ "$code" != 2 ]; then
+            echo "lychee exited with $code" >&2
+            exit 1
+          fi
+
+          workspace='${{ github.workspace }}/'
+          sed -i "s|file://${workspace}public/|/|g; s|${workspace}||g" lychee/out.md
+
+          issue=$(gh issue list --label "$LABEL" --state open --json number --jq '.[0].number')
+          run_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          if [ "$code" = 2 ]; then
+            { echo "Found by [this run]($run_url)."; echo; cat lychee/out.md; } > body.md
+            if [ -n "$issue" ]; then
+              gh issue edit "$issue" --body-file body.md
+              gh issue comment "$issue" --body "Still broken as of [this run]($run_url)."
+            else
+              gh label create "$LABEL" --color d73a4a --description "Reported by the link checker" --force
+              gh issue create --title "Broken links" --label "$LABEL" --body-file body.md
+            fi
+          elif [ -n "$issue" ]; then
+            gh issue close "$issue" --comment "All links work as of [this run]($run_url)."
+          fi
