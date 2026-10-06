@@ -127,13 +127,15 @@ h1, h2, h3, h4, h5, h6,
 main { max-width: var(--max); }
 
 main > :first-child,
-main > .post > :first-child { margin-top: 0; }
+main > .post > :first-child,
+main > .post > .post-content:first-child > :first-child { margin-top: 0; }
 
 /* Trim the space above capital letters so the name and the first line of
    the page share the same top edge. */
 .site-title,
 main > :first-child,
-main > .post > :first-child { text-box: trim-start cap alphabetic; }
+main > .post > :first-child,
+main > .post > .post-content:first-child > :first-child { text-box: trim-start cap alphabetic; }
 
 @media (min-width: 52rem) {
   /* Equal side columns keep the main text centered on the page; the
