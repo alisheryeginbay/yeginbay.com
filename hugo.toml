@@ -13,3 +13,6 @@ title = "Alisher Yeginbay"
 
 [permalinks]
   posts = "/:filename/"
+
+[security]
+  allowContent = ['! ^text/html$']
