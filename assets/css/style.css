@@ -86,6 +86,8 @@ h1, h2, h3, h4, h5, h6,
   line-height: 1.25;
 }
 
+ul { list-style-type: "– "; }
+
 .layout {
   max-width: calc(var(--max) + var(--sidebar) + 3rem);
   margin: 0 auto;
@@ -166,7 +168,6 @@ main > .post > .post-content:first-child > :first-child { text-box: trim-start c
 main { min-height: 60vh; padding-bottom: 3rem; }
 
 .post-list {
-  list-style: disc;
   padding-left: 1.25rem;
   margin: 0;
 }
