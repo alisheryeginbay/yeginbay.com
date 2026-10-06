@@ -3,9 +3,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "hugo && bun scripts/inject-favicons.mjs && bun scripts/external-links.mjs"
+    "build": "hugo && bun scripts/inject-favicons.ts && bun scripts/external-links.ts",
+    "typecheck": "tsc"
   },
   "dependencies": {
     "cheerio": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.2",
+    "typescript": "^5"
   }
 }

@@ -8,7 +8,9 @@
   <link rel="stylesheet" href="{{ "css/style.css" | absURL }}">
   <link rel="alternate" type="application/rss+xml" href="{{ "index.xml" | absURL }}" title="{{ site.Title }}">
   {{ if .HasShortcode "attention-viz" }}
-  <script defer src="{{ "js/attention-viz.js" | absURL }}"></script>
+  {{- with resources.Get "js/attention-viz.ts" | js.Build (dict "minify" hugo.IsProduction) }}
+  <script defer src="{{ .Permalink }}"></script>
+  {{- end }}
   {{ end }}
   {{ $hasMath := and .IsPage (strings.Contains .RawContent "$$") }}
   {{ if $hasMath }}

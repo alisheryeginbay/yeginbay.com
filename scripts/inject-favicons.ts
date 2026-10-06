@@ -1,38 +1,25 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 // Post-processes Hugo's build output to add favicon icons next to external
 // links, gated by how often each domain is linked across the site's org
 // sources. Must run after `hugo build`.
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile, writeFile, glob } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
-import { glob } from "node:fs/promises";
 import * as cheerio from "cheerio";
+import { CONTENT_DIR, PUBLIC_DIR, ROOT, getSiteHost, normalizeHost } from "./site.ts";
 
-const ROOT = path.resolve(import.meta.dirname, "..");
-const CONTENT_DIR = path.join(ROOT, "content");
-const PUBLIC_DIR = path.join(ROOT, "public");
 const CONFIG_PATH = path.join(ROOT, "scripts", "favicon-config.json");
 
 const URL_RE = /https?:\/\/[^\s\]\)"'<>]+/g;
 
-function normalizeHost(rawUrl) {
-  try {
-    const host = new URL(rawUrl).hostname.toLowerCase();
-    return host.startsWith("www.") ? host.slice(4) : host;
-  } catch {
-    return null;
-  }
+interface FaviconConfig {
+  minCount?: number;
+  allowlist?: string[];
+  blocklist?: string[];
 }
 
-async function getSiteHost() {
-  const toml = await readFile(path.join(ROOT, "hugo.toml"), "utf8");
-  const match = toml.match(/baseURL\s*=\s*"([^"]+)"/);
-  if (!match) return null;
-  return normalizeHost(match[1]);
-}
-
-async function countDomains() {
-  const counts = new Map();
+async function countDomains(): Promise<Map<string, number>> {
+  const counts = new Map<string, number>();
   for await (const file of glob("**/*.org", { cwd: CONTENT_DIR })) {
     const text = await readFile(path.join(CONTENT_DIR, file), "utf8");
     for (const raw of text.matchAll(URL_RE)) {
@@ -52,7 +39,7 @@ async function main() {
     process.exit(1);
   }
 
-  const config = JSON.parse(await readFile(CONFIG_PATH, "utf8"));
+  const config: FaviconConfig = JSON.parse(await readFile(CONFIG_PATH, "utf8"));
   const allowlist = new Set((config.allowlist ?? []).map((d) => d.toLowerCase()));
   const blocklist = new Set((config.blocklist ?? []).map((d) => d.toLowerCase()));
   const minCount = config.minCount ?? 2;
@@ -60,7 +47,7 @@ async function main() {
   const ownHost = await getSiteHost();
   const counts = await countDomains();
 
-  const qualifies = (host) => {
+  const qualifies = (host: string | null): host is string => {
     if (!host) return false;
     if (host === ownHost || host === "localhost") return false;
     if (blocklist.has(host)) return false;
@@ -84,8 +71,7 @@ async function main() {
       if ($a.closest("pre, code").length) return;
       if ($a.find("img.favicon-icon").length) return;
 
-      const href = $a.attr("href");
-      const host = normalizeHost(href);
+      const host = normalizeHost($a.attr("href")!);
       if (!qualifies(host)) return;
 
       $a.append(
