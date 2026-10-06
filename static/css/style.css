@@ -53,7 +53,8 @@
   --bg: #fdfdfc;
   --fg: #1a1a1a;
   --muted: #6b6b6b;
-  --link: #9B4F96;
+  --link: #92406F;
+  --highlight: #C8AABF;
   --rule: #e4e4e0;
   --max: 40rem;
 }
@@ -61,6 +62,11 @@
 * { box-sizing: border-box; }
 
 html { -webkit-text-size-adjust: 100%; }
+
+::selection {
+  background: var(--highlight);
+  color: var(--fg);
+}
 
 body {
   margin: 0;
