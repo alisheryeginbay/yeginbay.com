@@ -10,6 +10,9 @@ include_fragments = "anchor-only"
 accept = ["200..=299", "429"]
 
 exclude = [
-  # Blocks automated requests, so it would always be reported.
+  # These block automated requests (403 from CI runners even when the page
+  # loads in a browser), so they would always be reported.
   '^https://(www\.)?(x|twitter)\.com/',
+  '^https://([a-z0-9-]+\.)?substack\.com/',
+  '^https://([a-z0-9-]+\.)?medium\.com/',
 ]
