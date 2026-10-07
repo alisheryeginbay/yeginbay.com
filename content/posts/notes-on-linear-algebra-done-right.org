@@ -1,0 +1,54 @@
+#+title: Notes on "Linear Algebra Done Right"
+#+date: 2026-10-07T16:36:16+05:00
+
+So far my linear algebra knowledge was based on basic school-level linear algebra, 3Blue1Brown's [[https://youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab]["Essence of Linear Algebra"]] (it's brilliant!), and some intuitive understanding I gained while playing around with models' internals.
+
+Linear algebra is essential in AI and it is especially important in [[https://en.wikipedia.org/wiki/Mechanistic_interpretability][mechanistic interpretability]]. So I decided to build a robust foundation. I settled on Sheldon Axler's [[https://linear.axler.net/LADR4e.pdf][/Linear Algebra Done Right/]] (4th ed.). I also considered Gilbert Strang's /Introduction to Linear Algebra/; however I thought that proof-based approach would be more fun,[fn:1] since I never had an experience with writing proofs.
+
+You can find my notebook with some of the proofs here.
+
+* Vector Spaces
+
+I spend /a lot/ of time on this chapter.
+
+It's not that the material itself was hard. The concepts are explained in a clear and accessible way. However the lack of experience with proof-writing slowed me down considerably. At this stage, I was essentially learning to prove rather than learning linear algebra itself.
+
+To make it clear how /bad/ I was in proving mathematical statements before starting the textbook: I didn't even know what's associativity and commutativity! So imagine me reading this problem:
+
+#+caption: Sheldon Axler, /Linear Algebra Done Right/, 4th ed., Exercise 1A.1
+#+attr_html: :cite https://linear.axler.net/
+#+begin_quote
+Show that $\alpha + \beta = \beta + \alpha$ for all $\alpha, \beta \in \mathbf{C}$.
+#+end_quote
+
+I was like, "well, isn't this clear that $\alpha + \beta = \beta + \alpha$? What am I supposed to prove here...?".
+
+So Claude recommended me I learn some basics[fn:2] using Richard Hammack's [[https://richardhammack.github.io/BookOfProof/][/Book of Proof/]] (3rd ed.). Well---it helped me significantly! I've gradually learned to parse problems; use only previously declared definitions, axioms, and statements; and prove "for all" kind of problems using arbitrary elements.
+
+*** Subspaces
+I found it a bit challenging at the beginning to understand $\iff$ (if and only if) statements and why I need to cover both directions. For instance,
+#+begin_quote
+Suppose $b \in \mathbf{R}$. Show that the set of continuous real-valued functions $f$ on the interval $[0,1]$ such that $\int_{0}^{1} f = b$ is a subspace of $\mathbf{R}^{[0,1]}$ if and only if $b = 0$.
+#+end_quote
+
+First, I thought, "what's the specific reason to say 'if and only if' rather than just saying 'if'". Then I referenced the /Book of Proof/ and decomposed[fn:3] that into the separate statements $P$ and $Q$, where $P$ is "the set of continuous real-valued functions $f$ on the interval $[0,1]$ such that $\int_{0}^{1} f = b$ is a subspace of $\mathbf{R}^{[0,1]}$" and $Q$ is "$b = 0$". So the matter was to prove the following conditions:
+- If $P$, then $Q$.
+- If $Q$, then $P$.
+
+Then I thought, "well... why showing that the conditions of a subspace force $b = 0$ isn't enough for a complete proof?" But looking at the decomposed form made it crystal clear! The first direction /supposes/ that $P$ is true and that it yields $Q$, but it is a mere assumption, not something that is definitely true; so we need to check if it's indeed a factual thing by plugging back $b = 0$ ($Q$ condition).
+
+It was definitely fun to learn a whole new language of proving stuff!
+
+
+** Finite-Dimensional Vector Spaces
+Writing...
+
+** Linear Maps
+Writing...
+
+* Footnotes
+
+[fn:3] In general, I find it really helpful to explicitly translate English text using a mathematical notation and decompose it into separate pieces.
+[fn:2] I also skimmed Paul R. Halmos's [[https://www.amazon.com/dp/0486814874][/Naive Set Theory/]]. It sped up the process.
+
+[fn:1] It is fun indeed! But I often felt so stupid (and still do occasionally), because I just couldn't properly read what exactly is being asked to prove, or write a proof without having some circular reasoning.
