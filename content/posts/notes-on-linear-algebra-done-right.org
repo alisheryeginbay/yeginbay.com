@@ -1,5 +1,6 @@
 #+title: Notes on "Linear Algebra Done Right"
 #+date: 2026-10-07T16:36:16+05:00
+#+tags[]: mathematics
 
 So far my linear algebra knowledge was based on basic school-level linear algebra, 3Blue1Brown's [[https://youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab]["Essence of Linear Algebra"]] (it's brilliant!), and some intuitive understanding I gained while playing around with models' internals.
 
