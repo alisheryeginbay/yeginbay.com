@@ -25,7 +25,7 @@
   {{- else }}
   {{- $_ := (resources.FromString "favicon-hosts.json" (jsonify $faviconHosts)).Publish }}
   {{- end }}
-  {{ $hasMath := and (or .IsPage .IsHome) (strings.Contains .RawContent "$$") }}
+  {{ $hasMath := and (or .IsPage .IsHome) (findRE `\$[^$\s][^$]*\$` .RawContent 1) }}
   {{ if $hasMath }}
   <link rel="stylesheet" href="{{ "vendor/katex/katex.min.css" | absURL }}">
   {{- if hugo.IsServer }}
