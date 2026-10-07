@@ -1,4 +1,4 @@
-#+title: Notes on "Linear Algebra Done Right"
+#+title: "Linear Algebra Done Right"
 #+date: 2026-10-07T16:36:16+05:00
 #+tags[]: mathematics
 
