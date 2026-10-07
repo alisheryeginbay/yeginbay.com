@@ -14,3 +14,7 @@
   Cache-Control: public, max-age=86400
 /images/*
   Cache-Control: public, max-age=86400
+
+# Post sources, shown in the browser instead of downloaded.
+/*.org
+  Content-Type: text/plain; charset=utf-8

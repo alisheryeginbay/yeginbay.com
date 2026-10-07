@@ -1,4 +1,9 @@
 {{ define "main" }}
+{{- /* Publish the post's org source next to it: /slug -> /slug.org */ -}}
+{{ if eq .Section "posts" }}
+  {{ $src := os.ReadFile (path.Join "content" .File.Path) }}
+  {{ $_ := (resources.FromString (printf "%s.org" (strings.TrimSuffix "/" .RelPermalink)) $src).Publish }}
+{{ end }}
 <article class="post">
   <h1>{{ .Title }}</h1>
   {{ if not .Date.IsZero }}<time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "Jan 2, 2006" }}</time>{{ end }}
