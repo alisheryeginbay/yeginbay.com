@@ -1,11 +1,36 @@
 {{ define "main" }}
+{{- $posts := where site.RegularPages "Type" "posts" }}
+{{- $finished := slice }}
+{{- $drafts := slice }}
+{{- $notes := slice }}
+{{- range $posts }}
+  {{- $status := partial "status.html" . }}
+  {{- if eq $status "notes" }}{{ $notes = $notes | append . }}
+  {{- else if eq $status "draft" }}{{ $drafts = $drafts | append . }}
+  {{- else }}{{ $finished = $finished | append . }}{{ end }}
+{{- end }}
 <h1>{{ .Title }}</h1>
 <ul class="post-list">
-  {{ range where site.RegularPages "Type" "posts" }}
+  {{ range sort $finished "Date" "desc" }}
   <li>
     <a href="{{ strings.TrimSuffix "/" .Permalink }}">{{ .Title }}</a>
     <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "Jan 2, 2006" }}</time>
   </li>
   {{ end }}
 </ul>
+
+{{- /* Work in progress, most recently touched first. */}}
+{{ range $group := slice (dict "title" "Drafts" "pages" $drafts) (dict "title" "Notes" "pages" $notes) }}
+{{ with .pages }}
+<h2>{{ $group.title }}</h2>
+<ul class="post-list">
+  {{ range sort . "Lastmod" "desc" }}
+  <li>
+    <a href="{{ strings.TrimSuffix "/" .Permalink }}">{{ .Title }}</a>
+    <time datetime="{{ .Lastmod.Format "2006-01-02" }}">updated {{ .Lastmod.Format "Jan 2, 2006" }}</time>
+  </li>
+  {{ end }}
+</ul>
+{{ end }}
+{{ end }}
 {{ end }}
