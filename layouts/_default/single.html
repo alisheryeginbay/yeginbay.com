@@ -6,8 +6,18 @@
 {{ end }}
 <article class="post">
   <h1>{{ .Title }}</h1>
-  {{ if not .Date.IsZero }}<time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "Jan 2, 2006" }}</time>{{ end }}
-  {{ if .Params.show_lastmod }}<time datetime="{{ .Lastmod.Format "2006-01-02" }}">Last updated {{ .Lastmod.Format "Jan 2, 2006" }}</time>{{ end }}
+  {{ if eq .Section "posts" }}
+  {{ $status := partial "status.html" . }}
+  {{ $started := .Date.Format "2006-01-02" }}
+  {{ $updated := .Lastmod.Format "2006-01-02" }}
+  <p class="post-meta">
+    {{ if ne $status "finished" }}<span class="post-status">{{ $status }}</span> · {{ end }}
+    {{ if ne $status "finished" }}Started {{ end }}<time datetime="{{ $started }}">{{ .Date.Format "Jan 2, 2006" }}</time>
+    {{ if gt $updated $started }} · Updated <time datetime="{{ $updated }}">{{ .Lastmod.Format "Jan 2, 2006" }}</time>{{ end }}
+    · <a href="{{ strings.TrimSuffix "/" .RelPermalink }}.org">source</a>
+    · <a href="{{ site.Params.repo }}/commits/main/content/{{ .File.Path }}">history</a>
+  </p>
+  {{ else if not .Date.IsZero }}<time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "Jan 2, 2006" }}</time>{{ end }}
   {{ with .GetTerms "tags" }}
   <ul class="post-tags">
     {{ range . }}<li><a href="{{ strings.TrimSuffix "/" .RelPermalink }}">{{ .Data.Term }}</a></li>{{ end }}

@@ -478,3 +478,18 @@ input.margin-toggle { display: none; }
   color: var(--muted);
   font-size: 0.85rem;
 }
+
+.post-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.post-meta a { color: var(--muted); }
+.post-meta a:hover { color: var(--fg); }
+
+.post-status {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.75rem;
+}

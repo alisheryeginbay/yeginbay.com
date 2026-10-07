@@ -5,6 +5,7 @@ enableGitInfo = true
 
 [params]
   description = "Notes and writing."
+  repo = "https://github.com/alisheryeginbay/yeginbay.com"
 
 [markup.org]
   # keep TOC/heading behavior default; org files are parsed natively by Hugo
