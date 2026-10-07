@@ -1,0 +1,36 @@
+{{- /*
+Turns the footnotes that Hugo's Org renderer emits into Tufte-style
+sidenotes: each note moves next to its first reference, and the footnote
+list at the end of the content is dropped. Repeated references keep their
+number but no note. A paragraph inside a <p> isn't valid HTML, so note
+paragraphs become block-level spans.
+
+Takes a dict with "page" (for error messages) and "content" (.Content).
+*/ -}}
+{{- $page := .page -}}
+{{- $parts := split .content `<div class="footnotes">` -}}
+{{- $body := index $parts 0 -}}
+{{- if gt (len $parts) 1 -}}
+  {{- $defs := after 1 (split (index $parts 1) `<div class="footnote-definition">`) -}}
+  {{- range $i, $def := $defs -}}
+    {{- $m := index (findRESubmatch `(?s)^\s*<sup id="footnote-(\d+)">.*?</sup>\s*<div class="footnote-body">(.*)$` $def 1) 0 -}}
+    {{- $n := index $m 1 -}}
+    {{- $note := index $m 2 -}}
+    {{- /* Each definition ends with the body and definition closing tags;
+         the last also closes the definitions list and the footnotes block. */ -}}
+    {{- range seq (cond (eq (add $i 1) (len $defs)) 4 2) -}}
+      {{- $note = replaceRE `(?s)\s*</div>\s*$` "" $note -}}
+    {{- end -}}
+    {{- $note = $note | replaceRE `<p>\s*` `<span class="sidenote-paragraph">` | replaceRE `</p>` `</span>` | strings.TrimSpace -}}
+    {{- with findRE `<(div|ul|ol|dl|pre|table|blockquote|figure|h[1-6])[\s>]` $note 1 -}}
+      {{- errorf "%s: footnote %s contains %s…, which can't go in a sidenote; keep footnotes to paragraphs and inline markup" $page.File.Path $n (index . 0) -}}
+    {{- end -}}
+    {{- $ref := printf `<sup class="footnote-reference"><a id="footnote-reference-%s" href="#footnote-%s">%s</a></sup>` $n $n $n -}}
+    {{- $sidenote := printf `<label for="sidenote-%s" class="margin-toggle sidenote-number">%s</label><input type="checkbox" id="sidenote-%s" class="margin-toggle"><span class="sidenote"><span class="sidenote-number">%s</span> %s</span>` $n $n $n $n $note -}}
+    {{- $body = replace $body $ref $sidenote 1 -}}
+    {{- $body = replace $body $ref (printf `<span class="sidenote-number">%s</span>` $n) -}}
+  {{- end -}}
+  {{- /* An Org "* Footnotes" heading is left empty once the list is gone. */ -}}
+  {{- $body = replaceRE `(?s)<div id="outline-container-[^"]+" class="outline-\d">\s*<h\d id="[^"]+">\s*Footnotes\s*</h\d>\s*</div>\s*$` "" $body -}}
+{{- end -}}
+{{- return ($body | safeHTML) -}}

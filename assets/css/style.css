@@ -58,6 +58,7 @@
   --rule: #e4e4e0;
   --max: 40rem;
   --sidebar: 12rem;
+  --sidenote: 14rem;
 }
 
 * { box-sizing: border-box; }
@@ -258,15 +259,55 @@ main { min-height: 60vh; padding-bottom: 3rem; }
   padding: 0.25rem 0;
 }
 
-.post-content .footnotes {
-  margin-top: 2.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--rule);
+/* Sidenotes, after Tufte CSS (markup from layouts/partials/sidenotes.html).
+   When the right column has room, each note floats into it beside the line
+   that references it. Otherwise the notes stay hidden until the reader taps
+   the number, which opens the note below that line. */
+.sidenote-number {
+  font-size: 0.7em;
+  line-height: 0;
+  vertical-align: super;
+}
+
+input.margin-toggle { display: none; }
+
+.sidenote {
+  display: none;
   font-size: 0.9rem;
+  line-height: 1.5;
   color: var(--muted);
 }
 
-.post-content .footnotes hr { display: none; }
+.sidenote-paragraph { display: block; }
+.sidenote-paragraph + .sidenote-paragraph { margin-top: 0.5em; }
+/* The first paragraph follows the note's number on the same line. */
+.sidenote > .sidenote-number + .sidenote-paragraph { display: inline; }
+
+@media (width < 77rem) {
+  label.sidenote-number {
+    color: var(--link);
+    cursor: pointer;
+  }
+
+  .margin-toggle:checked + .sidenote {
+    display: block;
+    margin: 0.5rem 0 0.75rem;
+    padding-left: 1rem;
+    border-left: 2px solid var(--rule);
+  }
+}
+
+/* The main column is at full width here and the right column is at least
+   as wide as a note. */
+@media (min-width: 77rem) {
+  .sidenote {
+    display: block;
+    float: right;
+    clear: right;
+    width: var(--sidenote);
+    margin: 0.3rem calc(-1 * (var(--sidenote) + 3rem)) 1rem 0;
+  }
+}
 
 .post-content blockquote {
   margin: 1rem 0;
