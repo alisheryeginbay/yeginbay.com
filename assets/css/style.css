@@ -236,6 +236,12 @@ main { min-height: 60vh; padding-bottom: 3rem; }
   margin-top: 1.5rem;
 }
 
+/* Paragraphs run on without a gap, and a paragraph that follows another
+   starts with an indent, as in a printed book. */
+.post-content p { margin: 0; }
+.post-content p + p { text-indent: 1.5em; }
+.post-content .sidenote { text-indent: 0; }
+
 .book-list {
   padding-left: 1.25rem;
   margin: 0;
