@@ -228,6 +228,58 @@ main { min-height: 60vh; padding-bottom: 3rem; }
   margin-top: 1.5rem;
 }
 
+.book-list {
+  padding-left: 1.25rem;
+  margin: 0;
+}
+
+.book-list li {
+  padding: 0.2rem 0;
+}
+
+.book-title {
+  font-weight: 500;
+}
+
+.book-author::before {
+  content: "by ";
+}
+
+.book-author,
+.book-rating,
+.book-count {
+  color: var(--muted);
+}
+
+.book-rating,
+.book-count {
+  font-size: 0.85rem;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.book-rating { margin-left: 0.4rem; }
+
+.book-favourite { color: var(--link); }
+
+.book-review {
+  font-size: 0.95rem;
+  margin: 0.25rem 0 0.5rem;
+}
+
+.book-review p { margin: 0.25rem 0; }
+
+.book-shelf summary {
+  cursor: pointer;
+  margin-top: 2rem;
+}
+
+.book-shelf summary h2 {
+  display: inline;
+}
+
+.book-count { margin-left: 0.4rem; font-weight: 400; }
+
 .post-content h2,
 .post-content h3 {
   margin-top: 2rem;

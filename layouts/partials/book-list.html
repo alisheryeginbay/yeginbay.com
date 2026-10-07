@@ -1,0 +1,15 @@
+{{- /* Renders a list of books from data/books.json. Takes "page" (for
+  rendering reviews, which are written in org) and "books". */ -}}
+<ul class="book-list">
+  {{- range .books }}
+  <li>
+    <span class="book-title">{{ .title }}</span>
+    <span class="book-author">{{ .author }}</span>
+    {{- if in .tags "favourite" }} <span class="book-favourite" title="Favourite">♥</span>{{ end }}
+    {{- with .rating }} <span class="book-rating" title="{{ . }} out of 10">{{ . }}/10</span>{{ end }}
+    {{- with .review }}
+    <div class="book-review">{{ $.page.RenderString (dict "markup" "org" "display" "block") . }}</div>
+    {{- end }}
+  </li>
+  {{- end }}
+</ul>

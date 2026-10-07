@@ -1,6 +1,4 @@
 #+title: Books
-#+show_lastmod: true
+#+layout: books
 
-Under construction! 🏗️
-
-/(designing & migrating stuff from Goodreads)/
+Books I'm reading, have read, and want to read. Ratings are out of 10.
