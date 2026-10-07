@@ -1,0 +1,2 @@
+{{- /* Posts open with a Goudy initial, which only has the letters A to Z. */ -}}
+{{- return and (eq .Type "posts") (findRE `^\s*[A-Za-z]` .Plain 1) -}}

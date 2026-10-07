@@ -8,7 +8,7 @@
     {{ range . }}<li><a href="{{ strings.TrimSuffix "/" .RelPermalink }}">{{ .Data.Term }}</a></li>{{ end }}
   </ul>
   {{ end }}
-  <div class="post-content">
+  <div class="post-content{{ if partial "has-drop-cap.html" . }} drop-cap{{ end }}">
     {{ partial "sidenotes.html" (dict "page" . "content" .Content) }}
   </div>
 </article>

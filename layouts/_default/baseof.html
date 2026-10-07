@@ -6,6 +6,9 @@
   <title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }} · {{ site.Title }}{{ end }}</title>
   <meta name="description" content="{{ if .Description }}{{ .Description }}{{ else }}{{ site.Params.description }}{{ end }}">
   <link rel="preload" href="{{ "fonts/sourceserif4-400.woff2" | absURL }}" as="font" type="font/woff2" crossorigin>
+  {{- if and .IsPage (partial "has-drop-cap.html" .) }}
+  <link rel="preload" href="{{ "fonts/goudyinitialen.woff2" | absURL }}" as="font" type="font/woff2" crossorigin>
+  {{- end }}
   {{- with resources.Get "css/style.css" | minify | fingerprint }}
   <link rel="stylesheet" href="{{ .Permalink }}" integrity="{{ .Data.Integrity }}">
   {{- end }}

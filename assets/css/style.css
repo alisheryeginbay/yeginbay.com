@@ -46,6 +46,14 @@
   src: url("/fonts/sourceserif4-600.woff2") format("woff2");
 }
 
+@font-face {
+  font-family: "Goudy Initialen";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/goudyinitialen.woff2") format("woff2");
+}
+
 :root {
   color-scheme: light;
   --font-heading: "Brygada 1918", Georgia, "Times New Roman", serif;
@@ -279,6 +287,18 @@ main { min-height: 60vh; padding-bottom: 3rem; }
 }
 
 .book-count { margin-left: 0.4rem; font-weight: 400; }
+
+/* The first letter of a post as a floriated initial three lines tall. The
+   glyphs are square and sit on the baseline with nothing below it. */
+.post-content.drop-cap > p:first-child::first-letter {
+  float: left;
+  font-family: "Goudy Initialen", var(--font-heading);
+  font-size: 5.25em;
+  line-height: 0.8;
+  text-transform: uppercase;
+  color: var(--link);
+  margin: 0.07em 0.06em 0 0;
+}
 
 .post-content h2,
 .post-content h3 {
