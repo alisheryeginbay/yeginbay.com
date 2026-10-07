@@ -209,12 +209,19 @@ main { min-height: 60vh; padding-bottom: 3rem; }
   margin: 0.6rem 0 0;
 }
 
-.post-tags li {
+.post-tags a {
+  display: block;
   color: var(--muted);
   font-size: 0.8rem;
+  text-decoration: none;
   border: 1px solid var(--rule);
   border-radius: 999px;
   padding: 0.1rem 0.6rem;
+}
+
+.post-tags a:hover {
+  color: var(--fg);
+  border-color: var(--muted);
 }
 
 .post-content {
