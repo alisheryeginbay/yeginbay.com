@@ -1,0 +1,20 @@
+#+title: Connect 4 Probes
+#+date: 2026-10-09T03:13:25+05:00
+#+status: notes
+#+tags[]: interpretability
+
+Wherein we explore interpretable world models in Connect 4. [[https://github.com/alisheryeginbay/connect-4][Repository]].
+
+* Question
+
+* Current understanding
+A while ago I read the [[https://arxiv.org/abs/2210.13382][Othello GPT paper]] and decided that it would be interesting to reproduce it. But I thought that reusing Othello would be a bit boring, so I decided to try the game of [[https://en.wikipedia.org/wiki/Connect_Four][Connect 4]] instead. Although Connect 4 is much simpler, I think we'll still be able to find something gripping (I hope).
+
+* Open questions
+- Is the design of the game inviting enough for the model to build a world model at all?
+- What is "championship" dataset for Connect 4?
+- I also didn't read the Neel Nanda's follow-up paper where they suggest using "empty/mine/yours" perspective. I deliberately want to postpone the reading, so that I'll try figure that out as needed. But now I'm certainly intrigued to understand why this approach helped!
+
+* Sources
+- https://arxiv.org/abs/2210.13382
+- https://arxiv.org/abs/2309.00941
