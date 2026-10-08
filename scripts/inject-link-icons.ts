@@ -23,7 +23,7 @@ async function main() {
   for await (const file of glob("**/*.html", { cwd: PUBLIC_DIR })) {
     const filePath = path.join(PUBLIC_DIR, file);
     const html = await readFile(filePath, "utf8");
-    if (!html.includes('class="post-content"')) continue;
+    if (!html.includes('class="post-content')) continue;
 
     const $ = cheerio.load(html, { xmlMode: false });
     let changed = false;
