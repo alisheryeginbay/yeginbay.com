@@ -3,6 +3,15 @@
 #+status: notes
 #+tags[]: k-pop
 
+* Open questions
+** K-pop Wave
+South Korea is relatively small in population: 51 million, 30th in the world as of 8 October 2026. It was around 50 million in the 2010s, during which most of the K-pop wave took place. So how did they achieve such an increase in K-pop popularity?
+** BTS, Blackpink
+Why were they the most prominent groups during the wave?
+** Dance
+One of the fundamental parts (if not the most) is dance. Why?
+** Recruiting
+
 * Reading list
 - https://mattlakeman.org/2020/09/06/a-deep-dive-into-k-pop/
 - https://en.wikipedia.org/wiki/K-pop
