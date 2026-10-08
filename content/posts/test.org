@@ -1,0 +1,150 @@
+#+title: Test
+#+date: 2026-10-08
+#+status: draft
+#+author: Alisher Yeginbay, Claude Opus 5.5
+#+tags[]: technical
+
+Every feature the site supports, on one page, to check after changing templates, styles or build scripts. This page is kept out of the writings list, tag pages, RSS and the sitemap, and asks search engines not to index it. The first paragraph opens with a drop cap, and each paragraph after it is indented.
+
+Like this one. It also has *bold*, /italic/, _underline_, +strikethrough+, =verbatim=, ~code~, and a long unbroken URL as link text: [[https://en.wikipedia.org/wiki/Mechanistic_interpretability][https://en.wikipedia.org/wiki/Mechanistic_interpretability]].
+
+* Links
+
+Internal links open in the same tab: [[/writings][writings]], [[/books][books]], [[/tags/korean][a tag page]], and [[#sidenotes][a section on this page]]. External links open in a new tab, and some get a logo:
+
+- [[https://github.com/alisheryeginbay][GitHub]]
+- [[https://en.wikipedia.org/wiki/Typography][Wikipedia]]
+- [[https://x.com/yeginbay][X]] and [[https://twitter.com/yeginbay][Twitter]]
+- [[https://yeginbay.substack.com][Substack]]
+- [[https://arxiv.org/abs/1706.03762][arXiv]]
+- [[https://www.youtube.com/@ComprehensibleInputKorean][YouTube]]
+- [[https://linear.axler.net/][A site without a logo]]
+
+A logo stays on the line with the end of its link, even at the end of a line in a narrow window: [[https://en.wikipedia.org/wiki/Hangul][Hangul]]. Links inside code get no logo: ~https://github.com~.
+
+* Sidenotes
+
+A sidenote sits in the margin on wide screens and opens on tap on narrow ones.[fn:1] Inline notes work too.[fn::An inline note, written right where it's referenced.] A note can hold math and links.[fn:2] A note referenced twice keeps its number the second time, without a second note.[fn:1]
+
+A note can have several paragraphs.[fn:3]
+
+* Math
+
+Inline math such as $W_{QK} = W_Q W_K^T$ and $\alpha + \beta = \beta + \alpha$ sits in the text. Display math gets its own line:
+
+$$
+A = \text{softmax}\left(\frac{x_i W_{QK} x_j^T}{\sqrt{d_{\text{head}}}}\right)
+$$
+
+Aligned equations, with a matrix:
+
+$$ \begin{aligned}
+q &= x_i W_Q \\
+k &= x_j W_K \\
+\begin{bmatrix} \text{head}_1 & \text{head}_2 & \cdots & \text{head}_{n} \end{bmatrix} W_O &= \sum_{h} \text{head}_h W_O^h
+\end{aligned} $$
+
+* Headings
+
+Each heading links to itself, with a § in the left margin and a button that copies its link. Headings appear in the contents.
+
+** A second-level heading
+
+*** A third-level heading
+
+Text under the deepest heading.
+
+** A heading with a [[https://en.wikipedia.org/wiki/Pilcrow][link]]
+
+A heading that already holds a link links to itself through the § alone.
+
+** Repeated title
+
+** Repeated title
+
+The second repeated heading gets a numbered id.
+
+* Korean
+
+Hangul uses Source Han Serif KR: 안녕하세요, 저는 알리셰르입니다. In bold: *한국어를 공부하고 있어요.*
+
+* Blocks
+
+** Lists
+
+- An unordered item
+- Another, with nested items:
+  - Nested
+  - Nested again
+
+1. An ordered item
+2. Another
+   1. Nested
+
+- Term :: Its definition
+- Another term :: Another definition
+
+** Quote
+
+#+caption: Sheldon Axler, /Linear Algebra Done Right/, 4th ed., Exercise 1A.1
+#+attr_html: :cite https://linear.axler.net/
+#+begin_quote
+Show that $\alpha + \beta = \beta + \alpha$ for all $\alpha, \beta \in \mathbf{C}$.
+#+end_quote
+
+** Code
+
+#+begin_src python
+def attention(q, k, v):
+    scores = q @ k.T / q.shape[-1] ** 0.5
+    return softmax(scores) @ v  # see https://github.com, no logo here
+#+end_src
+
+** Table
+
+| model | shot | moved | unfaithfulness |
+|-------+------+-------+----------------|
+| Opus  |    0 |     1 |          1.000 |
+| Llama |    3 |    84 |          0.952 |
+
+** Details
+
+#+BEGIN_EXPORT html
+<details>
+<summary>Folded content</summary>
+#+END_EXPORT
+
+Text that shows when the details open.
+
+#+BEGIN_EXPORT html
+</details>
+#+END_EXPORT
+
+* Images
+
+#+CAPTION: An image with a caption
+[[/images/posts/seeing-superposition/superposition.svg]]
+
+An image without a caption, as raw HTML:
+
+@@html:<img src="/images/posts/susceptibility-limits-faithfulness-measurement/hint_schematic.svg" alt="Hint schematic" />@@
+
+* Attention visualization
+
+With a field selector:
+
+{{< attention-viz src="/data/transformer-circuits/attn_data.json" fields="Raw:qk_raw,Normalized:qk_norm" row-label="query" col-label="key" >}}
+
+With a single field:
+
+{{< attention-viz src="/data/transformer-circuits/attn_data.json" field="ov" row-label="input" col-label="output" >}}
+
+* Footnotes
+
+[fn:1] A numbered note. It's long enough to wrap onto several lines in the margin, to check line height and spacing against the text beside it.
+
+[fn:2] With math, $\int_0^1 f = 0$, and a [[https://en.wikipedia.org/wiki/Integral][link]].
+
+[fn:3] The first paragraph of the note.
+
+The second paragraph of the note.
