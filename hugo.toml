@@ -13,6 +13,11 @@ enableGitInfo = true
 [markup.org]
   # keep TOC/heading behavior default; org files are parsed natively by Hugo
 
+[markup.highlight]
+  # Emit classes instead of inline colours, so code is coloured by the
+  # .chroma rules in assets/css/style.css.
+  noClasses = false
+
 [taxonomies]
   tag = "tags"
 
