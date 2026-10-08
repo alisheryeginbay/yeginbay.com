@@ -7,7 +7,7 @@ import { readFile, writeFile, rm, glob } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import * as cheerio from "cheerio";
-import { ICON_SELECTOR, LINK_SELECTOR, SKIP_INSIDE, faviconHtml } from "../assets/js/favicons.ts";
+import { ICON_SELECTOR, LINK_SELECTOR, SKIP_INSIDE, faviconHtml, splitGluedTail } from "../assets/js/favicons.ts";
 import { PUBLIC_DIR, normalizeHost } from "./site.ts";
 
 const HOSTS_PATH = path.join(PUBLIC_DIR, "favicon-hosts.json");
@@ -43,7 +43,12 @@ async function main() {
       const host = normalizeHost($a.attr("href")!);
       if (!host || !hosts.has(host)) return;
 
-      $a.append(faviconHtml(host));
+      // Move the end of the link text into the icon's nowrap span.
+      let tail = "";
+      const last = $a.contents().last()[0];
+      if (last?.type === "text") [last.data, tail] = splitGluedTail(last.data);
+
+      $a.append(faviconHtml(host, tail));
       changed = true;
       iconsAdded += 1;
     });

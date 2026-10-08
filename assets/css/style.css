@@ -394,6 +394,8 @@ main { min-height: 60vh; padding-bottom: 3rem; }
 
 .post-content a { color: var(--link); }
 
+.favicon-nowrap { white-space: nowrap; }
+
 .favicon-icon {
   display: inline-block;
   width: 0.9em;
