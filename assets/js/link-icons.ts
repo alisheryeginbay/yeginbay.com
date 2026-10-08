@@ -1,6 +1,13 @@
 // Link icon rules shared by scripts/inject-link-icons.ts (build) and
 // link-icons-preview.ts (`hugo server`).
-import { siArxiv, siGithub, siWikipedia, siX, siYoutube } from "simple-icons";
+import {
+  siArxiv,
+  siGithub,
+  siSubstack,
+  siWikipedia,
+  siX,
+  siYoutube,
+} from "simple-icons";
 
 // A monochrome 24×24 logo, shown in the muted text colour and switched to
 // `hex` while its link is hovered.
@@ -13,6 +20,7 @@ type Icon = { title: string; path: string; hex: string };
 const RULES: Record<string, Icon> = {
   "arxiv.org": siArxiv,
   "github.com": siGithub,
+  "substack.com": siSubstack,
   "twitter.com": siX,
   "wikipedia.org": siWikipedia,
   "x.com": siX,
