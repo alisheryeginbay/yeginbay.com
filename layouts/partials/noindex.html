@@ -1,0 +1,2 @@
+{{- /* Whether a page has #+noindex: true. Org keywords are strings, so "false" counts as false. */ -}}
+{{- return in (slice true "true") .Params.noindex -}}

@@ -26,13 +26,3 @@ enableGitInfo = true
 
 [security]
   allowContent = ['! ^text/html$']
-
-# /test shows every feature of the site, for checking changes. It's built
-# but kept out of the writings list, tag pages, RSS and the sitemap.
-[[cascade]]
-  [cascade.params]
-    noindex = true
-  [cascade.build]
-    list = "never"
-  [cascade.target]
-    path = "/posts/test"

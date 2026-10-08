@@ -1,5 +1,5 @@
 {{ define "main" }}
-{{- $posts := where site.RegularPages "Type" "posts" }}
+{{- $posts := partial "listed.html" (where site.RegularPages "Type" "posts") }}
 {{- $finished := slice }}
 {{- $drafts := slice }}
 {{- $notes := slice }}

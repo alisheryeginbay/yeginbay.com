@@ -1,0 +1,7 @@
+{{- /* The given pages without those marked #+noindex: true, which are built
+       but kept out of the writings list, tag pages, RSS and the sitemap. */ -}}
+{{- $pages := slice -}}
+{{- range . -}}
+  {{- if not (partial "noindex.html" .) }}{{ $pages = $pages | append . }}{{ end -}}
+{{- end -}}
+{{- return $pages -}}

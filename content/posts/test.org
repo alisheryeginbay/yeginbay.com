@@ -1,6 +1,7 @@
 #+title: Test
 #+date: 2026-10-08
 #+status: draft
+#+noindex: true
 #+author: Alisher Yeginbay, Claude Opus 5.5
 #+tags[]: technical
 
