@@ -21,6 +21,11 @@
   {{- with resources.Get "js/heading-copy.ts" | js.Build (dict "minify" hugo.IsProduction) | fingerprint }}
   <script defer src="{{ .Permalink }}" integrity="{{ .Data.Integrity }}"></script>
   {{- end }}
+  {{- if and .IsPage (partial "toc.html" .) }}
+  {{- with resources.Get "js/toc-current.ts" | js.Build (dict "minify" hugo.IsProduction) | fingerprint }}
+  <script defer src="{{ .Permalink }}" integrity="{{ .Data.Integrity }}"></script>
+  {{- end }}
+  {{- end }}
   {{ if .HasShortcode "attention-viz" }}
   {{- with resources.Get "js/attention-viz.ts" | js.Build (dict "minify" hugo.IsProduction) | fingerprint }}
   <script defer src="{{ .Permalink }}" integrity="{{ .Data.Integrity }}"></script>

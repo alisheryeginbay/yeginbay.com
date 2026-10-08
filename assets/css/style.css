@@ -219,6 +219,10 @@ main > .post > .post-content:first-child > :first-child { margin-top: 0; }
   overscroll-behavior: contain;
   scrollbar-width: thin;
   padding-block: calc(var(--fade) - 0.35rem) var(--fade);
+  /* Room for the bar beside the current entry, which the scrolling list
+     would otherwise clip, without moving the entries off the title's edge. */
+  padding-left: 0.6rem;
+  margin-left: -0.6rem;
   mask-image: linear-gradient(transparent, #000 var(--fade), #000 calc(100% - var(--fade)), transparent);
 }
 
@@ -227,11 +231,27 @@ main > .post > .post-content:first-child > :first-child { margin-top: 0; }
 .toc li { margin-top: 0.35rem; }
 
 .toc a {
+  display: block;
+  position: relative;
   color: var(--muted);
   text-decoration: none;
 }
 
-.toc a:hover { color: var(--fg); }
+.toc a:hover,
+.toc a[aria-current] { color: var(--fg); }
+
+/* The entry for the section being read (assets/js/toc-current.ts) has a bar
+   hanging to its left. */
+.toc a[aria-current]::before {
+  content: "";
+  position: absolute;
+  left: -0.6rem;
+  top: 0.2em;
+  bottom: 0.2em;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--link);
+}
 
 @media (min-width: 52rem) {
   .toc { display: flex; }
