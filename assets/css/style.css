@@ -148,10 +148,7 @@ main > .post > .post-content:first-child > :first-child { margin-top: 0; }
 /* Trim the space above capital letters so the name and the contents list
    share the same top edge. */
 .site-title,
-.toc-title,
-main > :first-child,
-main > .post > :first-child,
-main > .post > .post-content:first-child > :first-child { text-box: trim-start cap alphabetic; }
+.toc-title { text-box: trim-start cap alphabetic; }
 
 @media (min-width: 52rem) {
   /* Equal side columns keep the main text centered on the page; the
