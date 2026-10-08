@@ -10,7 +10,7 @@
   <h1>{{ .Title }}</h1>
   {{ with $data.updated }}{{ $date := time.AsTime . }}<time datetime="{{ $date.Format "2006-01-02" }}">Last updated {{ $date.Format "Jan 2, 2006" }}</time>{{ end }}
   <div class="post-content">
-    {{ partial "heading-ids.html" .Content | dict "html" | partial "heading-anchors.html" }}
+    {{ partial "heading-ids.html" (partial "unnest-links.html" .Content) | dict "html" | partial "heading-anchors.html" }}
 
     {{ with $reading }}
     {{ partial "heading.html" (dict "level" 2 "text" "Reading now") }}

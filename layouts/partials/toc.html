@@ -9,7 +9,7 @@ Takes the page and returns the list's HTML, or "" when the post has fewer
 than two headings.
 */ -}}
 {{- $headings := slice -}}
-{{- range findRESubmatch `(?s)<h([2-6]) id="([^"]+)">(.*?)</h[2-6]>` (partial "heading-ids.html" .Content) -}}
+{{- range findRESubmatch `(?s)<h([2-6]) id="([^"]+)">(.*?)</h[2-6]>` (partial "heading-ids.html" (partial "unnest-links.html" .Content)) -}}
   {{- $text := index . 3 | plainify | htmlUnescape | strings.TrimSpace -}}
   {{- if ne $text "Footnotes" -}}
     {{- $headings = $headings | append (dict "level" (int (index . 1)) "id" (index . 2) "text" $text) -}}

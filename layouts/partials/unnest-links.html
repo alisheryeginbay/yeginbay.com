@@ -1,0 +1,10 @@
+{{- /*
+Hugo's Org renderer turns a URL used as a link's text into a link of its
+own, nested inside the first: [[https://a][https://a]] becomes <a
+href="https://a"><a href="https://a">https://a</a></a>. Browsers split the
+nested link into an empty link and the real one, and each got a link icon.
+This keeps only the inner link.
+
+Takes .Content and returns it with nested links flattened.
+*/ -}}
+{{- return (replaceRE `<a [^>]*>(<a [^>]*>[^<]*</a>)</a>` "$1" .) -}}

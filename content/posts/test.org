@@ -6,7 +6,7 @@
 
 Every feature the site supports, on one page, to check after changing templates, styles or build scripts. This page is kept out of the writings list, tag pages, RSS and the sitemap, and asks search engines not to index it. The first paragraph opens with a drop cap, and each paragraph after it is indented.
 
-Like this one. It also has *bold*, /italic/, _underline_, +strikethrough+, =verbatim=, ~code~, and a long unbroken URL as link text: [[https://en.wikipedia.org/wiki/Mechanistic_interpretability][https://en.wikipedia.org/wiki/Mechanistic_interpretability]].
+Like this one. It also has *bold*, /italic/, _underline_, +strikethrough+, =verbatim=, ~code~, and a long unbroken URL as link text: [[https://en.wikipedia.org/wiki/Mechanistic_interpretability]].
 
 * Links
 

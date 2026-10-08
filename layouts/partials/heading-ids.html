@@ -5,7 +5,7 @@ link to a section survives headings being added or removed above it.
 Repeated titles get a numeric suffix (results, results-1, …). Headings with
 a CUSTOM_ID property already carry their own id and are left alone.
 
-Takes .Content and returns it with the ids replaced.
+Takes .Content (after unnest-links.html) and returns it with the ids replaced.
 */ -}}
 {{- $out := . -}}
 {{- $seen := dict -}}
