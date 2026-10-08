@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }} · {{ site.Title }}{{ end }}</title>
+  <meta name="author" content="{{ delimit (partial "authors.html" .) ", " }}">
   <meta name="description" content="{{ if .Description }}{{ .Description }}{{ else }}{{ site.Params.description }}{{ end }}">
   <link rel="preload" href="{{ "fonts/sourceserif4-400.woff2" | absURL }}" as="font" type="font/woff2" crossorigin>
   {{- if and .IsPage (partial "has-drop-cap.html" .) }}

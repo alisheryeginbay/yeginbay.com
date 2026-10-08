@@ -5,6 +5,9 @@ enableGitInfo = true
 
 [params]
   description = "Notes and writing."
+  # Posts without #+author: are by this author. data/authors.toml says
+  # where author names link to.
+  author = "Alisher Yeginbay"
   repo = "https://github.com/alisheryeginbay/yeginbay.com"
 
 [markup.org]

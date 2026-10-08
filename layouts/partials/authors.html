@@ -1,0 +1,8 @@
+{{- /*
+A page's authors, from #+author: (one name, or several separated by commas),
+or the site's author (params.author in hugo.toml) when it has none.
+
+Takes the page and returns a slice of names.
+*/ -}}
+{{- $authors := .Params.author | default site.Params.author -}}
+{{- return apply (split $authors ",") "strings.TrimSpace" "." -}}
