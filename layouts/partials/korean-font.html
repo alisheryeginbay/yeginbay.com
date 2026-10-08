@@ -1,0 +1,17 @@
+{{- /* Source Han Serif KR for Hangul. Built sites use the subsets that
+  scripts/subset-korean.ts writes before `hugo`; fingerprinting gives each
+  subset its own URL, since /fonts/* is cached as immutable. `hugo server`
+  uses the full Hangul fonts so new text never needs a rerun. */ -}}
+{{- $faces := slice }}
+{{- range $weight := slice 400 600 }}
+  {{- $font := cond hugo.IsServer
+    (resources.Get (printf "fonts/sourcehanserifkr-hangul-%d.woff2" $weight))
+    (resources.Get (printf "fonts/subset/sourcehanserifkr-%d.woff2" $weight)) }}
+  {{- with $font }}
+    {{- $font = . | resources.Copy (printf "fonts/sourcehanserifkr-%d.woff2" $weight) | fingerprint "sha256" }}
+    {{- $faces = $faces | append (printf `@font-face{font-family:"Source Han Serif KR";font-style:normal;font-weight:%d;font-display:swap;src:url(%q) format("woff2");unicode-range:U+1100-11FF,U+3130-318F,U+A960-A97F,U+AC00-D7FF}` $weight $font.RelPermalink) }}
+  {{- end }}
+{{- end }}
+{{- with $faces }}
+  <style>{{ delimit . "" | safeCSS }}</style>
+{{- end }}

@@ -9,6 +9,7 @@
   {{- if and .IsPage (partial "has-drop-cap.html" .) }}
   <link rel="preload" href="{{ "fonts/goudyinitialen.woff2" | absURL }}" as="font" type="font/woff2" crossorigin>
   {{- end }}
+  {{- partial "korean-font.html" . }}
   {{- with resources.Get "css/style.css" | minify | fingerprint }}
   <link rel="stylesheet" href="{{ .Permalink }}" integrity="{{ .Data.Integrity }}">
   {{- end }}

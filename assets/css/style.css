@@ -47,24 +47,6 @@
 }
 
 @font-face {
-  font-family: "Source Han Serif KR";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/fonts/sourcehanserifkr-400.woff2") format("woff2");
-  unicode-range: U+1100-11FF, U+3130-318F, U+A960-A97F, U+AC00-D7FF;
-}
-
-@font-face {
-  font-family: "Source Han Serif KR";
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url("/fonts/sourcehanserifkr-600.woff2") format("woff2");
-  unicode-range: U+1100-11FF, U+3130-318F, U+A960-A97F, U+AC00-D7FF;
-}
-
-@font-face {
   font-family: "Goudy Initialen";
   font-style: normal;
   font-weight: 400;
