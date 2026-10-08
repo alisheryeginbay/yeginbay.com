@@ -1,7 +1,7 @@
 // Helpers shared by the post-build scripts.
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { normalizeHost } from "../assets/js/favicons.ts";
+import { normalizeHost } from "../assets/js/link-icons.ts";
 
 export { normalizeHost };
 

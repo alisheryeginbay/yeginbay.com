@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "hugo && bun scripts/inject-favicons.ts && bun scripts/external-links.ts && bun scripts/render-math.ts",
+    "build": "hugo && bun scripts/inject-link-icons.ts && bun scripts/external-links.ts && bun scripts/render-math.ts",
     "books": "bun scripts/export-books.ts",
     "typecheck": "tsc"
   },
@@ -13,6 +13,7 @@
   },
   "devDependencies": {
     "@types/bun": "^1.4.2",
+    "simple-icons": "^16.34.0",
     "typescript": "^5"
   }
 }

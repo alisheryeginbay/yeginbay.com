@@ -18,15 +18,10 @@
   <script defer src="{{ .Permalink }}" integrity="{{ .Data.Integrity }}"></script>
   {{- end }}
   {{ end }}
-  {{- $faviconHosts := partialCached "favicon-hosts.html" . }}
-  {{- if hugo.IsServer }}
-  {{- if or .IsPage .IsHome }}
-  {{- with resources.Get "js/favicon-preview.ts" | js.Build }}
-  <script defer src="{{ .Permalink }}" data-hosts="{{ jsonify $faviconHosts }}"></script>
+  {{- if and hugo.IsServer (or .IsPage .IsHome) }}
+  {{- with resources.Get "js/link-icons-preview.ts" | js.Build }}
+  <script defer src="{{ .Permalink }}"></script>
   {{- end }}
-  {{- end }}
-  {{- else }}
-  {{- $_ := (resources.FromString "favicon-hosts.json" (jsonify $faviconHosts)).Publish }}
   {{- end }}
   {{ $hasMath := and (or .IsPage .IsHome) (findRE `\$[^$\s][^$]*\$` .RawContent 1) }}
   {{ if $hasMath }}

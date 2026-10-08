@@ -1,28 +1,21 @@
 #!/usr/bin/env bun
-// Post-processes Hugo's build output to add favicon icons next to external
-// links. The hosts that qualify are chosen by
-// layouts/partials/favicon-hosts.html, which Hugo publishes as
-// favicon-hosts.json. Must run after `hugo build`.
-import { readFile, writeFile, rm, glob } from "node:fs/promises";
+// Post-processes Hugo's build output to add site logos next to external
+// links. Which sites get which logo is decided by the rules in
+// assets/js/link-icons.ts. Must run after `hugo build`.
+import { readFile, writeFile, glob } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import * as cheerio from "cheerio";
-import { ICON_SELECTOR, LINK_SELECTOR, SKIP_INSIDE, faviconHtml, splitGluedTail } from "../assets/js/favicons.ts";
-import { PUBLIC_DIR, normalizeHost } from "./site.ts";
-
-const HOSTS_PATH = path.join(PUBLIC_DIR, "favicon-hosts.json");
+import { ICON_SELECTOR, LINK_SELECTOR, SKIP_INSIDE, iconFor, iconHtml, splitGluedTail } from "../assets/js/link-icons.ts";
+import { PUBLIC_DIR } from "./site.ts";
 
 async function main() {
-  if (!existsSync(HOSTS_PATH)) {
+  if (!existsSync(PUBLIC_DIR)) {
     console.error(
-      `inject-favicons: ${HOSTS_PATH} does not exist. Run "hugo build" first.`,
+      `inject-link-icons: ${PUBLIC_DIR} does not exist. Run "hugo build" first.`,
     );
     process.exit(1);
   }
-
-  const hosts = new Set<string>(JSON.parse(await readFile(HOSTS_PATH, "utf8")));
-  // Only this script needs the list, so it isn't deployed.
-  await rm(HOSTS_PATH);
 
   let filesChanged = 0;
   let iconsAdded = 0;
@@ -40,15 +33,15 @@ async function main() {
       if ($a.closest(SKIP_INSIDE).length) return;
       if ($a.find(ICON_SELECTOR).length) return;
 
-      const host = normalizeHost($a.attr("href")!);
-      if (!host || !hosts.has(host)) return;
+      const icon = iconFor($a.attr("href")!);
+      if (!icon) return;
 
       // Move the end of the link text into the icon's nowrap span.
       let tail = "";
       const last = $a.contents().last()[0];
       if (last?.type === "text") [last.data, tail] = splitGluedTail(last.data);
 
-      $a.append(faviconHtml(host, tail));
+      $a.append(iconHtml(icon, tail));
       changed = true;
       iconsAdded += 1;
     });
@@ -60,7 +53,7 @@ async function main() {
   }
 
   console.log(
-    `inject-favicons: added ${iconsAdded} icon(s) across ${filesChanged} file(s).`,
+    `inject-link-icons: added ${iconsAdded} icon(s) across ${filesChanged} file(s).`,
   );
 }
 

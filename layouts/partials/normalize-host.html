@@ -1,6 +1,0 @@
-{{- /* Lowercased hostname of a URL without a leading "www.", or "" if it has none. */ -}}
-{{- $host := "" -}}
-{{- with try (urls.Parse .) -}}
-  {{- with .Value -}}{{- $host = strings.TrimPrefix "www." (lower .Hostname) -}}{{- end -}}
-{{- end -}}
-{{- return $host -}}
