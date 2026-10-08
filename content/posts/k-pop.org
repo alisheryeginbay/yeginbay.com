@@ -1,0 +1,8 @@
+#+title: K-Pop
+#+date: 2026-10-08T05:13:14+05:00
+#+status: notes
+#+tags[]: k-pop
+
+* Reading list
+- https://mattlakeman.org/2020/09/06/a-deep-dive-into-k-pop/
+- https://en.wikipedia.org/wiki/K-pop
