@@ -21,13 +21,17 @@
   {{ $updated := .Lastmod.Format "2006-01-02" }}
   <p class="post-meta">
     {{ if ne $status "finished" }}<span class="post-status">{{ $status }}</span> · {{ end }}
+    {{- $names := partial "authors.html" . }}
+    {{- /* A post by the site's author alone needs no byline. */}}
+    {{- if ne (delimit $names ",") site.Params.author }}
     {{- $authors := slice }}
-    {{- range partial "authors.html" . }}
+    {{- range $names }}
       {{- $name := htmlEscape . }}
       {{- with index hugo.Data.authors . }}{{ $name = printf `<a href="%s">%s</a>` (relURL .) $name }}{{ end }}
       {{- $authors = $authors | append $name }}
     {{- end }}
     By <span class="post-author">{{ delimit $authors ", " | safeHTML }}</span> ·
+    {{- end }}
     {{ if ne $status "finished" }}Started {{ end }}<time datetime="{{ $started }}">{{ .Date.Format "Jan 2, 2006" }}</time>
     {{ if gt $updated $started }} · Updated <time datetime="{{ $updated }}">{{ .Lastmod.Format "Jan 2, 2006" }}</time>{{ end }}
     · <a href="{{ strings.TrimSuffix "/" .RelPermalink }}.org">source</a>
