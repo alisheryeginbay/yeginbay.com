@@ -5,6 +5,7 @@
   "scripts": {
     "build": "hugo && bun scripts/inject-link-icons.ts && bun scripts/external-links.ts && bun scripts/render-math.ts",
     "books": "bun scripts/export-books.ts",
+    "subset-korean": "bun scripts/subset-korean.ts",
     "typecheck": "tsc"
   },
   "dependencies": {
