@@ -1,0 +1,32 @@
+#+title: About
+#+date: 2026-10-09T01:57:16+05:00
+#+status: notes
+#+tags[]: personal
+#+noindex: true
+#+aliases[]: /me
+
+* Uses
+** Software
+*** Daily
+I spend most of my time writing and programming in [[https://en.wikipedia.org/wiki/Emacs][Emacs]][fn:2] (yes, I use [[https://orgmode.org/][Org Mode]]); vibe-coding in [[https://ghostty.org/][Ghostty]] (see [[#terminal][terminal]]) via [[https://claude.com/product/claude-code][Claude Code]]; reviewing my flashcards in [[https://apps.ankiweb.net/][Anki]]; browsing in [[https://helium.computer/][Helium]] (with [[http://github.com/gorhill/uBlock][uBlock Origin]]).
+
+I use [[https://1password.com/][1Password]] for managing my passwords.
+*** AI
+I primarily use [[https://claude.ai][Claude]] ([[https://platform.claude.com/docs/en/models/opus-5-5/overview][Opus 5.5]] as of 9 October 2026).
+*** Language learning
+Besides Anki, I use [[https://yomitan.wiki/][Yomitan]] for vocabulary; [[https://github.com/asbplayer/asbplayer][asbplayer]] for subtitles. I also use [[https://www.merriam-webster.com/thesaurus][the Merriam-Webster Thesaurus]].
+*** Terminal
+I use Ghostty with [[https://fishshell.com/][fish]] (shell), [[https://starship.rs/][Starship]] (shell prompt), [[https://github.com/eza-community/eza][eza]] (alternative to ~ls~), [[https://github.com/ajeetdsouza/zoxide][zoxide]] (smarter ~cd~), [[https://github.com/sharkdp/bat][bat]] (alternative to ~cat~).
+*** Miscellaneous
+I use [[https://www.raycast.com/][Raycast]] instead of Spotlight (and you should too!). For managing windows, I use their [[https://www.raycast.com/core-features/window-management][Window Management]] feature with Rectangle preset.[fn:1]
+
+** Hardware
+*** Laptop
+I use MacBook Pro (14-inch, 2021).
+** Other
+I read most of the books on [[https://www.amazon.com/dp/B0GV621HD7][Kindle Paperwhite Signature Edition]] 
+
+* Footnotes
+[fn:2] I also manage all of my tasks; read papers, books, documents; and many other things---all that in Emacs! :)
+
+[fn:1] Before that I used [[https://rectangleapp.com/][Rectangle]] itself, but eventually switched to Raycast's solution. 
