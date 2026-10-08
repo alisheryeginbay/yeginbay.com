@@ -1,3 +1,12 @@
+{{ define "sidebar" }}
+{{ with partial "toc.html" . }}
+<nav class="toc" aria-labelledby="toc-title">
+  <span class="toc-title" id="toc-title">Contents</span>
+  {{ . }}
+</nav>
+{{ end }}
+{{ end }}
+
 {{ define "main" }}
 {{- /* Publish the post's org source next to it: /slug -> /slug.org */ -}}
 {{ if eq .Section "posts" }}

@@ -42,10 +42,10 @@
   <div class="layout">
     <aside class="sidebar">
       <a class="site-title" href="{{ "/" | absURL }}">{{ site.Title }}</a>
-      <nav>
+      <nav class="site-nav">
         <a href="{{ "/writings" | absURL }}">Writings</a>
-        <a href="https://yeginbay.substack.com/">Substack</a>
       </nav>
+      {{ block "sidebar" . }}{{ end }}
     </aside>
     <main>
       {{ block "main" . }}{{ end }}

@@ -1,0 +1,38 @@
+{{- /*
+Builds a nested table of contents from the headings Hugo's Org renderer
+emits (<h2 id="headline-N"> and deeper). The shallowest heading level in the
+post is the top of the list, and a heading never nests more than one level
+below the one before it. The "Footnotes" heading is skipped, since the
+sidenotes partial removes it from the page.
+
+Takes the page and returns the list's HTML, or "" when the post has fewer
+than two headings.
+*/ -}}
+{{- $headings := slice -}}
+{{- range findRESubmatch `(?s)<h([2-6]) id="([^"]+)">(.*?)</h[2-6]>` .Content -}}
+  {{- $text := index . 3 | plainify | htmlUnescape | strings.TrimSpace -}}
+  {{- if ne $text "Footnotes" -}}
+    {{- $headings = $headings | append (dict "level" (int (index . 1)) "id" (index . 2) "text" $text) -}}
+  {{- end -}}
+{{- end -}}
+{{- $out := "" -}}
+{{- if ge (len $headings) 2 -}}
+  {{- $min := 6 -}}
+  {{- range $headings }}{{ $min = math.Min $min .level }}{{ end -}}
+  {{- $depth := 0 -}}
+  {{- range $headings -}}
+    {{- $level := int (math.Min (add (sub .level $min) 1) (add $depth 1)) -}}
+    {{- if gt $level $depth -}}
+      {{- $out = printf "%s<ol><li>" $out -}}
+    {{- else -}}
+      {{- if gt $depth $level -}}
+        {{- range seq (sub $depth $level) }}{{ $out = printf "%s</li></ol>" $out }}{{ end -}}
+      {{- end -}}
+      {{- $out = printf "%s</li><li>" $out -}}
+    {{- end -}}
+    {{- $depth = $level -}}
+    {{- $out = printf `%s<a href="#%s">%s</a>` $out .id (htmlEscape .text) -}}
+  {{- end -}}
+  {{- range seq $depth }}{{ $out = printf "%s</li></ol>" $out }}{{ end -}}
+{{- end -}}
+{{- return ($out | safeHTML) -}}
