@@ -103,14 +103,14 @@ ul { list-style-type: "– "; }
   padding-top: 2.5rem;
 }
 
-.sidebar {
+.site-header {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 1.25rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid var(--rule);
-  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem 1.5rem;
+  max-width: var(--max);
+  margin-bottom: 2.5rem;
 }
 
 .site-title {
@@ -122,9 +122,13 @@ ul { list-style-type: "– "; }
 
 .site-nav {
   display: flex;
+  gap: 1.25rem;
+}
+
+.sidebar {
+  display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.35rem;
 }
 
 .site-nav a {
@@ -141,9 +145,10 @@ main > :first-child,
 main > .post > :first-child,
 main > .post > .post-content:first-child > :first-child { margin-top: 0; }
 
-/* Trim the space above capital letters so the name and the first line of
-   the page share the same top edge. */
+/* Trim the space above capital letters so the name and the contents list
+   share the same top edge. */
 .site-title,
+.toc-title,
 main > :first-child,
 main > .post > :first-child,
 main > .post > .post-content:first-child > :first-child { text-box: trim-start cap alphabetic; }
@@ -160,20 +165,20 @@ main > .post > .post-content:first-child > :first-child { text-box: trim-start c
     align-items: start;
   }
 
-  .sidebar {
-    width: var(--sidebar);
-    justify-self: end;
-  }
+  .site-header,
+  main { grid-column: 2; }
 
-  /* The sidebar never runs past the bottom of the window; a long table of
+  /* The sidebar starts level with the header and stays in view as the page
+     scrolls. It never runs past the bottom of the window; a long table of
      contents scrolls inside it instead. */
   .sidebar {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    width: var(--sidebar);
+    justify-self: end;
     position: sticky;
     top: 2.5rem;
     max-height: calc(100vh - 5rem);
-    padding-bottom: 0;
-    border-bottom: none;
-    margin-bottom: 0;
   }
 
   /* With a table of contents the sidebar takes the rest of the window's
@@ -182,8 +187,8 @@ main > .post > .post-content:first-child > :first-child { text-box: trim-start c
 }
 
 /* The table of contents of a post, built by layouts/partials/toc.html. It
-   only shows beside the text; on narrow screens the sidebar sits above the
-   post and the list would push it down. */
+   only shows beside the text; on narrow screens the sidebar sits between
+   the header and the post and the list would push the post down. */
 .toc {
   display: none;
   flex: 1;
