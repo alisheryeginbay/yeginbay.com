@@ -39,7 +39,7 @@
 
     {{ with $toRead }}
     <details class="book-shelf">
-      <summary>{{ partial "heading.html" (dict "level" 2 "text" "Want to read" "margin" true "html" (printf `Want to read <span class="book-count">%d</span>` (len .))) }}</summary>
+      <summary>{{ partial "heading.html" (dict "level" 2 "text" "Want to read" "unlinked" true "html" (printf `Want to read <span class="book-count">%d</span>` (len .))) }}</summary>
       {{ partial "book-list.html" (dict "page" $ "books" .) }}
     </details>
     {{ end }}

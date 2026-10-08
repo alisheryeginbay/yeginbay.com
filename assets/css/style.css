@@ -240,14 +240,11 @@ main > .post > .post-content:first-child > :first-child { margin-top: 0; }
 :is(h2, h3, h4, h5, h6)[id] { scroll-margin-top: 2.5rem; }
 
 /* A heading is a link to itself (layouts/partials/heading-anchors.html) that
-   still reads as a heading. A § at the right edge of the text column, on the
-   heading's first line, is the hint; the heading keeps clear of it. It shows
-   while the heading is hovered and stays on the section you've jumped to. */
-:is(h2, h3, h4, h5, h6)[id] {
-  position: relative;
-  padding-right: 1em;
-}
-
+   still reads as a heading. A § hanging in the margin to its left, at the
+   heading's size, is the hint, and a button after the
+   heading text copies the link. Both show while the heading is hovered, and
+   the § also stays on the section you've jumped to. The § still fits within
+   the page's side padding on narrow screens. */
 :is(h2, h3, h4, h5, h6)[id] .heading-link {
   color: inherit;
   text-decoration: none;
@@ -255,21 +252,54 @@ main > .post > .post-content:first-child > :first-child { margin-top: 0; }
 }
 
 :is(h2, h3, h4, h5, h6)[id] .heading-anchor {
-  position: absolute;
-  right: 0;
+  display: inline-block;
+  width: 0.7em;
+  margin-left: -0.7em;
+  /* The § runs below the baseline; raising it centers it on the capitals. */
+  translate: 0 -0.125em;
   font-weight: 400;
   color: var(--muted);
   text-decoration: none;
+}
+
+:is(h2, h3, h4, h5, h6)[id] .heading-copy {
+  margin-left: 0.3em;
+  padding: 0.1em;
+  border: 0;
+  background: none;
+  font: inherit;
+  line-height: 1;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.heading-copy svg {
+  display: block;
+  width: 0.6em;
+  height: 0.6em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.heading-copy:not([data-copied]) .heading-copied-icon,
+.heading-copy[data-copied] .heading-copy-icon { display: none; }
+
+:is(h2, h3, h4, h5, h6)[id] :is(.heading-anchor, .heading-copy) {
   opacity: 0;
   transition: opacity 0.15s, color 0.15s;
 }
 
 /* Hovering a heading's link turns it, § and all, the link color. */
-:is(h2, h3, h4, h5, h6)[id] :is(.heading-link:hover, .heading-link:hover .heading-anchor, a.heading-anchor:hover) {
+:is(h2, h3, h4, h5, h6)[id] :is(.heading-link:hover, .heading-link:hover .heading-anchor, a.heading-anchor:hover, .heading-copy:hover, .heading-copy[data-copied]) {
   color: var(--link);
 }
 
-:is(h2, h3, h4, h5, h6)[id]:is(:hover, :target, :has(:focus-visible)) .heading-anchor { opacity: 1; }
+:is(h2, h3, h4, h5, h6)[id]:is(:hover, :target, :has(:focus-visible)) .heading-anchor,
+:is(h2, h3, h4, h5, h6)[id]:hover .heading-copy,
+:is(h2, h3, h4, h5, h6)[id] .heading-copy:is(:focus-visible, [data-copied]) { opacity: 1; }
 
 main { min-height: 60vh; padding-bottom: 3rem; }
 
@@ -389,10 +419,10 @@ main { min-height: 60vh; padding-bottom: 3rem; }
   display: inline;
 }
 
-/* The heading is inline, so its § is placed against the summary instead,
-   at the right edge of the column like the others. */
+/* The summary's disclosure triangle sits where a heading's § would hang, so
+   here the § hangs left of the triangle instead. */
 .book-shelf summary { position: relative; }
-.book-shelf summary h2 { position: static; }
+.book-shelf summary .heading-anchor { position: absolute; right: 100%; }
 
 .book-count { margin-left: 0.4rem; font-weight: 400; }
 

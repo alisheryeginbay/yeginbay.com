@@ -1,26 +1,28 @@
 {{- /*
-Makes each heading that has an id a link to itself, with a § the CSS shows
-at the right edge of the column as a hint. A heading that already holds a
-link or a sidenote can't go inside another link, so the § alone is its link
-instead, and so it is for one inside a <summary>, where a click opens the
-details. Org puts the heading text on its own line, so whitespace around it
-goes, or it would indent the text.
+Makes each heading that has an id a link to itself, with a § the CSS hangs
+in the margin to its left as a hint, and puts a button after the heading text
+that copies the link (assets/js/heading-copy.ts). A heading that already
+holds a link or a sidenote can't go inside another link, so the § alone is
+its link instead, and so it is for one inside a <summary>, where a click
+opens the details. Org puts the heading text on its own line, so whitespace
+around it goes, or it would indent the text.
 
-Takes a dict with "html", and optionally "margin" set to true to always use
-the § link. Returns the HTML with the links added.
+Takes a dict with "html", and optionally "unlinked" set to true to leave the
+heading text unlinked. Returns the HTML with the links and buttons added.
 */ -}}
+{{- $copy := `<button type="button" class="heading-copy" aria-label="Copy link to this section"><svg class="heading-copy-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><svg class="heading-copied-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></button>` -}}
 {{- $out := .html -}}
-{{- $whole := not .margin -}}
+{{- $unlinked := .unlinked -}}
 {{- range $m := findRESubmatch `(?s)<h([2-6]) id="([^"]+)">\s*(.*?)\s*</h[2-6]>` $out -}}
   {{- $level := index $m 1 -}}
   {{- $id := index $m 2 -}}
   {{- $text := index $m 3 -}}
-  {{- $new := "" -}}
-  {{- if and $whole (not (findRE `<(a|label|input)[\s>]` $text 1)) -}}
-    {{- $new = printf `<h%s id="%s"><a class="heading-link" href="#%s"><span class="heading-anchor" aria-hidden="true">§</span>%s</a></h%s>` $level $id $id $text $level -}}
+  {{- if or $unlinked (findRE `<(a|label|input)[\s>]` $text 1) -}}
+    {{- $text = printf `<a class="heading-anchor" href="#%s" aria-label="Link to this section">§</a>%s` $id $text -}}
   {{- else -}}
-    {{- $new = printf `<h%s id="%s"><a class="heading-anchor" href="#%s" aria-label="Link to this section">§</a>%s</h%s>` $level $id $id $text $level -}}
+    {{- $text = printf `<a class="heading-link" href="#%s"><span class="heading-anchor" aria-hidden="true">§</span>%s</a>` $id $text -}}
   {{- end -}}
+  {{- $new := printf `<h%s id="%s">%s%s</h%s>` $level $id $text $copy $level -}}
   {{- $out = replace $out (index $m 0) $new 1 -}}
 {{- end -}}
 {{- return ($out | safeHTML) -}}

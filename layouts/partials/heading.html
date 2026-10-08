@@ -1,9 +1,10 @@
 {{- /*
 A heading written in a template rather than in Org, with an id made from its
-text that links to itself, like the headings of a post.
+text, a link to itself and a button that copies the link, like the headings
+of a post.
 
 Takes a dict with "level" (2–6), "text", and optionally "html" to show in
-place of the text and "margin" (see heading-anchors.html).
+place of the text and "unlinked" (see heading-anchors.html).
 */ -}}
 {{- $html := printf `<h%d id="%s">%s</h%d>` .level (anchorize .text) (.html | default (htmlEscape .text)) .level -}}
-{{- return (partial "heading-anchors.html" (dict "html" $html "margin" .margin)) -}}
+{{- return (partial "heading-anchors.html" (dict "html" $html "unlinked" .unlinked)) -}}
