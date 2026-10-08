@@ -2,7 +2,8 @@
 // section being read, and keeps it in view when the list scrolls. A section is
 // being read once its heading reaches the spot a link to it scrolls to, so the
 // entry clicked is the one marked; at the bottom of the page, where the last
-// headings may never get that high, the last heading on screen is marked.
+// headings may never get that high, the last heading on screen is marked. A
+// page too short to scroll isn't at the bottom: nothing is read past yet.
 const list = document.querySelector<HTMLOListElement>(".toc > ol");
 
 if (list) {
@@ -14,7 +15,7 @@ if (list) {
 
   const update = () => {
     queued = false;
-    const atBottom = innerHeight + scrollY >= document.documentElement.scrollHeight - 1;
+    const atBottom = scrollY > 0 && innerHeight + scrollY >= document.documentElement.scrollHeight - 1;
     let next: HTMLAnchorElement | undefined;
     for (const { link, heading } of entries) {
       const top = heading.getBoundingClientRect().top;

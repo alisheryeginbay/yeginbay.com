@@ -180,6 +180,10 @@ main > .post > .post-content:first-child > :first-child { margin-top: 0; }
     max-width: none;
     display: grid;
     grid-template-columns: minmax(var(--sidebar), 1fr) minmax(0, var(--max)) minmax(0, 1fr);
+    /* The post's row takes up any height the sidebar needs beyond the
+       header and post, so on a short post the header row doesn't stretch
+       and push the post down. */
+    grid-template-rows: auto 1fr;
     column-gap: 3rem;
     align-items: start;
   }
