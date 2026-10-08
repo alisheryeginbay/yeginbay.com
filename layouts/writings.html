@@ -22,7 +22,7 @@
 {{- /* Work in progress, most recently touched first. */}}
 {{ range $group := slice (dict "title" "Drafts" "pages" $drafts) (dict "title" "Notes" "pages" $notes) }}
 {{ with .pages }}
-<h2>{{ $group.title }}</h2>
+{{ partial "heading.html" (dict "level" 2 "text" $group.title) }}
 <ul class="post-list">
   {{ range sort . "Lastmod" "desc" }}
   <li>

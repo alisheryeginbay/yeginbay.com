@@ -10,36 +10,36 @@
   <h1>{{ .Title }}</h1>
   {{ with $data.updated }}{{ $date := time.AsTime . }}<time datetime="{{ $date.Format "2006-01-02" }}">Last updated {{ $date.Format "Jan 2, 2006" }}</time>{{ end }}
   <div class="post-content">
-    {{ .Content }}
+    {{ partial "heading-ids.html" .Content | dict "html" | partial "heading-anchors.html" }}
 
     {{ with $reading }}
-    <h2>Reading now</h2>
+    {{ partial "heading.html" (dict "level" 2 "text" "Reading now") }}
     {{ partial "book-list.html" (dict "page" $ "books" .) }}
     {{ end }}
 
     {{ with $read }}
-    <h2>Read</h2>
+    {{ partial "heading.html" (dict "level" 2 "text" "Read") }}
     {{ $dated := where . "finished" "!=" nil }}
     {{ $years := slice }}
     {{ range $dated }}{{ $years = $years | append (substr .finished 0 4) }}{{ end }}
     {{ range $years | uniq }}
-    <h3>{{ . }}</h3>
+    {{ partial "heading.html" (dict "level" 3 "text" .) }}
     {{ partial "book-list.html" (dict "page" $ "books" (where $dated "finished" "like" (printf "^%s-" .))) }}
     {{ end }}
     {{ with where . "finished" nil }}
-    <h3>Undated</h3>
+    {{ partial "heading.html" (dict "level" 3 "text" "Undated") }}
     {{ partial "book-list.html" (dict "page" $ "books" .) }}
     {{ end }}
     {{ end }}
 
     {{ with $abandoned }}
-    <h2>Abandoned</h2>
+    {{ partial "heading.html" (dict "level" 2 "text" "Abandoned") }}
     {{ partial "book-list.html" (dict "page" $ "books" .) }}
     {{ end }}
 
     {{ with $toRead }}
     <details class="book-shelf">
-      <summary><h2>Want to read <span class="book-count">{{ len . }}</span></h2></summary>
+      <summary>{{ partial "heading.html" (dict "level" 2 "text" "Want to read" "margin" true "html" (printf `Want to read <span class="book-count">%d</span>` (len .))) }}</summary>
       {{ partial "book-list.html" (dict "page" $ "books" .) }}
     </details>
     {{ end }}

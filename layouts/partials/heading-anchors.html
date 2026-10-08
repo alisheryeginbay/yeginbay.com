@@ -1,0 +1,26 @@
+{{- /*
+Makes each heading that has an id a link to itself, with a § the CSS shows
+at the right edge of the column as a hint. A heading that already holds a
+link or a sidenote can't go inside another link, so the § alone is its link
+instead, and so it is for one inside a <summary>, where a click opens the
+details. Org puts the heading text on its own line, so whitespace around it
+goes, or it would indent the text.
+
+Takes a dict with "html", and optionally "margin" set to true to always use
+the § link. Returns the HTML with the links added.
+*/ -}}
+{{- $out := .html -}}
+{{- $whole := not .margin -}}
+{{- range $m := findRESubmatch `(?s)<h([2-6]) id="([^"]+)">\s*(.*?)\s*</h[2-6]>` $out -}}
+  {{- $level := index $m 1 -}}
+  {{- $id := index $m 2 -}}
+  {{- $text := index $m 3 -}}
+  {{- $new := "" -}}
+  {{- if and $whole (not (findRE `<(a|label|input)[\s>]` $text 1)) -}}
+    {{- $new = printf `<h%s id="%s"><a class="heading-link" href="#%s"><span class="heading-anchor" aria-hidden="true">§</span>%s</a></h%s>` $level $id $id $text $level -}}
+  {{- else -}}
+    {{- $new = printf `<h%s id="%s"><a class="heading-anchor" href="#%s" aria-label="Link to this section">§</a>%s</h%s>` $level $id $id $text $level -}}
+  {{- end -}}
+  {{- $out = replace $out (index $m 0) $new 1 -}}
+{{- end -}}
+{{- return ($out | safeHTML) -}}

@@ -1,0 +1,21 @@
+{{- /*
+Gives the headings Hugo's Org renderer emits readable ids: <h2
+id="headline-3">Experiment Setup</h2> becomes id="experiment-setup", so a
+link to a section survives headings being added or removed above it.
+Repeated titles get a numeric suffix (results, results-1, …). Headings with
+a CUSTOM_ID property already carry their own id and are left alone.
+
+Takes .Content and returns it with the ids replaced.
+*/ -}}
+{{- $out := . -}}
+{{- $seen := dict -}}
+{{- range $m := findRESubmatch `(?s)<h([2-6]) id="(headline-\d+)">(.*?)</h[2-6]>` . -}}
+  {{- $slug := index $m 3 | plainify | htmlUnescape | strings.TrimSpace | anchorize -}}
+  {{- with $slug -}}
+    {{- $n := index $seen $slug | default 0 -}}
+    {{- $seen = merge $seen (dict $slug (add $n 1)) -}}
+    {{- if $n }}{{ $slug = printf "%s-%d" $slug $n }}{{ end -}}
+    {{- $out = replace $out (printf `<h%s id="%s">` (index $m 1) (index $m 2)) (printf `<h%s id="%s">` (index $m 1) $slug) 1 -}}
+  {{- end -}}
+{{- end -}}
+{{- return ($out | safeHTML) -}}

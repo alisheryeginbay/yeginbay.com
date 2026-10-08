@@ -237,7 +237,39 @@ main > .post > .post-content:first-child > :first-child { margin-top: 0; }
   .toc { display: flex; }
 }
 
-.post-content :is(h2, h3, h4, h5, h6) { scroll-margin-top: 2.5rem; }
+:is(h2, h3, h4, h5, h6)[id] { scroll-margin-top: 2.5rem; }
+
+/* A heading is a link to itself (layouts/partials/heading-anchors.html) that
+   still reads as a heading. A § at the right edge of the text column, on the
+   heading's first line, is the hint; the heading keeps clear of it. It shows
+   while the heading is hovered and stays on the section you've jumped to. */
+:is(h2, h3, h4, h5, h6)[id] {
+  position: relative;
+  padding-right: 1em;
+}
+
+:is(h2, h3, h4, h5, h6)[id] .heading-link {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+:is(h2, h3, h4, h5, h6)[id] .heading-anchor {
+  position: absolute;
+  right: 0;
+  font-weight: 400;
+  color: var(--muted);
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+}
+
+/* Hovering a heading's link turns it, § and all, the link color. */
+:is(h2, h3, h4, h5, h6)[id] :is(.heading-link:hover, .heading-link:hover .heading-anchor, a.heading-anchor:hover) {
+  color: var(--link);
+}
+
+:is(h2, h3, h4, h5, h6)[id]:is(:hover, :target, :has(:focus-visible)) .heading-anchor { opacity: 1; }
 
 main { min-height: 60vh; padding-bottom: 3rem; }
 
@@ -356,6 +388,11 @@ main { min-height: 60vh; padding-bottom: 3rem; }
 .book-shelf summary h2 {
   display: inline;
 }
+
+/* The heading is inline, so its § is placed against the summary instead,
+   at the right edge of the column like the others. */
+.book-shelf summary { position: relative; }
+.book-shelf summary h2 { position: static; }
 
 .book-count { margin-left: 0.4rem; font-weight: 400; }
 
