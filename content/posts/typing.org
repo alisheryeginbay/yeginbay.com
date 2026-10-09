@@ -1,0 +1,20 @@
+#+title: Typing
+#+date: 2026-10-08T19:54:13+05:00
+#+status: notes
+#+tags[]:
+
+Typing is integral in my daily life: I write, program, journal, run terminal commands, etc. I've been typing since I was ~9 years old[fn:1].
+
+However, my typing experience has been driven by casual process of just typing everyday, for many hours. Without using any specific technique or awareness of how can I do better, I've so far built a 97 WPM typing speed[fn:2].
+
+So in this post I delve into the world of typing: keyboard layouts, what affects the typing speed (besides raw practice), ergonomics.
+
+* Open questions
+
+* Sources
+- https://colemak.com/
+
+* Footnotes
+[fn:2] Based on my 181 runs in Monkeytype English 15 sec. [[https://github.com/alisheryeginbay/monkeytype-scripts][Here]] you can find the script. 
+
+[fn:1] Maybe even earlier. I implied 9 years only based on my email history---I'm certain I've been using computers even earlier than that. 
