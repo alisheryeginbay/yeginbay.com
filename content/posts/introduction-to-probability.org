@@ -4,6 +4,8 @@
 #+tags[]: mathematics
 #+dropcap: false
 
+[[http://probabilitybook.net/][Textbook]].
+
 #+begin_src R :results output
 summary(cars)
 #+end_src
