@@ -2,6 +2,7 @@
 #+date: 2026-10-09T04:50:44+05:00
 #+status: notes
 #+tags[]: mathematics
+#+dropcap: false
 
 #+begin_src R :results output
 summary(cars)
