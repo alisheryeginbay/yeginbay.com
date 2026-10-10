@@ -526,6 +526,9 @@ main { min-height: 60vh; padding-bottom: 3rem; }
 
 .post-content a { color: var(--link); }
 
+/* A link with a site's logo takes the logo's colour on hover. */
+.post-content a[style*="--brand"]:is(:hover, :focus-visible) { color: var(--brand); }
+
 .link-icon-nowrap { white-space: nowrap; }
 
 .link-icon {

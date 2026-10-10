@@ -6,7 +6,7 @@ import { readFile, writeFile, glob } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import * as cheerio from "cheerio";
-import { ICON_SELECTOR, LINK_SELECTOR, SKIP_INSIDE, iconFor, iconHtml, splitGluedTail } from "../assets/js/link-icons.ts";
+import { ICON_SELECTOR, LINK_SELECTOR, SKIP_INSIDE, brandStyle, iconFor, iconHtml, splitGluedTail } from "../assets/js/link-icons.ts";
 import { PUBLIC_DIR } from "./site.ts";
 
 async function main() {
@@ -41,6 +41,7 @@ async function main() {
       const last = $a.contents().last()[0];
       if (last?.type === "text") [last.data, tail] = splitGluedTail(last.data);
 
+      $a.attr("style", brandStyle(icon));
       $a.append(iconHtml(icon, tail));
       changed = true;
       iconsAdded += 1;
