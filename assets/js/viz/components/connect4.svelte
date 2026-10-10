@@ -11,8 +11,9 @@
 -->
 <script lang="ts">
   import { onMount, untrack } from "svelte";
-  import { cubicIn } from "svelte/easing";
+  import { cubicInOut } from "svelte/easing";
   import { prefersReducedMotion } from "svelte/motion";
+  import { draw } from "svelte/transition";
   import { publish } from "../store.svelte.ts";
   import Button from "../ui/Button.svelte";
   import Controls from "../ui/Controls.svelte";
@@ -138,12 +139,61 @@
   let drawn = false;
   onMount(() => { drawn = true; });
 
-  function drop(node: SVGElement, { distance }: { distance: number }) {
-    if (!drawn || prefersReducedMotion.current) return { duration: 0 };
+  // A disc falling `distance` SVG units under gravity, then bouncing on
+  // whatever it lands on, each bounce leaving with a fraction of the speed it
+  // arrived with, until the bounces are too small to see. A cell is about
+  // 26mm across on a real board, so real gravity would be some 3,800 units/s²;
+  // this is far less, so a drop down the whole board takes about half a
+  // second and can be followed.
+  const GRAVITY = 480;
+  const RESTITUTION = 0.25;
+  const SETTLED = 0.15;
+
+  // How far above its resting place the disc is at each moment, in seconds,
+  // and how long until it comes to rest.
+  function fall(distance: number): { duration: number; height: (time: number) => number } {
+    const landing = Math.sqrt((2 * distance) / GRAVITY);
+    const bounces: { start: number; speed: number }[] = [];
+    let start = landing;
+    for (let speed = GRAVITY * landing * RESTITUTION; speed ** 2 / (2 * GRAVITY) > SETTLED; speed *= RESTITUTION) {
+      bounces.push({ start, speed });
+      start += (2 * speed) / GRAVITY;
+    }
     return {
-      duration: 140 + distance * 6,
-      easing: cubicIn,
-      tick: (t: number) => node.setAttribute("transform", `translate(0 ${-(1 - t) * distance})`),
+      duration: start,
+      height(time) {
+        if (time < landing) return distance - (GRAVITY * time ** 2) / 2;
+        const bounce = bounces.findLast((b) => time >= b.start);
+        if (!bounce) return 0;
+        const since = time - bounce.start;
+        return Math.max(0, bounce.speed * since - (GRAVITY * since ** 2) / 2);
+      },
+    };
+  }
+
+  const animated = () => drawn && !prefersReducedMotion.current;
+
+  // Once a game is won, the winning disc comes to rest before the four are
+  // marked: the line is drawn across them and the other discs fade. An undone
+  // win is unmarked straight away.
+  let marked = $state(false);
+  $effect(() => {
+    if (!game.winner) {
+      marked = false;
+      return;
+    }
+    const [row] = game.cells[game.cells.length - 1];
+    const settle = animated() ? fall(y(row) + S / 2).duration * 1000 : 0;
+    const timer = setTimeout(() => (marked = true), settle);
+    return () => clearTimeout(timer);
+  });
+
+  function drop(node: SVGElement, { distance }: { distance: number }) {
+    if (!animated()) return { duration: 0 };
+    const { duration, height } = fall(distance);
+    return {
+      duration: duration * 1000,
+      tick: (t: number) => node.setAttribute("transform", `translate(0 ${-height(t * duration)})`),
     };
   }
 
@@ -191,38 +241,65 @@
             {/each}
           {/each}
         </mask>
+
+        <!-- Each player's disc: lit from the upper left, darker toward the edge. -->
+        {#each [[FIRST, "var(--fg)"], [SECOND, "var(--link)"]] as [player, base] (player)}
+          <radialGradient id="{id}-disc{player}" cx="0.38" cy="0.32" r="0.75">
+            <stop offset="0" style:stop-color="color-mix(in oklab, {base} 90%, white)" />
+            <stop offset="0.7" style:stop-color={base} />
+            <stop offset="1" style:stop-color="color-mix(in oklab, {base} 92%, black)" />
+          </radialGradient>
+        {/each}
+
+        <!-- The board's lip shades the top of each hole. -->
+        <linearGradient id="{id}-lip" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="black" stop-opacity="0.07" />
+          <stop offset="0.4" stop-color="black" stop-opacity="0" />
+        </linearGradient>
       </defs>
 
+      <!-- A disc, with a hint of the raised ring of a real one. -->
+      {#snippet disc(cx: number, cy: number, player: number)}
+        <circle {cx} {cy} r={R} fill="url(#{id}-disc{player})" />
+        <circle class="ring" {cx} {cy} r={R * 0.68} />
+      {/snippet}
+
       {#if aiming !== undefined && canPlay && legal.includes(aiming)}
-        <circle cx={x(aiming)} cy={-S / 2} r={R} fill={color(game.turn)} opacity="0.35" />
+        <g opacity="0.35">{@render disc(x(aiming), -S / 2, game.turn)}</g>
       {/if}
 
       {#each game.cells as [row, col], i (i)}
         <g in:drop={{ distance: y(row) + S / 2 }}>
-          <circle
-            cx={x(col)}
-            cy={y(row)}
-            r={R}
-            fill={color(i % 2 === 0 ? FIRST : SECOND)}
-            class:faded={game.winner && !game.four.some(([r, c]) => r === row && c === col)}
-            class:pointed={pointing === i}
-          />
-          {#if i === game.cells.length - 1 && !game.winner}
-            <circle cx={x(col)} cy={y(row)} r={0.07 * S} fill="var(--bg)" />
-          {/if}
+          <g class="disc" class:faded={marked && !game.four.some(([r, c]) => r === row && c === col)}>
+            {@render disc(x(col), y(row), i % 2 === 0 ? FIRST : SECOND)}
+            {#if pointing === i}
+              <circle class="pointed" cx={x(col)} cy={y(row)} r={R} />
+            {/if}
+            {#if i === game.cells.length - 1 && !game.winner}
+              <circle cx={x(col)} cy={y(row)} r={0.07 * S} fill="var(--bg)" />
+            {/if}
+          </g>
         </g>
       {/each}
 
       <rect class="frame" x="0" y="0" width={COLS * S} height={ROWS * S} rx="2" mask="url(#{id}-holes)" />
       {#each { length: ROWS }, row}
         {#each { length: COLS }, col}
+          <circle class="lip" cx={x(col)} cy={y(row)} r={R - 0.5} stroke="url(#{id}-lip)" />
           <circle class="rim" cx={x(col)} cy={y(row)} r={R} />
         {/each}
       {/each}
 
-      {#if game.winner}
+      {#if marked && game.winner}
         {@const [a, b] = [game.four[0], game.four[game.four.length - 1]]}
-        <line class="four" x1={x(a[1])} y1={y(a[0])} x2={x(b[1])} y2={y(b[0])} />
+        <line
+          class="four"
+          x1={x(a[1])}
+          y1={y(a[0])}
+          x2={x(b[1])}
+          y2={y(b[0])}
+          in:draw={{ duration: animated() ? 600 : 0, easing: cubicInOut }}
+        />
       {/if}
     </svg>
 
@@ -289,9 +366,30 @@
     stroke-width: 0.5;
   }
 
-  .faded { opacity: 0.3; }
+  /* Fading only on the way out: an undone win brings the discs straight back. */
+  .faded {
+    opacity: 0.3;
+    transition: opacity 600ms ease-in-out;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .faded { transition: none; }
+  }
+
+  .ring {
+    fill: none;
+    stroke: black;
+    stroke-opacity: 0.1;
+    stroke-width: 0.3;
+  }
+
+  .lip {
+    fill: none;
+    stroke-width: 0.8;
+  }
 
   .pointed {
+    fill: none;
     stroke: var(--highlight);
     stroke-width: 1.4;
   }
