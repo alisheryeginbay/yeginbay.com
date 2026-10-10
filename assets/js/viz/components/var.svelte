@@ -8,7 +8,7 @@
     labels   for a toggle: what to say when on and when off, "on,off"
 -->
 <script lang="ts">
-  import { pointing, values, type Value } from "../store.svelte.ts";
+  import { pointing, read, write, type Value } from "../store.svelte.ts";
   import Choice from "../ui/Choice.svelte";
   import Scrubber from "../ui/Scrubber.svelte";
   import { format as formatValue } from "../ui/format.ts";
@@ -27,8 +27,8 @@
   let { name, kind, min = 0, max = 1, step = 1, format, options = [], labels = "on,off" }: Props = $props();
 
   const value = {
-    get current() { return values.get(name); },
-    set current(v: Value | undefined) { if (v !== undefined) values.set(name, v); },
+    get current() { return read(name) as Value | undefined; },
+    set current(v: Value | undefined) { if (v !== undefined) write(name, v); },
   };
 
   const optionList = $derived(

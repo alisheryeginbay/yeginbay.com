@@ -10,6 +10,7 @@
 <style>
   p {
     margin: 0.5rem 0 0;
+    text-indent: 0;
     color: var(--muted);
     font-size: 0.85rem;
   }

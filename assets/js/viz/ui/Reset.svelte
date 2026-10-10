@@ -3,11 +3,11 @@
 <script lang="ts">
   import { fade } from "svelte/transition";
   import { prefersReducedMotion } from "svelte/motion";
-  import { isDefault, reset } from "../store.svelte.ts";
+  import { isChangeable, isDefault, reset } from "../store.svelte.ts";
 
   let { names }: { names: string[] } = $props();
 
-  const changed = $derived(names.filter((n) => !isDefault(n)));
+  const changed = $derived(names.filter((n) => isChangeable(n) && !isDefault(n)));
 </script>
 
 {#if changed.length}

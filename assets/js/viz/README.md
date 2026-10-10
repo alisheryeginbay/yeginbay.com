@@ -8,7 +8,8 @@ the prose and figures talk to each other.
 - `components/<name>.svelte`: one per figure or prose control. `<name>` is
   what a post writes in `is="<name>"`.
 - `ui/`: the parts components are built from (`Controls`, `Select`,
-  `Status`, `Heatmap`, `Scrubber`, `Choice`, colour scales, number formats).
+  `Button`, `Status`, `Heatmap`, `Scrubber`, `Choice`, colour scales, number
+  formats).
 - `store.svelte.ts`: the page's shared values, and `publish` for values a
   figure offers to the prose.
 - `data.svelte.ts`: `fetched(() => src)` loads JSON once per page, however

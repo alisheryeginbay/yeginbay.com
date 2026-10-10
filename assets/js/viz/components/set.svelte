@@ -6,13 +6,13 @@
     to    the values to set, by name
 -->
 <script lang="ts">
-  import { assign, pointing, values, type Value } from "../store.svelte.ts";
+  import { assign, pointing, read, type Value } from "../store.svelte.ts";
 
   let { html, to }: { html: string; to: Record<string, Value> } = $props();
 
   const names = $derived(Object.keys(to));
   // Whether the values are already what these words set them to.
-  const active = $derived(names.every((n) => String(values.get(n)) === String(to[n])));
+  const active = $derived(names.every((n) => String(read(n)) === String(to[n])));
 
   const point = () => (pointing.names = names);
   const unpoint = () => (pointing.names = []);

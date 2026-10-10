@@ -6,7 +6,7 @@
 // post with many figures doesn't do all its work up front.
 import { mount as mountComponent, type Component } from "svelte";
 import Reset from "./ui/Reset.svelte";
-import { assign, declare, isDefault, pointing, read, values, type Value } from "./store.svelte.ts";
+import { assign, declare, isChangeable, isDefault, pointing, read, use, write } from "./store.svelte.ts";
 
 type Params = Record<string, unknown>;
 
@@ -37,7 +37,7 @@ function propsFor(params: Params): Params {
       Object.defineProperty(props, k, {
         enumerable: true,
         get: () => read(name),
-        set: (x: Value) => values.set(name, x),
+        set: (x: unknown) => write(name, x),
       });
     } else {
       props[k] = v;
@@ -49,11 +49,12 @@ function propsFor(params: Params): Params {
 export default function mount(group: Group) {
   const instances = group.scripts.flatMap((script) => script.instances.map((i) => ({ script, ...i })));
 
-  // Every name the reader can change on this page.
+  // Every shared name the page refers to. Ones that figures publish are left
+  // out of the address and the reset button (see isChangeable).
   const names = new Set<string>();
   for (const { script, params } of instances) {
     if (script.id === "var") {
-      declare(params.name as string, params.value as Value);
+      declare(params.name as string, params.value as string | number | boolean);
       names.add(params.name as string);
     }
     if (script.id === "set") for (const n of Object.keys(params.to as Params)) names.add(n);
@@ -62,6 +63,8 @@ export default function mount(group: Group) {
       if (n) names.add(n);
     }
   }
+
+  for (const n of names) use(n);
 
   const query = new URLSearchParams(location.search);
   for (const n of names) {
@@ -118,7 +121,8 @@ export default function mount(group: Group) {
     $effect(() => {
       const query = new URLSearchParams(location.search);
       for (const n of names) {
-        const v = values.get(n);
+        if (!isChangeable(n)) continue;
+        const v = read(n);
         if (v === undefined || isDefault(n)) query.delete(n);
         else query.set(n, String(v));
       }

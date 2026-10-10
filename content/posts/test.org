@@ -150,6 +150,12 @@ The figure is showing {{< var name="t_head" value="L0H0" options="$t_qk_heads" >
 
 A number to drag: {{< var name="t_n" value=3 min=1 max=12 >}} is {{< show "t_n" >}}. A choice that cycles: {{< var name="t_fruit" value="apple" options="apple,pear,plum" >}}, now {{< show "t_fruit" >}}. A toggle: {{< var name="t_on" value=true labels="on,off" >}}.
 
+* Connect 4
+
+A board that publishes its game: after {{< show "t_c4.moves" >}} moves it reads {{< show "t_c4.tokens" >}}. Try {{< set t_c4_moves="3344556" >}}a quick win{{< /set >}}.
+
+{{< viz is="connect4" moves="$t_c4_moves" opponent="none" name="t_c4" >}}
+
 * Footnotes
 
 [fn:1] A numbered note. It's long enough to wrap onto several lines in the margin, to check line height and spacing against the text beside it.
