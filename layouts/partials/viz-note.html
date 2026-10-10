@@ -1,0 +1,6 @@
+{{- /* Notes shared value names a page's components use, for the checks in
+     viz-check.html: what `var`s declare, what figures bind to and publish,
+     what `set`s change and what `show`s and `var`s read. Takes the page, the
+     kind of use and the names. Notes are filed under the content's hash, so
+     ones from an earlier version of the page are never read. */ -}}
+{{- .page.Store.Add (printf "viz-%s-%s" (md5 .page.RawContent) .kind) .names -}}

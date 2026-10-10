@@ -8,4 +8,8 @@ renderMathInElement(document.body, {
     { left: "$$", right: "$$", display: true },
     { left: "$", right: "$", display: false },
   ],
+  // Interactive figures and the prose bound to them may already be drawn,
+  // and auto-render would remove the empty text nodes Svelte keeps its place
+  // with.
+  ignoredClasses: ["viz", "viz-inline", "viz-overlay"],
 });

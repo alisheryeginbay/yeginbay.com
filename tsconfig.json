@@ -10,5 +10,6 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["scripts/**/*.ts", "assets/js/**/*.ts"]
+  "include": ["scripts/**/*.ts", "assets/js/**/*.ts", "assets/js/**/*.svelte"],
+  "exclude": ["assets/js/viz-build"]
 }

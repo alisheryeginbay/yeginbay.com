@@ -4,6 +4,8 @@
 .DS_Store
 /old-content/
 /node_modules/
+# Compiled by scripts/compile-svelte.ts
+/assets/js/viz-build/
 
 # Emacs backup/autosave files
 *~

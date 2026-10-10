@@ -1,0 +1,26 @@
+{{- /* Adds a component to the page's js.Batch group, to be drawn into the
+     element with id "viz-<id>" by assets/js/viz/mount.svelte.ts. Takes the
+     page, the component's name (`is`), the id, its props and the calling
+     shortcode's position, for errors. Components are compiled by
+     scripts/compile-svelte.ts. */ -}}
+{{- $component := resources.Get (printf "js/viz-build/components/%s.svelte.js" .is) -}}
+{{- if not $component }}
+  {{- errorf "viz: no component %q at %s (or run `bun scripts/compile-svelte.ts`)" .is .position }}
+{{- end -}}
+{{- $ := . -}}
+{{- with js.Batch "js/viz" }}
+  {{- with .Config }}
+    {{- .SetOptions (dict "minify" hugo.IsProduction) }}
+  {{- end }}
+  {{- with .Group (partial "viz-group.html" $.page) }}
+    {{- /* The runner hands the page's components to mount.svelte.ts. Mount is
+         added as a script, not as the runner itself, because js.Batch
+         doesn't resolve a runner's relative imports. */}}
+    {{- with .Runner "run" }}
+      {{- .SetOptions (dict "resource" (resources.FromString "js/viz-run.js" "export default (group) => group.scripts.find((s) => s.id === \"mount\").binding(group);")) }}
+    {{- end }}
+    {{- with .Script "mount" }}{{ .SetOptions (dict "resource" (resources.Get "js/viz-build/mount.svelte.js") "export" "default") }}{{ end }}
+    {{- with .Script $.is }}{{ .SetOptions (dict "resource" $component "export" "default") }}{{ end }}
+    {{- with .Instance $.is $.id }}{{ .SetOptions (dict "params" $.props) }}{{ end }}
+  {{- end }}
+{{- end -}}

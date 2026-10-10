@@ -134,11 +134,21 @@ An image without a caption, as raw HTML:
 
 With a field selector:
 
-{{< attention-viz src="/data/transformer-circuits/attn_data.json" fields="Raw:qk_raw,Normalized:qk_norm" row-label="query" col-label="key" >}}
+{{< viz is="attention" src="/data/transformer-circuits/attn_data.json" fields="Raw:qk_raw,Normalized:qk_norm" rows="query" cols="key" >}}
 
 With a single field:
 
-{{< attention-viz src="/data/transformer-circuits/attn_data.json" field="ov" row-label="input" col-label="output" >}}
+{{< viz is="attention" src="/data/transformer-circuits/attn_data.json" fields="ov" rows="input" cols="output" >}}
+
+* Values shared with the prose
+
+Words can point a figure at something: compare {{< set t_head="L10H2" t_field="qk_norm" >}}L10H2, normalized{{< /set >}} with {{< set t_head="L10H6" t_field="qk_raw" >}}L10H6, raw{{< /set >}}. Pointing at either outlines the figure it changes.
+
+{{< viz is="attention" src="/data/transformer-circuits/attn_data.json" fields="Raw:qk_raw,Normalized:qk_norm" rows="query" cols="key" head="$t_head" field="$t_field" name="t_qk" >}}
+
+The figure is showing {{< var name="t_head" value="L0H0" options="$t_qk_heads" >}}, where "France" attends to "Paris" with a score of {{< show "t_qk.France.Paris" ".2f" >}}.
+
+A number to drag: {{< var name="t_n" value=3 min=1 max=12 >}} is {{< show "t_n" >}}. A choice that cycles: {{< var name="t_fruit" value="apple" options="apple,pear,plum" >}}, now {{< show "t_fruit" >}}. A toggle: {{< var name="t_on" value=true labels="on,off" >}}.
 
 * Footnotes
 

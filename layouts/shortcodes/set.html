@@ -1,0 +1,15 @@
+{{- /* Words in the prose that set shared values when clicked, for pointing
+     a figure at something the text talks about:
+
+       {{< set qk_head="L10H2" >}}L10H2{{< /set >}}
+
+     Every parameter is a value to set, by name. */ -}}
+{{- if not .Params }}{{ errorf "set: needs a value to set at %s" .Position }}{{ end -}}
+{{- $html := .Inner | .Page.RenderString (dict "display" "inline") | strings.TrimSpace -}}
+{{- $to := dict -}}
+{{- $names := slice -}}
+{{- range $k, $v := .Params }}{{ $to = merge $to (dict $k $v) }}{{ $names = $names | append $k }}{{ end -}}
+{{- partial "viz-note.html" (dict "page" .Page "kind" "set" "names" $names) -}}
+{{- $id := string .Ordinal -}}
+{{- partial "viz-instance.html" (dict "page" .Page "is" "set" "id" $id "props" (dict "html" $html "to" $to) "position" .Position) -}}
+<span class="viz-inline" id="viz-{{ $id }}">{{ $html }}</span>

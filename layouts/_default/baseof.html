@@ -26,11 +26,28 @@
   <script defer src="{{ .Permalink }}" integrity="{{ .Data.Integrity }}"></script>
   {{- end }}
   {{- end }}
-  {{ if .HasShortcode "attention-viz" }}
-  {{- with resources.Get "js/attention-viz.ts" | js.Build (dict "minify" hugo.IsProduction) | fingerprint }}
-  <script defer src="{{ .Permalink }}" integrity="{{ .Data.Integrity }}"></script>
+  {{- /* Interactive figures and the prose bound to them, from the viz, var,
+       set and show shortcodes. The batch is built once every page has added
+       its components to it. */}}
+  {{- if or (.HasShortcode "viz") (.HasShortcode "var") (.HasShortcode "set") (.HasShortcode "show") }}
+  {{- $noop := .Content }}
+  {{- partial "viz-check.html" . }}
+  {{- with resources.Get "js/viz-build/viz.css" | minify | fingerprint }}
+  <link rel="stylesheet" href="{{ .Permalink }}" integrity="{{ .Data.Integrity }}">
   {{- end }}
-  {{ end }}
+  {{- $group := partial "viz-group.html" . }}
+  {{- with (templates.Defer (dict "key" $group "data" (dict "group" $group))) }}
+  {{- with (js.Batch "js/viz").Build }}
+  {{- range index .Groups $.group }}
+  {{- if eq .MediaType.SubType "css" }}
+  <link rel="stylesheet" href="{{ .RelPermalink }}">
+  {{- else }}
+  <script type="module" src="{{ .RelPermalink }}"></script>
+  {{- end }}
+  {{- end }}
+  {{- end }}
+  {{- end }}
+  {{- end }}
   {{- if and hugo.IsServer (or .IsPage .IsHome) }}
   {{- with resources.Get "js/link-icons-preview.ts" | js.Build }}
   <script defer src="{{ .Permalink }}"></script>

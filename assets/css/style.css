@@ -86,6 +86,9 @@
   --code-bg: #f4f3ef;
   --code-keyword: #92406F;
   --code-literal: #4d6b45;
+  /* The ends of colour scales in figures: above and below zero. */
+  --viz-pos: #d74545;
+  --viz-neg: #3b6fd6;
   --max: 40rem;
   --sidebar: 12rem;
   --sidenote: 14rem;
@@ -618,69 +621,26 @@ input.margin-toggle { display: none; }
   margin-top: 0.5rem;
 }
 
-.attn-viz {
+/* Interactive figures, from layouts/shortcodes/viz.html. Their insides are
+   styled within the components in assets/js/viz/. */
+.viz {
   margin: 2rem 0;
-  max-width: 100%;
+  border-radius: 6px;
+  outline: 2px solid transparent;
+  outline-offset: 0.5rem;
+  transition: outline-color 150ms;
 }
 
-.attn-viz-controls {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
+/* While the reader points at words in the prose that change this figure. */
+.viz.viz-linked { outline-color: color-mix(in srgb, var(--highlight) 70%, transparent); }
+
+@media (prefers-reduced-motion: reduce) {
+  .viz { transition: none; }
 }
 
-.attn-viz-controls select {
-  font: inherit;
-  font-size: 0.85rem;
-  background: var(--bg);
-  color: var(--fg);
-  border: 1px solid var(--rule);
-  border-radius: 4px;
-  padding: 0.2rem 0.4rem;
-}
-
-.attn-viz-grid {
-  overflow-x: auto;
-}
-
-.attn-viz-table {
-  border-collapse: collapse;
-  font-size: 0.7rem;
-}
-
-.attn-viz-table th,
-.attn-viz-table td {
-  padding: 0;
-  text-align: center;
-}
-
-.attn-viz-table thead th {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  color: var(--muted);
-  font-weight: 400;
-  padding-bottom: 0.25rem;
-  max-height: 5rem;
-}
-
-.attn-viz-table tbody th {
-  color: var(--muted);
-  font-weight: 400;
-  text-align: right;
-  padding-right: 0.4rem;
-  white-space: nowrap;
-}
-
-.attn-viz-table td {
-  width: 1.4rem;
-  height: 1.4rem;
-  border: 1px solid var(--bg);
-}
-
-.attn-viz-caption {
-  margin-top: 0.5rem;
-  color: var(--muted);
-  font-size: 0.85rem;
+/* Reaches into the margin on the right, where sidenotes go. */
+@media (min-width: 77rem) {
+  .viz-wide { margin-right: calc(-1 * (var(--sidenote) + 3rem)); }
 }
 
 .post-meta {

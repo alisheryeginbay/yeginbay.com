@@ -1,0 +1,43 @@
+{{- /* A shared value the reader controls, inline in the prose. What it
+     looks like depends on its parameters:
+
+       {{< var name="n" value=3 min=1 max=10 step=1 format=".0f" >}}  a number, dragged sideways
+       {{< var name="head" value="L10H2" options="L10H2,L10H6" >}}    a choice; or options="$qk_heads",
+                                                                         a list a figure publishes
+       {{< var name="norm" value=true labels="normalized,raw" >}}      a toggle
+
+     Readers without JavaScript see the starting value. */ -}}
+{{- $name := .Get "name" -}}
+{{- if not $name }}{{ errorf "var: needs a name at %s" .Position }}{{ end -}}
+{{- $value := .Get "value" -}}
+{{- $text := string $value -}}
+{{- $kind := "choice" -}}
+{{- if isset .Params "labels" }}
+  {{- $kind = "toggle" }}
+  {{- $value = eq (string $value) "true" }}
+  {{- $labels := split (.Get "labels") "," }}
+  {{- $text = trim (index $labels (cond $value 0 1)) " " }}
+{{- else if or (isset .Params "min") (isset .Params "max") }}
+  {{- $kind = "number" }}
+  {{- $value = float $value }}
+  {{- $text = string $value }}
+  {{- with .Get "format" }}{{ with findRESubmatch `^\.(\d+)f$` . }}
+    {{- $text = printf (printf "%%.%sf" (index (index . 0) 1)) $value }}
+  {{- end }}{{ end }}
+{{- else if not (isset .Params "options") }}
+  {{- errorf "var: %q needs options, min and max, or labels at %s" $name .Position }}
+{{- end -}}
+
+{{- $props := dict -}}
+{{- range $k, $v := .Params }}{{ $props = merge $props (dict $k $v) }}{{ end -}}
+{{- $props = merge $props (dict "kind" $kind "value" $value) -}}
+
+{{- partial "viz-note.html" (dict "page" .Page "kind" "declared" "names" (slice $name)) }}
+{{- with .Get "options" }}{{ if hasPrefix . "$" }}
+  {{- partial "viz-note.html" (dict "page" $.Page "kind" "read" "names" (slice (index (split (strings.TrimPrefix "$" .) ".") 0))) }}
+{{- end }}{{ end -}}
+{{- .Page.Store.SetInMap (printf "viz-%s-text" (md5 .Page.RawContent)) $name $text -}}
+
+{{- $id := string .Ordinal -}}
+{{- partial "viz-instance.html" (dict "page" .Page "is" "var" "id" $id "props" $props "position" .Position) -}}
+<span class="viz-inline" id="viz-{{ $id }}">{{ $text }}</span>

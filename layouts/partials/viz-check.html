@@ -1,0 +1,27 @@
+{{- /* Fails the build when the prose refers to a shared value nothing on the
+     page provides, which is usually a typo. Call after the content has
+     rendered. See viz-note.html. */ -}}
+{{- $key := md5 .RawContent -}}
+{{- $notes := dict -}}
+{{- range slice "declared" "bound" "published" "set" "read" }}
+  {{- $notes = merge $notes (dict . ($.Store.Get (printf "viz-%s-%s" $key .) | default slice)) }}
+{{- end -}}
+{{- $changeable := union $notes.declared $notes.bound -}}
+
+{{- range $notes.set }}
+  {{- if not (in $changeable .) }}
+    {{- errorf "viz: %s sets %q, but no var declares it and no figure is bound to it" $.File.Path . }}
+  {{- end }}
+{{- end -}}
+
+{{- range $notes.read }}
+  {{- $name := . }}
+  {{- $found := in (union $changeable $notes.set) $name }}
+  {{- /* A figure publishing `qk` also publishes names like `qk_heads`. */}}
+  {{- range $notes.published }}
+    {{- if or (eq $name .) (hasPrefix $name (printf "%s_" .)) }}{{ $found = true }}{{ end }}
+  {{- end }}
+  {{- if not $found }}
+    {{- errorf "viz: %s shows %q, but nothing on the page declares or publishes it" $.File.Path $name }}
+  {{- end }}
+{{- end -}}

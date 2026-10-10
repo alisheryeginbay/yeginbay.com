@@ -1,0 +1,34 @@
+{{- /* An interactive figure, drawn by the Svelte component in
+     assets/js/viz/components/<is>.svelte. Every parameter other than `is`,
+     `width` and `caption` is passed to the component as a prop. `src` may
+     name a file in the page's bundle or a path under static/. A prop like
+     `head="$qk_head"` is bound to that shared value, which the prose can
+     set and show (see var.html, set.html and show.html).
+
+       {{< viz is="attention" src="/data/…/attn_data.json" head="$qk_head" >}}
+
+     `width` is "wide" to reach into the margin beside the text. */ -}}
+{{- $props := dict -}}
+{{- range $k, $v := .Params }}
+  {{- if not (in (slice "is" "width" "caption") $k) }}{{ $props = merge $props (dict $k $v) }}{{ end }}
+{{- end }}
+{{- with $props.src }}
+  {{- $src := relURL . }}
+  {{- with $.Page.Resources.Get . }}{{ $src = .RelPermalink }}{{ end }}
+  {{- $props = merge $props (dict "src" $src) }}
+{{- end -}}
+
+{{- $bound := slice }}
+{{- range $props }}{{ if and (eq (printf "%T" .) "string") (hasPrefix . "$") }}{{ $bound = $bound | append (strings.TrimPrefix "$" .) }}{{ end }}{{ end }}
+{{- partial "viz-note.html" (dict "page" .Page "kind" "bound" "names" $bound) }}
+{{- with $props.name }}{{ partial "viz-note.html" (dict "page" $.Page "kind" "published" "names" (slice .)) }}{{ end -}}
+
+{{- $id := string .Ordinal -}}
+{{- partial "viz-instance.html" (dict "page" .Page "is" (.Get "is") "id" $id "props" $props "position" .Position) -}}
+
+<figure class="viz{{ with .Get "width" }} viz-{{ . }}{{ end }}">
+  <div class="viz-mount" id="viz-{{ $id }}"></div>
+  {{- with .Get "caption" }}
+  <figcaption>{{ $.Page.RenderString . }}</figcaption>
+  {{- end }}
+</figure>

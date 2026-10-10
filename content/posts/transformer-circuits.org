@@ -43,7 +43,7 @@ For example, by visualizing $W_E W_{QK} W_E^T$ we can see what tokens tend to at
 
 We can see that unnormalized form is a bit messy since it does not acknowledge sequence positions at all and shows token-identity-only attention. That said, we can view the normalized form to see which tokens stand out relative to each row's baseline.
 
-{{< attention-viz src="/data/transformer-circuits/attn_data.json" fields="Raw:qk_raw,Normalized:qk_norm" row-label="query" col-label="key" >}}
+{{< viz is="attention" src="/data/transformer-circuits/attn_data.json" fields="Raw:qk_raw,Normalized:qk_norm" rows="query" cols="key" >}}
 
 For example, L10H2 seems to show strong semantic correlation between tokens "France" and "Paris", "king" and "queen" since they attend to each other strongly. There's also L10H6 which has even stronger attention between "France" and "Paris" which might show head's specialization in geography rather than gender. That said, since this decomposition ignores positional terms, these correlations are suggestive rather than conclusive. We'd need to verify against actual attention patterns on real inputs.
 
@@ -55,7 +55,7 @@ While QK matrix was acting like a router of information, i.e /where/ to look at,
 
 For instance, we can visualize the $W_E W_OV W_U$ to see what information tokens tend to push to write into the residual stream. We embed a single input token and unembed from the result to get a human-interpretable token which is being promoted by specific head. This is different from QK since we're /comparing/ two tokens there.
 
-{{< attention-viz src="/data/transformer-circuits/attn_data.json" field="ov" row-label="input" col-label="output" >}}
+{{< viz is="attention" src="/data/transformer-circuits/attn_data.json" fields="ov" rows="input" cols="output" >}}
 
 From these heatmaps we can see that in L6H8 tokens "France" and "Paris", "king" and "queen" seem to promote each other. But this is also worth mentioning that these notions act as a fraction of the bigger picture, therefore we'd need to look at this from various angles as well.
 

@@ -1,0 +1,24 @@
+{{- /* A shared value, inline in the prose: one a var declares, or one a
+     figure publishes, by name and then keys into it.
+
+       {{< show "n" >}}
+       {{< show "qk.France.Paris" ".2f" >}}
+       {{< show path="qk.France.Paris" format=".1%" fallback="a high score" >}}
+
+     Readers without JavaScript see the fallback, or a var's starting value
+     when the var comes earlier in the post. */ -}}
+{{- $path := .Get "path" | default (.Get 0) -}}
+{{- $format := .Get "format" | default (.Get 1) | default "" -}}
+{{- if not $path }}{{ errorf "show: needs a value to show at %s" .Position }}{{ end -}}
+{{- $root := index (split $path ".") 0 -}}
+{{- $fallback := .Get "fallback" -}}
+{{- if not $fallback }}
+  {{- $fallback = "…" }}
+  {{- if eq $root $path }}
+    {{- with index (.Page.Store.Get (printf "viz-%s-text" (md5 .Page.RawContent)) | default dict) $root }}{{ $fallback = . }}{{ end }}
+  {{- end }}
+{{- end -}}
+{{- partial "viz-note.html" (dict "page" .Page "kind" "read" "names" (slice $root)) -}}
+{{- $id := string .Ordinal -}}
+{{- partial "viz-instance.html" (dict "page" .Page "is" "show" "id" $id "props" (dict "path" $path "format" $format "fallback" $fallback) "position" .Position) -}}
+<span class="viz-inline" id="viz-{{ $id }}">{{ $fallback }}</span>

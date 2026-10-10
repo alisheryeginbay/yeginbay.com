@@ -29,8 +29,14 @@ jobs:
           hugo-version: "0.167.0"
           extended: true
 
+      - uses: oven-sh/setup-bun@v2
+
+      # Interactive figures are Svelte components, compiled for Hugo first.
       - name: Build site
-        run: hugo --quiet
+        run: |
+          bun install --frozen-lockfile
+          bun scripts/compile-svelte.ts
+          hugo --quiet
 
       # Links to the site itself are checked against the build, so a page that
       # was removed or renamed shows up before visitors hit it.
