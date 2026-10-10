@@ -97,23 +97,31 @@
 </script>
 
 {#if data.current}
-  <Controls>
-    <Select
-      label="Layer"
-      bind:value={() => shown?.layer ?? "", (l) => (head = heads.find((h) => h.layer === l)?.key)}
-      options={layers.map((l) => ({ value: l, label: `Layer ${l}` }))}
-    />
-    <Select
-      label="Head"
-      bind:value={() => shown?.key ?? "", (k) => (head = k)}
-      options={headsInLayer.map((h) => ({ value: h.key, label: `Head ${h.head}` }))}
-    />
-    <Select label="Matrix" bind:value={() => shownField, (f) => (field = f)} options={fields} />
-  </Controls>
-  {#if matrix}
-    <Heatmap {matrix} rows={labels} cols={labels} rowName={rows} colName={cols} />
-  {/if}
-  <Status>
-    {shown?.key}{#if fields.length > 1}&nbsp;· {fields.find((f) => f.value === shownField)?.label}{/if}
-  </Status>
+  <div class="attention">
+    <Controls>
+      <Select
+        label="Layer"
+        bind:value={() => shown?.layer ?? "", (l) => (head = heads.find((h) => h.layer === l)?.key)}
+        options={layers.map((l) => ({ value: l, label: `Layer ${l}` }))}
+      />
+      <Select
+        label="Head"
+        bind:value={() => shown?.key ?? "", (k) => (head = k)}
+        options={headsInLayer.map((h) => ({ value: h.key, label: `Head ${h.head}` }))}
+      />
+      <Select label="Matrix" bind:value={() => shownField, (f) => (field = f)} options={fields} />
+    </Controls>
+    {#if matrix}
+      <Heatmap {matrix} rows={labels} cols={labels} rowName={rows} colName={cols} />
+    {/if}
+    <Status>
+      {shown?.key}{#if fields.length > 1}&nbsp;· {fields.find((f) => f.value === shownField)?.label}{/if}
+    </Status>
+  </div>
 {/if}
+
+<style>
+  .attention { text-align: center; }
+
+  .attention :global(.controls) { justify-content: center; }
+</style>

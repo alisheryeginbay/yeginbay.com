@@ -24,6 +24,7 @@
         {#each cols as c}
           <th title="{colName}: {c}">{c.trim()}</th>
         {/each}
+        <th class="balance"></th>
       </tr>
     </thead>
     <tbody>
@@ -33,6 +34,8 @@
           {#each row as v}
             <td style:background={color(v)} title={v.toFixed(3)}></td>
           {/each}
+          <!-- An unseen copy of the row's label, so the grid itself sits in the middle. -->
+          <th class="balance" aria-hidden="true">{rows[i].trim()}</th>
         </tr>
       {/each}
     </tbody>
@@ -43,6 +46,7 @@
   .heatmap { overflow-x: auto; }
 
   table {
+    margin-inline: auto;
     border-collapse: collapse;
     font-size: 0.7rem;
   }
@@ -67,6 +71,13 @@
     text-align: right;
     padding-right: 0.4rem;
     white-space: nowrap;
+  }
+
+  .balance { visibility: hidden; }
+
+  /* Where there's no room to spare, the grid shifts right of centre instead. */
+  @media (max-width: 40rem) {
+    .balance { display: none; }
   }
 
   td {
