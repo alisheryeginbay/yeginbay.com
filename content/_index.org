@@ -1,6 +1,6 @@
 #+title: Alisher Yeginbay
 
-Hey! I'm Alisher. I'm currently focused on technical AI safety. I spend most of my time [[/books][reading books]], self-studying [[/tags/korean][Korean]] and [[/tags/mathematics][math]]. I also love science, languages, flowers, typography, rabbit holing [[https://en.wikipedia.org/wiki/Main_Page][Wikipedia]], Harry Potter, and K-pop.
+Hey! I'm Alisher. I'm currently focused on [[/tags/interpretability][technical AI safety]]. I spend most of my time [[/books][reading books]], self-studying [[/tags/korean][Korean]] and [[/tags/mathematics][math]]. I also love science, languages, flowers, typography, rabbit holing [[https://en.wikipedia.org/wiki/Main_Page][Wikipedia]], Harry Potter, and K-pop.
 
 * Websites
 - [[https://github.com/alisheryeginbay][Github]]
