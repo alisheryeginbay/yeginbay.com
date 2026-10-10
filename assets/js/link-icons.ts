@@ -10,9 +10,10 @@ import {
   siYoutube,
 } from "simple-icons";
 
-// A monochrome 24×24 logo, shown in the muted text colour. While its link is
-// hovered, the logo and the link text both switch to `hex`.
-type Icon = { title: string; path: string; hex: string };
+// A monochrome logo, 24×24 unless `viewBox` says otherwise, shown in the
+// muted text colour. While its link is hovered, the logo and the link text
+// both switch to `hex`.
+type Icon = { title: string; path: string; hex: string; viewBox?: string };
 
 // Simple Icons dropped Amazon, so its logo is copied from simple-icons@13.
 const siAmazon: Icon = {
@@ -25,6 +26,14 @@ const siAmazon: Icon = {
 // instead.
 const anthropic: Icon = { ...siAnthropic, hex: "D97757" };
 
+// LessWrong's compass star, which isn't in Simple Icons.
+const lessWrong: Icon = {
+  title: "LessWrong",
+  hex: "5F9B65",
+  viewBox: "0 0 100 100",
+  path: "M29.1,29.2l6.4,11.6l4.3-0.8l0.8-4.3L29.1,29.2z M40.7,64.5l-0.8-4.3l-4.3-0.8L29.2,71L40.7,64.5z M70.9,70.9l-6.4-11.6l-4.3,0.8l-0.8,4.3L70.9,70.9z M64.4,40.8l6.4-11.6l-11.6,6.4l0.8,4.3L64.4,40.8z M67.4,58.8l10.8,19.4L58.8,67.4L50,98.8l-8.8-31.4L21.9,78.2l10.8-19.4L1.2,50.1l31.4-8.8L21.9,21.9l19.4,10.8L50,1.3l8.8,31.4l19.4-10.8L67.4,41.3L98.8,50L67.4,58.8zM57.7,57.8L83.5,50L50,50.1l7.7-7.7L50,16.6v33.5l-7.7-7.7l-25.8,7.7H50l-7.7,7.7L50,83.5V50.1L57.7,57.8z",
+};
+
 // Which logo goes next to links to which site. A rule for "wikipedia.org"
 // also covers its subdomains, such as en.wikipedia.org. Logos come from
 // Simple Icons (https://simpleicons.org); to recolour one, spread it and
@@ -36,6 +45,7 @@ const RULES: Record<string, Icon> = {
   "anthropic.com": anthropic,
   "arxiv.org": siArxiv,
   "github.com": siGithub,
+  "lesswrong.com": lessWrong,
   "substack.com": siSubstack,
   "transformer-circuits.pub": anthropic,
   "twitter.com": siX,
@@ -95,6 +105,6 @@ export function brandStyle(icon: Icon): string {
 }
 
 export function iconHtml(icon: Icon, tail = ""): string {
-  const svg = `<svg class="link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="${icon.path}"/></svg>`;
+  const svg = `<svg class="link-icon" viewBox="${icon.viewBox ?? "0 0 24 24"}" aria-hidden="true"><path d="${icon.path}"/></svg>`;
   return `<span class="link-icon-nowrap">${escapeHtml(tail)}${svg}</span>`;
 }
