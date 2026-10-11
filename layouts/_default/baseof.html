@@ -53,6 +53,11 @@
   <script defer src="{{ .Permalink }}"></script>
   {{- end }}
   {{- end }}
+  {{- if hugo.IsServer }}
+  {{- with resources.Get "js/external-links-preview.ts" | js.Build }}
+  <script defer src="{{ .Permalink }}"></script>
+  {{- end }}
+  {{- end }}
   {{ $hasMath := and (or .IsPage .IsHome) (findRE `\$[^$\s][^$]*\$` .RawContent 1) }}
   {{ if $hasMath }}
   <link rel="stylesheet" href="{{ "vendor/katex/katex.min.css" | absURL }}">
