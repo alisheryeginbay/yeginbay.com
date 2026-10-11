@@ -24,9 +24,9 @@ I use [[https://www.raycast.com/][Raycast]] instead of Spotlight (and you should
 *** Laptop
 I use MacBook Pro (14-inch, 2021).
 ** Other
-I read most of the books on [[https://www.amazon.com/dp/B0GV621HD7][Kindle Paperwhite Signature Edition]] 
+I read most of the books on [[https://www.amazon.com/dp/B0GV621HD7][Kindle Paperwhite Signature Edition]]
 
 * Footnotes
 [fn:2] I also manage all of my tasks; read papers, books, documents; and many other things---all that in Emacs! :)
 
-[fn:1] Before that I used [[https://rectangleapp.com/][Rectangle]] itself, but eventually switched to Raycast's solution. 
+[fn:1] Before that I used [[https://rectangleapp.com/][Rectangle]] itself, but eventually switched to Raycast's solution.
