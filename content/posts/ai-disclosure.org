@@ -1,0 +1,15 @@
+#+title: AI Disclosure
+#+date: 2026-10-14T02:17:05+05:00
+#+status: finished
+#+tags[]: personal
+#+tags[]: website
+
+Since I consider this website my personal notebook, I try to minimize the usage of AI. I don't have any interest in pretending that tokens produced by LLM are my words and my thinking; I believe writing[fn:1] /is/ thinking, hence I think there's no benefit of delegating the actual thinking process to AI.
+
+But AI is still very helpful and I frequently use it while building this website. Almost every line of code on this website's infrastructure ([[https://github.com/alisheryeginbay/yeginbay.com][source]]) is written using Claude. It also maintains the [[/test][test page]].
+
+For transparency, I mention any usage of AI. For example, [[/test][test page]] includes Claude Opus 5.5 (as of 14 October 2026) as one of the authors. I also keep Claude Code's [[https://code.claude.com/docs/en/settings-reference#git-and-attribution][git attribution]] enabled, so that it is clear which [[https://github.com/alisheryeginbay/yeginbay.com/commits/main/][commits]] are co-authored by Claude or any other AI.
+
+* Footnotes
+
+[fn:1] Using my own biological neurons! 
