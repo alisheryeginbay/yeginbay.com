@@ -8,17 +8,19 @@
 // post's HTML goes into assets/typst-build/pages.json with its front matter,
 // and content/_content.gotmpl makes pages of them at the .typ file's path.
 // The stylesheet Typst writes for its MathML goes to typst.css beside it.
-// Imports starting with / are resolved from the repo root.
+// Imports starting with / are resolved from the repo root. Uses the typst on
+// PATH, or else downloads TYPST_VERSION, as on Cloudflare's build image.
 // Must run before `hugo`; with --watch it recompiles on every change, for
 // use alongside `hugo server`.
-import { glob, mkdir, readFile, writeFile } from "node:fs/promises";
-import { watch } from "node:fs";
+import { glob, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { existsSync, watch } from "node:fs";
 import path from "node:path";
 import * as cheerio from "cheerio";
 import { ROOT } from "./site.ts";
 
 const CONTENT = path.join(ROOT, "content");
 const OUT = path.join(ROOT, "assets/typst-build");
+const TYPST_VERSION = "0.15.1";
 
 type Page = {
   path: string;
@@ -31,8 +33,38 @@ type Page = {
   html: string;
 };
 
+const TARGETS: Record<string, string> = {
+  "linux x64": "x86_64-unknown-linux-musl",
+  "linux arm64": "aarch64-unknown-linux-musl",
+  "darwin x64": "x86_64-apple-darwin",
+  "darwin arm64": "aarch64-apple-darwin",
+};
+
+async function download(): Promise<string> {
+  const target = TARGETS[`${process.platform} ${process.arch}`];
+  if (!target) throw new Error(`typst isn't on PATH, and there's no release for ${process.platform} ${process.arch}`);
+  const dir = path.join(ROOT, "node_modules/.cache/typst", TYPST_VERSION);
+  const bin = path.join(dir, `typst-${target}`, "typst");
+  if (existsSync(bin)) return bin;
+
+  const url = `https://github.com/typst/typst/releases/download/v${TYPST_VERSION}/typst-${target}.tar.xz`;
+  console.log(`compile-typst: typst isn't on PATH; downloading ${url}`);
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`downloading ${url}: ${res.status} ${res.statusText}`);
+  await mkdir(dir, { recursive: true });
+  const archive = path.join(dir, "typst.tar.xz");
+  await writeFile(archive, new Uint8Array(await res.arrayBuffer()));
+  const tar = Bun.spawn(["tar", "-xJf", archive, "-C", dir], { stderr: "inherit" });
+  if ((await tar.exited) !== 0 || !existsSync(bin)) throw new Error(`unpacking ${archive} failed`);
+  await rm(archive);
+  return bin;
+}
+
+let bin: Promise<string> | undefined;
+const typstBin = () => (bin ??= Promise.resolve(Bun.which("typst") ?? download()));
+
 async function typst(args: string[]): Promise<{ ok: boolean; out: string; err: string }> {
-  const proc = Bun.spawn(["typst", ...args, "--root", ROOT, "--features", "html"], { stdout: "pipe", stderr: "pipe" });
+  const proc = Bun.spawn([await typstBin(), ...args, "--root", ROOT, "--features", "html"], { stdout: "pipe", stderr: "pipe" });
   const [out, err, code] = await Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text(), proc.exited]);
   // Every HTML export warns that HTML export is experimental.
   const warnings = err
