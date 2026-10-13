@@ -1,0 +1,12 @@
+{{- /*
+A post kept as a page bundle refers to its images by relative path:
+[[file:images/a.webp]] becomes <img src="images/a.webp">. Hugo publishes
+them under the post, at /slug/images/a.webp, but the site is served
+without trailing slashes, so from /slug the browser resolves the path to
+/images/a.webp and finds nothing. This makes such paths absolute.
+
+Takes a dict with "page" and "content" and returns the content with
+relative image paths rooted at the page.
+*/ -}}
+{{- $base := strings.TrimSuffix "/" .page.RelPermalink -}}
+{{- return (replaceRE `(<img [^>]*src=")([^"/#:][^":]*)"` (printf `${1}%s/${2}"` $base) .content) -}}
