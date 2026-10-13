@@ -427,6 +427,20 @@ main { min-height: 60vh; padding-bottom: 3rem; }
   overflow-y: hidden;
 }
 
+/* "Needs revising" under an exercise whose proof needs another look, set
+   like the status in .post-meta. */
+.post-content .revise {
+  margin: -0.4em 0 0.4em;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.75rem;
+}
+
+/* Inline maths in posts written in Typst with the punctuation after it, kept
+   on one line. */
+.post-content .nowrap { white-space: nowrap; }
+
 /* The tombstone ending a proof in a post written in Typst, at the right end
    of the proof's last line, or of a line of its own when that one is full.
    Floats sit at the top of the line, so the margin brings it down to the
@@ -439,6 +453,13 @@ main { min-height: 60vh; padding-bottom: 3rem; }
   background: var(--link);
 }
 .post-content p:has(> .qed) { display: flow-root; }
+
+/* A proof (the proof helper in content/proofs/ladr-defs.typ) set a little
+   apart from the statement above it. */
+.post-content .proof {
+  display: flow-root;
+  margin-top: 0.75em;
+}
 
 .post-content .sidenote { text-indent: 0; }
 

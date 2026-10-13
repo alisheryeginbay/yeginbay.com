@@ -97,8 +97,8 @@ function unstretchFences(html: string): string {
 // Rewrites Typst's HTML into what Hugo's Org renderer emits, so the layout's
 // partials treat both alike: headings get the placeholder ids that
 // heading-ids.html replaces with readable ones, and footnotes take the
-// markup sidenotes.html turns into sidenotes. A □ ending a paragraph, as
-// proofs end, becomes the site's own tombstone (.qed in style.css).
+// markup sidenotes.html turns into sidenotes. A □ ending a paragraph or
+// block, as proofs end, becomes the site's own tombstone (.qed in style.css).
 // Code loses Typst's inline colours, which only suit a light background.
 function orgify(html: string): string {
   let headings = 0;
@@ -124,7 +124,13 @@ function orgify(html: string): string {
     return n ? `<sup class="footnote-reference"><a id="footnote-reference-${n}" href="#footnote-${n}">${n}</a></sup>` : ref;
   });
 
-  html = html.replace(/<math><mi>□<\/mi><\/math><\/p>/g, '<span class="qed" role="img" aria-label="End of proof"></span></p>');
+  // Typst sets f' as a superscript prime, which browsers raise and space off
+  // from the f; the prime character is already raised.
+  html = html.replace(/<msup>(<m[in]>[^<]*<\/m[in]>)<mo>(′+)<\/mo><\/msup>/g, '$1<mo lspace="0" rspace="0">$2</mo>');
+  // Keep punctuation after inline maths on the same line as it.
+  html = html.replace(/(<math>(?:(?!<\/math>)[\s\S])*<\/math>)([.,;:]+)/g, '<span class="nowrap">$1$2</span>');
+
+  html = html.replace(/<math><mi>□<\/mi><\/math>(?=<\/(?:p|div)>)/g, '<span class="qed" role="img" aria-label="End of proof"></span>');
 
   return html.replace(/<pre>[\s\S]*?<\/pre>/g, (pre) => pre.replace(/<span style="[^"]*">([\s\S]*?)<\/span>/g, "$1"));
 }
