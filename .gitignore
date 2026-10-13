@@ -6,6 +6,8 @@
 /node_modules/
 # Compiled by scripts/compile-svelte.ts
 /assets/js/viz-build/
+# Compiled by scripts/compile-typst.ts
+/assets/typst-build/
 
 # Emacs backup/autosave files
 *~

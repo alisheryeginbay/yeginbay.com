@@ -2,6 +2,9 @@ baseURL = "https://yeginbay.com/"
 locale = "en-us"
 title = "Alisher Yeginbay"
 enableGitInfo = true
+# Posts written in Typst reach Hugo through content/_content.gotmpl, not as
+# files of their own; their source is published by the single layout.
+ignoreFiles = ['\.typ$']
 
 [params]
   description = "Notes and writing."
@@ -9,6 +12,9 @@ enableGitInfo = true
   # where author names link to.
   author = "Alisher Yeginbay"
   repo = "https://github.com/alisheryeginbay/yeginbay.com"
+  # Sections whose pages are posts: shown on the writings page, with the
+  # post meta line, drop cap and published org source.
+  postSections = ["posts", "proofs"]
 
 [markup.org]
   # keep TOC/heading behavior default; org files are parsed natively by Hugo
@@ -25,4 +31,5 @@ enableGitInfo = true
   posts = "/:filename/"
 
 [security]
-  allowContent = ['! ^text/html$']
+  # Org posts, and the HTML that scripts/compile-typst.ts makes of .typ ones.
+  allowContent = ['^text/org$', '^text/html$']

@@ -23,7 +23,7 @@ Takes a dict with "page" (for error messages) and "content" (.Content).
     {{- end -}}
     {{- $note = $note | replaceRE `<p>\s*` `<span class="sidenote-paragraph">` | replaceRE `</p>` `</span>` | strings.TrimSpace -}}
     {{- with findRE `<(div|ul|ol|dl|pre|table|blockquote|figure|h[1-6])[\s>]` $note 1 -}}
-      {{- errorf "%s: footnote %s contains %s…, which can't go in a sidenote; keep footnotes to paragraphs and inline markup" $page.File.Path $n (index . 0) -}}
+      {{- errorf "%s: footnote %s contains %s…, which can't go in a sidenote; keep footnotes to paragraphs and inline markup" ($page.Params.source | default $page.File.Path) $n (index . 0) -}}
     {{- end -}}
     {{- $ref := printf `<sup class="footnote-reference"><a id="footnote-reference-%s" href="#footnote-%s">%s</a></sup>` $n $n $n -}}
     {{- $sidenote := printf `<label for="sidenote-%s" class="margin-toggle sidenote-number">%s</label><input type="checkbox" id="sidenote-%s" class="margin-toggle"><span class="sidenote"><span class="sidenote-number">%s</span> %s</span>` $n $n $n $n $note -}}

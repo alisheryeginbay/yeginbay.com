@@ -58,6 +58,12 @@
   <script defer src="{{ .Permalink }}"></script>
   {{- end }}
   {{- end }}
+  {{- /* Typst's styles for the MathML in posts written in Typst. */}}
+  {{- if eq (path.Ext (.Params.source | default "")) ".typ" }}
+  {{- with resources.Get "typst-build/typst.css" | minify | fingerprint }}
+  <link rel="stylesheet" href="{{ .Permalink }}" integrity="{{ .Data.Integrity }}">
+  {{- end }}
+  {{- end }}
   {{ $hasMath := and (or .IsPage .IsHome) (findRE `\$[^$\s][^$]*\$` .RawContent 1) }}
   {{ if $hasMath }}
   <link rel="stylesheet" href="{{ "vendor/katex/katex.min.css" | absURL }}">

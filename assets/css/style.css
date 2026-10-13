@@ -418,6 +418,28 @@ main { min-height: 60vh; padding-bottom: 3rem; }
    starts with an indent, as in a printed book. */
 .post-content p { margin: 0; }
 .post-content p + p { text-indent: 1.5em; }
+
+/* Display equations in posts written in Typst scroll on their own when
+   wider than the column, rather than widening the page. */
+.post-content math[display="block"] {
+  margin: 0.6em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* The tombstone ending a proof in a post written in Typst, at the right end
+   of the proof's last line, or of a line of its own when that one is full.
+   Floats sit at the top of the line, so the margin brings it down to the
+   baseline. */
+.qed {
+  float: right;
+  width: 0.55em;
+  height: 0.55em;
+  margin: 0.66em 0 0 0.5em;
+  background: var(--link);
+}
+.post-content p:has(> .qed) { display: flow-root; }
+
 .post-content .sidenote { text-indent: 0; }
 
 .book-list {

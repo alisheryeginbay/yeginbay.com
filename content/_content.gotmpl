@@ -1,0 +1,18 @@
+{{- /* Posts written in Typst: the pages scripts/compile-typst.ts compiled from the
+       .typ files in content/, each at its .typ file's path. */ -}}
+{{- with resources.Get "typst-build/pages.json" }}
+{{- range transform.Unmarshal . }}
+  {{- $dates := dict }}
+  {{- range $k, $v := .dates }}{{ $dates = merge $dates (dict $k (time $v)) }}{{ end }}
+  {{- $.AddPage (dict
+    "kind" "page"
+    "path" .path
+    "title" .title
+    "dates" $dates
+    "aliases" .aliases
+    "draft" .draft
+    "params" (merge .params (dict "source" .source))
+    "content" (dict "mediaType" "text/html" "value" .html)
+  ) }}
+{{- end }}
+{{- end }}

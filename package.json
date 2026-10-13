@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "bun scripts/subset-korean.ts && bun scripts/compile-svelte.ts && hugo && bun scripts/inject-link-icons.ts && bun scripts/external-links.ts && bun scripts/render-math.ts",
+    "build": "bun scripts/subset-korean.ts && bun scripts/compile-svelte.ts && bun scripts/compile-typst.ts && hugo && bun scripts/inject-link-icons.ts && bun scripts/external-links.ts && bun scripts/render-math.ts",
     "dev": "bun scripts/dev.ts",
     "books": "bun scripts/export-books.ts",
     "typecheck": "tsc && svelte-check --tsconfig ./tsconfig.json --threshold warning"
