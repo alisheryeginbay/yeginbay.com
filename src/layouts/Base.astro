@@ -39,6 +39,10 @@ const koreanFaces = Object.entries(koreanFonts)
     {noindex && <meta name="robots" content="noindex" />}
     <meta name="author" content={authors.join(", ")} />
     <meta name="description" content={description || SITE.description} />
+    <!-- 🌸 as Apple's emoji draws it. -->
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preload" href="/fonts/sourceserif4-400.woff2" as="font" type="font/woff2" crossorigin />
     {dropCap && <link rel="preload" href="/fonts/goudyinitialen.woff2" as="font" type="font/woff2" crossorigin />}
     {koreanFaces && <style is:inline set:html={koreanFaces} />}
