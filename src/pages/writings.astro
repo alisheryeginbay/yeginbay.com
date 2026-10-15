@@ -1,0 +1,32 @@
+---
+// Finished posts, newest first, then work in progress, most recently
+// touched first.
+import Heading from "../components/Heading.astro";
+import PostList from "../components/PostList.astro";
+import Base from "../layouts/Base.astro";
+import { listedPosts } from "../lib/posts.ts";
+
+const posts = await listedPosts();
+const byUpdate = (status: string) =>
+  posts.filter((p) => p.status === status).sort((a, b) => b.lastmod.getTime() - a.lastmod.getTime());
+const groups = [
+  { title: "Drafts", posts: byUpdate("draft") },
+  { title: "Notes", posts: byUpdate("notes") },
+];
+---
+
+<Base title="Writings">
+  <h1>Writings</h1>
+  <PostList posts={posts.filter((p) => p.status === "finished")} />
+  {
+    groups.map(
+      (group) =>
+        group.posts.length > 0 && (
+          <>
+            <Heading level={2} text={group.title} />
+            <PostList posts={group.posts} updated />
+          </>
+        ),
+    )
+  }
+</Base>

@@ -1,0 +1,12 @@
+---
+import PostList from "../../components/PostList.astro";
+import Base from "../../layouts/Base.astro";
+import { listedPosts } from "../../lib/posts.ts";
+
+const posts = (await listedPosts()).filter((p) => p.section === "proofs");
+---
+
+<Base title="Proofs">
+  <h1>Proofs</h1>
+  <PostList posts={posts} />
+</Base>

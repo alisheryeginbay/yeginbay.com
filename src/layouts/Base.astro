@@ -1,0 +1,68 @@
+---
+import "../styles/style.css";
+import { SITE } from "../site.ts";
+
+interface Props {
+  // The page's title; the home page has none of its own.
+  title?: string;
+  description?: string;
+  authors?: string[];
+  noindex?: boolean;
+  dropCap?: boolean;
+  hasMath?: boolean;
+  // Typst's styles for the MathML in a post written in Typst.
+  typstCss?: string;
+}
+
+const { title, description, authors = [SITE.author], noindex = false, dropCap = false, hasMath = false, typstCss } = Astro.props;
+
+// Source Han Serif KR for Hangul. Built sites use the subsets that
+// scripts/subset-korean.ts writes before `astro build`; `astro dev` uses the
+// full Hangul fonts, so new text never needs a rerun.
+const koreanFonts = import.meta.env.DEV
+  ? import.meta.glob<string>("../assets/fonts/sourcehanserifkr-hangul-*.woff2", { query: "?url", import: "default", eager: true })
+  : import.meta.glob<string>("../assets/fonts/subset/sourcehanserifkr-*.woff2", { query: "?url", import: "default", eager: true });
+const koreanFaces = Object.entries(koreanFonts)
+  .map(([file, url]) => {
+    const weight = file.match(/-(\d+)\.woff2$/)![1];
+    return `@font-face{font-family:"Source Han Serif KR";font-style:normal;font-weight:${weight};font-display:swap;src:url(${JSON.stringify(url)}) format("woff2");unicode-range:U+1100-11FF,U+3130-318F,U+A960-A97F,U+AC00-D7FF}`;
+  })
+  .join("");
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title ? `${title} · ${SITE.title}` : SITE.title}</title>
+    {noindex && <meta name="robots" content="noindex" />}
+    <meta name="author" content={authors.join(", ")} />
+    <meta name="description" content={description || SITE.description} />
+    <link rel="preload" href="/fonts/sourceserif4-400.woff2" as="font" type="font/woff2" crossorigin />
+    {dropCap && <link rel="preload" href="/fonts/goudyinitialen.woff2" as="font" type="font/woff2" crossorigin />}
+    {koreanFaces && <style is:inline set:html={koreanFaces} />}
+    <link rel="alternate" type="application/rss+xml" href="/index.xml" title={SITE.title} />
+    {typstCss && <style is:inline set:html={typstCss} />}
+    {hasMath && <link rel="stylesheet" href="/vendor/katex/katex.min.css" />}
+  </head>
+  <body>
+    <div class="layout">
+      <header class="site-header">
+        <a class="site-title" href="/">{SITE.title}</a>
+        <nav class="site-nav">
+          <a href="/writings">Writings</a>
+        </nav>
+      </header>
+      <aside class="sidebar">
+        <slot name="sidebar" />
+      </aside>
+      <main>
+        <slot />
+      </main>
+    </div>
+    <script>
+      import "../scripts/heading-copy.ts";
+    </script>
+  </body>
+</html>

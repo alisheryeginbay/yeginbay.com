@@ -1,0 +1,21 @@
+---
+// A shared value the reader controls, inline in the prose. What it looks
+// like depends on its props:
+//
+//   <Var name="n" value={3} min={1} max={10} step={1} format=".0f" />  a number, dragged sideways
+//   <Var name="head" value="L10H2" options="L10H2,L10H6" />            a choice; or options="$qk_heads",
+//                                                                       a list a figure publishes
+//   <Var name="norm" value={true} labels="normalized,raw" />           a toggle
+//
+// Readers without JavaScript see the starting value.
+import { varState, type VarProps } from "../../viz/prose.ts";
+
+type Props = VarProps;
+
+const { kind, value, text } = varState(Astro.props);
+const props = { ...Astro.props, kind, value };
+---
+
+<span class="viz-inline" data-viz="var" data-props={JSON.stringify(props)}>{text}</span><script>
+  import "../../viz/client.ts";
+</script>

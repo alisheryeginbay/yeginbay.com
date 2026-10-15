@@ -22,21 +22,18 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 0 # enableGitInfo needs history for lastmod
-
-      - uses: peaceiris/actions-hugo@v3
-        with:
-          hugo-version: "0.167.0"
-          extended: true
+          fetch-depth: 0 # posts' "Updated" dates come from git history
 
       - uses: oven-sh/setup-bun@v2
 
-      # Interactive figures are Svelte components, compiled for Hugo first.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
       - name: Build site
         run: |
           bun install --frozen-lockfile
-          bun scripts/compile-svelte.ts
-          hugo --quiet
+          bun run build
 
       # Links to the site itself are checked against the build, so a page that
       # was removed or renamed shows up before visitors hit it.
@@ -46,9 +43,9 @@ jobs:
         with:
           args: >-
             --no-progress
-            --root-dir ${{ github.workspace }}/public
-            --remap '^https://yeginbay\.com/(.*)$ file://${{ github.workspace }}/public/$1'
-            './public/**/*.html'
+            --root-dir ${{ github.workspace }}/dist
+            --remap '^https://yeginbay\.com/(.*)$ file://${{ github.workspace }}/dist/$1'
+            './dist/**/*.html'
           format: markdown
           output: lychee/out.md
           fail: false
@@ -66,7 +63,7 @@ jobs:
           fi
 
           workspace='${{ github.workspace }}/'
-          sed -i "s|file://${workspace}public/|/|g; s|${workspace}||g" lychee/out.md
+          sed -i "s|file://${workspace}dist/|/|g; s|${workspace}||g" lychee/out.md
 
           issue=$(gh issue list --label "$LABEL" --state open --json number --jq '.[0].number')
           run_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

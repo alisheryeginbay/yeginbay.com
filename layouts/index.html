@@ -1,7 +1,0 @@
-{{ define "main" }}
-<article class="post">
-  <div class="post-content">
-    {{ partial "sidenotes.html" (dict "page" . "content" (partial "heading-ids.html" (partial "unnest-links.html" .Content))) | dict "html" | partial "heading-anchors.html" }}
-  </div>
-</article>
-{{ end }}

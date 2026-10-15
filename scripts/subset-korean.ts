@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 // Subsets Source Han Serif KR down to the Hangul the site actually uses.
-// Runs before `hugo` in `bun run build`: reads the Hangul-only fonts in
-// assets/fonts/ and writes assets/fonts/subset/sourcehanserifkr-{400,600}.woff2
-// (gitignored), which layouts/partials/korean-font.html fingerprints. Under
-// `hugo server` the full Hangul fonts are used instead, so drafts need no rerun.
+// Runs before `astro build` in `bun run build`: reads the Hangul-only fonts in
+// src/assets/fonts/ and writes src/assets/fonts/subset/sourcehanserifkr-{400,600}.woff2
+// (gitignored), which src/layouts/Base.astro links to. Under `astro dev` the
+// full Hangul fonts are used instead, so drafts need no rerun.
 //
 // The Hangul-only fonts come from Adobe's sources
 // (github.com/adobe-fonts/source-han-serif), built with AFDKO's makeotf per the
@@ -13,15 +13,15 @@
 import { mkdir, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import subsetFont from "subset-font";
-import { ROOT } from "./site.ts";
 
-const FONT_DIR = path.join(ROOT, "assets", "fonts");
+const ROOT = path.resolve(import.meta.dirname, "..");
+const FONT_DIR = path.join(ROOT, "src", "assets", "fonts");
 const OUT_DIR = path.join(FONT_DIR, "subset");
-const SCAN = ["content", "data", "layouts", "hugo.toml"];
+const SCAN = ["content", "data", "src/pages", "src/components", "src/layouts", "src/site.ts"];
 const WEIGHTS = [400, 600];
 
 // Jamo, compatibility jamo, extended jamo and syllables: the same ranges as the
-// fonts' unicode-range in layouts/partials/korean-font.html.
+// fonts' unicode-range in src/layouts/Base.astro.
 const HANGUL = /[ᄀ-ᇿ㄰-㆏ꥠ-꥿가-퟿]/gu;
 
 async function* files(p: string): AsyncGenerator<string> {
@@ -38,7 +38,7 @@ for (const top of SCAN) {
   }
 }
 
-// Without Hangul there is nothing to subset, and the partial emits no fonts.
+// Without Hangul there is nothing to subset, and the layout links no fonts.
 await rm(OUT_DIR, { recursive: true, force: true });
 if (chars.size === 0) process.exit(0);
 await mkdir(OUT_DIR, { recursive: true });

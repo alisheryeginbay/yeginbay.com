@@ -1,0 +1,28 @@
+---
+// An interactive figure, drawn by the Svelte component in
+// src/viz/components/<is>.svelte. Every prop other than `is`, `width` and
+// `caption` is passed to the component. A prop like `head="$qk_head"` is
+// bound to that shared value, which the prose can set and show (see Var,
+// Set and Show).
+//
+//   <Viz is="attention" src="/data/…/attn_data.json" head="$qk_head" />
+//
+// `width` is "wide" to reach into the margin beside the text.
+interface Props {
+  is: string;
+  width?: "wide";
+  caption?: string;
+  [prop: string]: unknown;
+}
+
+const { is, width, caption, ...props } = Astro.props;
+---
+
+<figure class:list={["viz", width && `viz-${width}`]}>
+  <div class="viz-mount" data-viz={is} data-props={JSON.stringify(props)}></div>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<script>
+  import "../../viz/client.ts";
+</script>

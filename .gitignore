@@ -1,16 +1,12 @@
-/public/
-/resources/
-.hugo_build.lock
+/dist/
+/.astro/
 .DS_Store
 /old-content/
 /node_modules/
-# Compiled by scripts/compile-svelte.ts
-/assets/js/viz-build/
-# Compiled by scripts/compile-typst.ts
-/assets/typst-build/
+# Written by scripts/subset-korean.ts
+/src/assets/fonts/subset/
 
 # Emacs backup/autosave files
 *~
 \#*\#
 .\#*
-/assets/fonts/subset/

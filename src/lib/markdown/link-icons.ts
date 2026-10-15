@@ -1,0 +1,105 @@
+// Which external links get a site's logo, and the logo's markup. Used by
+// rehype-links.ts.
+import {
+  siAnthropic,
+  siArxiv,
+  siGithub,
+  siSubstack,
+  siWikipedia,
+  siX,
+  siYoutube,
+} from "simple-icons";
+
+// A monochrome logo, 24×24 unless `viewBox` says otherwise, shown in the
+// muted text colour. While its link is hovered, the logo and the link text
+// both switch to `hex`.
+type Icon = { title: string; path: string; hex: string; viewBox?: string };
+
+// Simple Icons dropped Amazon, so its logo is copied from simple-icons@13.
+const siAmazon: Icon = {
+  title: "Amazon",
+  hex: "FF9900",
+  path: "M.045 18.02c.072-.116.187-.124.348-.022 3.636 2.11 7.594 3.166 11.87 3.166 2.852 0 5.668-.533 8.447-1.595l.315-.14c.138-.06.234-.1.293-.13.226-.088.39-.046.525.13.12.174.09.336-.12.48-.256.19-.6.41-1.006.654-1.244.743-2.64 1.316-4.185 1.726a17.617 17.617 0 01-10.951-.577 17.88 17.88 0 01-5.43-3.35c-.1-.074-.151-.15-.151-.22 0-.047.021-.09.051-.13zm6.565-6.218c0-1.005.247-1.863.743-2.577.495-.71 1.17-1.25 2.04-1.615.796-.335 1.756-.575 2.912-.72.39-.046 1.033-.103 1.92-.174v-.37c0-.93-.105-1.558-.3-1.875-.302-.43-.78-.65-1.44-.65h-.182c-.48.046-.896.196-1.246.46-.35.27-.575.63-.675 1.096-.06.3-.206.465-.435.51l-2.52-.315c-.248-.06-.372-.18-.372-.39 0-.046.007-.09.022-.15.247-1.29.855-2.25 1.82-2.88.976-.616 2.1-.975 3.39-1.05h.54c1.65 0 2.957.434 3.888 1.29.135.15.27.3.405.48.12.165.224.314.283.45.075.134.15.33.195.57.06.254.105.42.135.51.03.104.062.3.076.615.01.313.02.493.02.553v5.28c0 .376.06.72.165 1.036.105.313.21.54.315.674l.51.674c.09.136.136.256.136.36 0 .12-.06.226-.18.314-1.2 1.05-1.86 1.62-1.963 1.71-.165.135-.375.15-.63.045a6.062 6.062 0 01-.526-.496l-.31-.347a9.391 9.391 0 01-.317-.42l-.3-.435c-.81.886-1.603 1.44-2.4 1.665-.494.15-1.093.227-1.83.227-1.11 0-2.04-.343-2.76-1.034-.72-.69-1.08-1.665-1.08-2.94l-.05-.076zm3.753-.438c0 .566.14 1.02.425 1.364.285.34.675.512 1.155.512.045 0 .106-.007.195-.02.09-.016.134-.023.166-.023.614-.16 1.08-.553 1.424-1.178.165-.28.285-.58.36-.91.09-.32.12-.59.135-.8.015-.195.015-.54.015-1.005v-.54c-.84 0-1.484.06-1.92.18-1.275.36-1.92 1.17-1.92 2.43l-.035-.02zm9.162 7.027c.03-.06.075-.11.132-.17.362-.243.714-.41 1.05-.5a8.094 8.094 0 011.612-.24c.14-.012.28 0 .41.03.65.06 1.05.168 1.172.33.063.09.099.228.099.39v.15c0 .51-.149 1.11-.424 1.8-.278.69-.664 1.248-1.156 1.68-.073.06-.14.09-.197.09-.03 0-.06 0-.09-.012-.09-.044-.107-.12-.064-.24.54-1.26.806-2.143.806-2.64 0-.15-.03-.27-.087-.344-.145-.166-.55-.257-1.224-.257-.243 0-.533.016-.87.046-.363.045-.7.09-1 .135-.09 0-.148-.014-.18-.044-.03-.03-.036-.047-.02-.077 0-.017.006-.03.02-.063v-.06z",
+};
+
+// Anthropic's Simple Icons colour is near-black, so use its orange accent
+// instead.
+const anthropic: Icon = { ...siAnthropic, hex: "D97757" };
+
+// LessWrong's compass star, which isn't in Simple Icons.
+const lessWrong: Icon = {
+  title: "LessWrong",
+  hex: "5F9B65",
+  viewBox: "0 0 100 100",
+  path: "M29.1,29.2l6.4,11.6l4.3-0.8l0.8-4.3L29.1,29.2z M40.7,64.5l-0.8-4.3l-4.3-0.8L29.2,71L40.7,64.5z M70.9,70.9l-6.4-11.6l-4.3,0.8l-0.8,4.3L70.9,70.9z M64.4,40.8l6.4-11.6l-11.6,6.4l0.8,4.3L64.4,40.8z M67.4,58.8l10.8,19.4L58.8,67.4L50,98.8l-8.8-31.4L21.9,78.2l10.8-19.4L1.2,50.1l31.4-8.8L21.9,21.9l19.4,10.8L50,1.3l8.8,31.4l19.4-10.8L67.4,41.3L98.8,50L67.4,58.8zM57.7,57.8L83.5,50L50,50.1l7.7-7.7L50,16.6v33.5l-7.7-7.7l-25.8,7.7H50l-7.7,7.7L50,83.5V50.1L57.7,57.8z",
+};
+
+// Which logo goes next to links to which site. A rule for "wikipedia.org"
+// also covers its subdomains, such as en.wikipedia.org. Logos come from
+// Simple Icons (https://simpleicons.org); to recolour one, spread it and
+// override `hex`, e.g. { ...siGithub, hex: "333333" }.
+const RULES: Record<string, Icon> = {
+  "a.co": siAmazon,
+  "amazon.com": siAmazon,
+  "amzn.to": siAmazon,
+  "anthropic.com": anthropic,
+  "arxiv.org": siArxiv,
+  "github.com": siGithub,
+  "lesswrong.com": lessWrong,
+  "substack.com": siSubstack,
+  "transformer-circuits.pub": anthropic,
+  "twitter.com": siX,
+  "wikipedia.org": siWikipedia,
+  "x.com": siX,
+  "youtube.com": siYoutube,
+};
+
+export function normalizeHost(rawUrl: string): string | null {
+  try {
+    const host = new URL(rawUrl).hostname.toLowerCase();
+    return host.startsWith("www.") ? host.slice(4) : host;
+  } catch {
+    return null;
+  }
+}
+
+export function iconFor(href: string): Icon | null {
+  const host = normalizeHost(href);
+  if (!host) return null;
+  for (const [domain, icon] of Object.entries(RULES)) {
+    if (host === domain || host.endsWith(`.${domain}`)) return icon;
+  }
+  return null;
+}
+
+// How many characters at the end of the link text stay glued to the icon, so
+// the icon never wraps onto a new line by itself. Kept short so a long URL
+// used as link text can still break.
+const GLUED_CHARS = 4;
+
+// Splits a link's last text node into the part that may wrap and the tail
+// that goes into the nowrap span with the icon.
+export function splitGluedTail(text: string): [head: string, tail: string] {
+  const chars = Array.from(text);
+  const tail = chars.slice(-GLUED_CHARS);
+  // Whitespace inside the tail would be a break point the span suppresses, so
+  // only glue the characters after it.
+  const lastSpace = tail.findLastIndex((c) => /\s/.test(c));
+  const glued = tail.slice(lastSpace + 1);
+  return [chars.slice(0, chars.length - glued.length).join(""), glued.join("")];
+}
+
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// The link's `style` attribute, which sets the colour it and its logo take
+// on hover.
+export function brandStyle(icon: Icon): string {
+  return `--brand:#${icon.hex}`;
+}
+
+export function iconHtml(icon: Icon, tail = ""): string {
+  const svg = `<svg class="link-icon" viewBox="${icon.viewBox ?? "0 0 24 24"}" aria-hidden="true"><path d="${icon.path}"/></svg>`;
+  return `<span class="link-icon-nowrap">${escapeHtml(tail)}${svg}</span>`;
+}

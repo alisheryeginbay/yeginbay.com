@@ -1,0 +1,121 @@
+---
+// Every post, at /<name> for content/posts/ and /<section>/<name> for other
+// sections, and a redirect to it from each of its `aliases`.
+import Toc from "../components/Toc.astro";
+import SetWords from "../components/viz/Set.astro";
+import Show from "../components/viz/Show.astro";
+import Var from "../components/viz/Var.astro";
+import Viz from "../components/viz/Viz.astro";
+import Base from "../layouts/Base.astro";
+import { isoDate, longDate } from "../lib/dates.ts";
+import { allPosts, hasDropCap, renderPost, type Post } from "../lib/posts.ts";
+import { isExternal } from "../lib/markdown/rehype-links.ts";
+import { AUTHOR_LINKS, SITE } from "../site.ts";
+
+export async function getStaticPaths() {
+  const posts = await allPosts();
+  return [
+    ...posts.map((post) => ({ params: { slug: post.url.slice(1) }, props: { post } })),
+    ...posts.flatMap((post) =>
+      post.aliases.map((alias) => ({ params: { slug: alias.replace(/^\/|\/$/g, "") }, props: { redirect: post.url } })),
+    ),
+  ];
+}
+
+type Props = { post: Post; redirect?: undefined } | { post?: undefined; redirect: string };
+
+const { post, redirect } = Astro.props;
+const target = redirect && new URL(redirect, SITE.url).href;
+
+const rendered = post && (await renderPost(post));
+// Components posts use without importing them.
+const components = { Set: SetWords, Show, Var, Viz };
+const external = (href: string) => (isExternal(href) ? { target: "_blank", rel: "noopener noreferrer" } : {});
+// A post by the site's author alone needs no byline.
+const byline = post && post.authors.join(",") !== SITE.author ? post.authors : [];
+const started = post && isoDate(post.date);
+const updated = post && isoDate(post.lastmod);
+const history = post && `${SITE.repo}/commits/main/${post.source}`;
+---
+
+{
+  target ? (
+    <html lang="en">
+      <head>
+        <title>{target}</title>
+        <link rel="canonical" href={target} />
+        <meta charset="utf-8" />
+        <meta http-equiv="refresh" content={`0; url=${target}`} />
+      </head>
+    </html>
+  ) : (
+    post &&
+    rendered && (
+      <Base
+        title={post.title}
+        description={post.description}
+        authors={post.authors}
+        noindex={post.noindex}
+        dropCap={hasDropCap(post, rendered)}
+        hasMath={rendered.hasMath}
+        typstCss={rendered.typstCss}
+      >
+        {rendered.headings.length >= 2 && <Toc slot="sidebar" headings={rendered.headings} />}
+        <article class="post">
+          <h1>{post.title}</h1>
+          <p class="post-meta">
+            {post.status !== "finished" && (
+              <>
+                <span class="post-status">{post.status}</span> ·{" "}
+              </>
+            )}
+            {byline.length > 0 && (
+              <>
+                By{" "}
+                <span class="post-author">
+                  {byline.map((name, i) => (
+                    <>
+                      {i > 0 && ", "}
+                      {AUTHOR_LINKS[name] ? (
+                        <a href={AUTHOR_LINKS[name]} {...external(AUTHOR_LINKS[name])}>
+                          {name}
+                        </a>
+                      ) : (
+                        name
+                      )}
+                    </>
+                  ))}
+                </span>{" "}
+                ·{" "}
+              </>
+            )}
+            {post.status !== "finished" && "Started "}
+            <time datetime={started}>{longDate(post.date)}</time>
+            {updated! > started! && (
+              <>
+                {" "}
+                · Updated <time datetime={updated}>{longDate(post.lastmod)}</time>
+              </>
+            )}{" "}
+            · <a href={post.sourceUrl}>source</a> ·{" "}
+            <a href={history} {...external(history!)}>
+              history
+            </a>
+          </p>
+          {post.tags.length > 0 && (
+            <ul class="post-tags">
+              {post.tags.map((tag) => (
+                <li>
+                  <a href={`/tags/${tag}`}>{tag}</a>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div class:list={["post-content", { "drop-cap": hasDropCap(post, rendered) }]}>
+            <rendered.Content components={components} />
+          </div>
+        </article>
+      </Base>
+    )
+  )
+}

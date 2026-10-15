@@ -1,0 +1,22 @@
+---
+// A shared value, inline in the prose: one a Var declares, or one a figure
+// publishes, by name and then keys into it.
+//
+//   <Show path="n" />
+//   <Show path="qk.France.Paris" format=".2f" />
+//   <Show path="qk.France.Paris" format=".1%" fallback="a high score" />
+//
+// Readers without JavaScript see the fallback, or a Var's starting value
+// when the Var comes earlier in the post (src/lib/markdown/remark-viz.ts).
+interface Props {
+  path: string;
+  format?: string;
+  fallback?: string;
+}
+
+const { path, format = "", fallback = "…" } = Astro.props;
+---
+
+<span class="viz-inline" data-viz="show" data-props={JSON.stringify({ path, format, fallback })}>{fallback}</span><script>
+  import "../../viz/client.ts";
+</script>

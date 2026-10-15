@@ -1,0 +1,44 @@
+---
+// A list of books from data/books.json. Reviews are written in Markdown.
+import { renderMarkdown } from "../lib/markdown/index.ts";
+
+export type Book = {
+  title: string;
+  author: string;
+  status: "to-read" | "reading" | "read" | "abandoned";
+  rating: number | null;
+  added: string;
+  started: string | null;
+  finished: string | null;
+  tags: string[];
+  review: string | null;
+};
+
+interface Props {
+  books: Book[];
+}
+
+const { books } = Astro.props;
+const reviews = await Promise.all(books.map((b) => (b.review ? renderMarkdown(b.review, `data/books.json (${b.title})`) : null)));
+---
+
+<ul class="book-list">
+  {
+    books.map((book, i) => (
+      <li>
+        <span class="book-title">{book.title}</span> <span class="book-author">{book.author}</span>
+        {book.tags.includes("favourite") && (
+          <span class="book-favourite" title="Favourite">
+            ♥
+          </span>
+        )}
+        {book.rating && (
+          <span class="book-rating" title={`${book.rating} out of 10`}>
+            {book.rating}/10
+          </span>
+        )}
+        {reviews[i] && <div class="book-review" set:html={reviews[i]} />}
+      </li>
+    ))
+  }
+</ul>

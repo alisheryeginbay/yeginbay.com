@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 // Exports the reading list kept in ~/org/reading.org to data/books.json,
-// which layouts/books.html renders. The org file lives outside the repo, so
+// which src/pages/books.astro renders. The org file lives outside the repo, so
 // the JSON is committed and the site builds without it.
 //
 //   bun run books [path/to/reading.org]
@@ -8,12 +8,13 @@
 // Each book is a top-level heading: a state keyword, the title and optional
 // tags, then a property drawer with AUTHOR, RATING (1-10 or empty),
 // DATE_ADDED, and optionally DATE_STARTED and DATE_READ. Only the body of the
-// "** Review" subheading is published; "** Close Reading" stays private.
+// "** Review" subheading is published, converted to Markdown; "** Close
+// Reading" stays private.
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { ROOT } from "./site.ts";
 
+const ROOT = path.resolve(import.meta.dirname, "..");
 const DEFAULT_SOURCE = path.join(os.homedir(), "org", "reading.org");
 const OUT_FILE = path.join(ROOT, "data", "books.json");
 
@@ -126,7 +127,7 @@ function parse(text: string) {
       started,
       finished,
       tags,
-      review: section(entry.slice(end + 1), "Review"),
+      review: markdown(section(entry.slice(end + 1), "Review")),
     });
   }
 
@@ -148,6 +149,25 @@ function section(lines: string[], name: string): string | null {
   const end = rest.findIndex((line) => /^\*{1,2} /.test(line));
   const body = (end === -1 ? rest : rest.slice(0, end)).join("\n").trim();
   return body || null;
+}
+
+// Org markup to Markdown, for the little a review uses: links, emphasis
+// and code. Lists are written alike in both.
+function markdown(org: string | null): string | null {
+  if (org === null) return null;
+  const keep: string[] = [];
+  const put = (s: string) => `\u0000${keep.push(s) - 1}\u0000`;
+  // Org emphasis: a marker after the start of a line, whitespace or opening
+  // punctuation, around text that doesn't start or end with whitespace.
+  const marked = (marker: string) =>
+    new RegExp(`(^|[\\s('"{\u0000-])${marker}(\\S|\\S.*?\\S)${marker}(?=[\\s.,;:!?')}"\u0000-]|$)`, "gm");
+  let text = org.replace(/\[\[([^\]]+)\](?:\[(.+?)\])?\]/g, (_, url: string, desc?: string) => put(`[${desc ?? url}](${url})`));
+  for (const marker of ["~", "="]) text = text.replace(marked(marker), (_, pre, body) => pre + put("`" + body + "`"));
+  for (const [marker, md] of [["\\*", "**"], ["/", "*"], ["\\+", "~~"]]) {
+    text = text.replace(marked(marker), (_, pre, body) => pre + put(md + body + md));
+  }
+  for (let n = 0; n < 3; n++) text = text.replace(/\u0000(\d+)\u0000/g, (_, k) => keep[Number(k)]);
+  return text;
 }
 
 async function main() {

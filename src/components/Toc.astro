@@ -1,0 +1,36 @@
+---
+// A post's table of contents, from its headings (h2 and deeper). The
+// shallowest heading level in the post is the top of the list, and a heading
+// never nests more than one level below the one before it. Render it only
+// for a post with two headings or more.
+import type { Heading } from "../lib/markdown/index.ts";
+
+interface Props {
+  headings: Heading[];
+}
+
+const { headings } = Astro.props;
+
+const escape = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+const min = Math.min(...headings.map((h) => h.depth));
+let list = "";
+let depth = 0;
+for (const h of headings) {
+  const level = Math.min(h.depth - min + 1, depth + 1);
+  if (level > depth) list += "<ol><li>";
+  else list += "</li></ol>".repeat(depth - level) + "</li><li>";
+  depth = level;
+  list += `<a href="#${escape(h.slug)}">${escape(h.text)}</a>`;
+}
+list += "</li></ol>".repeat(depth);
+---
+
+<nav class="toc" aria-labelledby="toc-title">
+  <span class="toc-title" id="toc-title">Contents</span>
+  <Fragment set:html={list} />
+</nav>
+
+<script>
+  import "../scripts/toc-current.ts";
+</script>

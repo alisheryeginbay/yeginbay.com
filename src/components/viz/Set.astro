@@ -1,0 +1,16 @@
+---
+// Words in the prose that set shared values when clicked, for pointing a
+// figure at something the text talks about:
+//
+//   <Set qk_head="L10H2">L10H2</Set>
+//
+// Every prop is a value to set, by name.
+type Props = Record<string, string | number | boolean>;
+
+const html = (await Astro.slots.render("default")).trim();
+const props = { html, to: Astro.props };
+---
+
+<span class="viz-inline" data-viz="set" data-props={JSON.stringify(props)} set:html={html} /><script>
+  import "../../viz/client.ts";
+</script>

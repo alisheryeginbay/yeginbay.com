@@ -1,3 +1,0 @@
-{{- /* Posts open with a Goudy initial, which only has the letters A to Z.
-       Set `dropcap: false` in front matter to opt a page out. */ -}}
-{{- return and (in site.Params.postSections .Section) (not (in (slice false "false") .Params.dropcap)) (findRE `^\s*[A-Za-z]` .Plain 1) -}}
