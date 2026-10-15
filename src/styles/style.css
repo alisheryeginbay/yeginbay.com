@@ -89,7 +89,7 @@
   /* The ends of colour scales in figures: above and below zero. */
   --viz-pos: #d74545;
   --viz-neg: #3b6fd6;
-  --max: 40rem;
+  --max: 46rem;
   --sidebar: 12rem;
   --sidenote: 14rem;
 }
@@ -623,7 +623,7 @@ input.margin-toggle { display: none; }
 
 /* The main column is at full width here and the right column is at least
    as wide as a note. */
-@media (min-width: 77rem) {
+@media (min-width: 83rem) {
   .sidenote {
     display: block;
     float: right;
@@ -671,7 +671,7 @@ input.margin-toggle { display: none; }
 }
 
 /* Reaches into the margin on the right, where sidenotes go. */
-@media (min-width: 77rem) {
+@media (min-width: 83rem) {
   .viz-wide { margin-right: calc(-1 * (var(--sidenote) + 3rem)); }
 }
 
