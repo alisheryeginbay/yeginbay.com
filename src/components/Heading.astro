@@ -1,0 +1,31 @@
+---
+// A heading written in a page rather than in a post, with an id made from
+// its text, a link to itself and a button that copies the link, like the
+// headings of a post (src/lib/markdown/rehype-headings.ts).
+import type { Element } from "hast";
+import { fromHtml } from "hast-util-from-html";
+import { toHtml } from "hast-util-to-html";
+import { slug } from "github-slugger";
+import { anchorHeading } from "../lib/markdown/rehype-headings.ts";
+
+interface Props {
+  level: 2 | 3 | 4 | 5 | 6;
+  text: string;
+  // Shown in place of the text.
+  html?: string;
+  // Link through the § alone, as for a heading inside a <summary>.
+  unlinked?: boolean;
+}
+
+const { level, text, html, unlinked = false } = Astro.props;
+
+const node: Element = {
+  type: "element",
+  tagName: `h${level}`,
+  properties: { id: slug(text) },
+  children: html ? (fromHtml(html, { fragment: true }).children as Element[]) : [{ type: "text", value: text }],
+};
+anchorHeading(node, unlinked);
+---
+
+<Fragment set:html={toHtml(node)} />

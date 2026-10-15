@@ -1,4 +1,0 @@
-# Where each author's name links to in a post's byline. A name that isn't
-# here is shown without a link. Keys must match #+author: exactly.
-"Alisher Yeginbay" = "/"
-"Claude Opus 5.5" = "https://www.anthropic.com/claude"

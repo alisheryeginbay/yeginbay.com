@@ -1,0 +1,24 @@
+---
+// Every tag, by its newest post.
+import Base from "../../layouts/Base.astro";
+import { isoDate, longDate } from "../../lib/dates.ts";
+import { tags, tagTitle } from "../../lib/posts.ts";
+
+const all = [...(await tags())]
+  .map(([tag, posts]) => ({ tag, date: posts[0].date }))
+  .sort((a, b) => b.date.getTime() - a.date.getTime() || a.tag.localeCompare(b.tag));
+---
+
+<Base title="Tags">
+  <h1>Tags</h1>
+  <ul class="post-list">
+    {
+      all.map(({ tag, date }) => (
+        <li>
+          <a href={`/tags/${tag}`}>{tagTitle(tag)}</a>
+          <time datetime={isoDate(date)}>{longDate(date)}</time>
+        </li>
+      ))
+    }
+  </ul>
+</Base>

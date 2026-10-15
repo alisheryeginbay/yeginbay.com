@@ -1,0 +1,128 @@
+# Interactive figures
+
+Svelte components that draw figures in posts, and the shared values that let
+the prose and figures talk to each other.
+
+## How it fits together
+
+- `components/<name>.svelte`: one per figure or prose control. `<name>` is
+  what a post writes in `is="<name>"`.
+- `ui/`: the parts components are built from (`Controls`, `Select`,
+  `Button`, `Status`, `Heatmap`, `Scrubber`, `Choice`, colour scales, number
+  formats).
+- `store.svelte.ts`: the page's shared values, and `publish` for values a
+  figure offers to the prose.
+- `data.svelte.ts`: `fetched(() => src)` loads JSON once per page, however
+  many figures read it.
+- `mount.svelte.ts`: sets up the shared values (the prose's defaults, then
+  the address), draws each component, and keeps the address in step.
+- `prose.ts`: what a `<Var>` holds before the reader touches it, shared by
+  the build and the page.
+
+Posts place components with `<Viz>`, `<Var>`, `<Set>` and `<Show>`
+(`src/components/viz/`), which leave an element naming the component and
+holding its props as JSON. `client.ts` runs `mount.svelte.ts` over them, and
+each component's code is loaded only by pages that use it. Components bring
+their styles with them (`svelte.config.js`).
+
+## Adding a component
+
+1. Run `bun run dev`.
+
+2. Create `components/<name>.svelte`, lowercase, starting with a comment
+   listing its props:
+
+   ```svelte
+   <!--
+     A distribution you can reshape by dragging its mean.
+
+       src    JSON with `samples`
+       mean   the mean shown; bindable
+       name   publishes the current variance as `name`
+   -->
+   <script lang="ts">
+     import { untrack } from "svelte";
+     import { fetched } from "../data.svelte.ts";
+     import { publish } from "../store.svelte.ts";
+     import Status from "../ui/Status.svelte";
+
+     let { src, mean = $bindable(), name }: { src: string; mean?: number | string; name?: string } = $props();
+
+     const data = fetched<{ samples: number[] }>(() => src);
+     // What's shown: the bound value, or a fallback until there is one.
+     const shownMean = $derived(mean === undefined ? 0 : Number(mean));
+     const variance = $derived(/* … */);
+
+     // A figure's name is set once, by the post.
+     untrack(() => {
+       if (name) publish(name, () => variance);
+     });
+   </script>
+
+   {#if data.current}
+     <!-- SVG, canvas, controls; assign to `mean` when the reader changes it -->
+     <Status>mean {shownMean}</Status>
+   {/if}
+
+   <style>
+     /* Scoped to this component. */
+   </style>
+   ```
+
+3. Put its data in `public/data/<post>/`, or in the post's bundle.
+
+4. Use it in the post:
+
+   ```mdx
+   <Viz is="distribution" src="/data/my-post/samples.json" mean="$mu" name="dist" />
+
+   Drag the mean to <Var name="mu" value={0} min={-3} max={3} step={0.1} />; the
+   variance is now <Show path="dist" format=".2f" />.
+   ```
+
+   `width="wide"` lets a figure reach into the sidenote margin, and
+   `caption="…"` gives it a caption. Posts use these without importing them.
+
+## In the prose
+
+| Component | Does |
+|---|---|
+| `<Viz is="…" prop="$name" />` | A figure. A prop starting with `$` is bound to that shared value. |
+| `<Var name="n" value={3} min={1} max={10} />` | A number the reader drags. `options="a,b"` (or `"$published_list"`) makes a choice, `labels="on,off"` a toggle. |
+| `<Set head="L10H2">L10H2</Set>` | Words that set values when clicked. |
+| `<Show path="qk.France.Paris" format=".2f" />` | A live value: a name, then keys into it. Formats: `.2f`, `.1%`, or none. |
+
+Values the reader changes go into the address (`?head=L10H6`), so a view
+can be shared. The build fails when a `<Show>` or `<Set>` names a value
+nothing on the page provides (`src/lib/markdown/remark-viz.ts`).
+
+## Conventions
+
+- Props from posts are strings, or numbers when written as `{3}`. Convert
+  them, don't trust their type.
+- To share a prop with the prose, declare it `$bindable()`, derive what's
+  shown from it with a fallback for when it's unset or invalid, and assign
+  to it only when the reader does something. Writing defaults back fills
+  the address with values nobody chose. `attention.svelte` shows the
+  pattern.
+- Publish with a `name` prop and `publish()` inside `untrack`. Further
+  values go under `name_something`, which the build check accepts.
+- Reach for `ui/` first, and move anything a second component could use
+  there.
+- Colour with the site's tokens: `--fg`, `--muted`, `--rule`, `--link`,
+  `--highlight`, `--code-bg`, and `--viz-pos`/`--viz-neg` for scales.
+- Respect `prefersReducedMotion` from `svelte/motion` in any animation.
+- Components that sit inside a sentence must not leave whitespace at the
+  edges of their markup, or the prose gets stray spaces.
+- Figures are drawn as they near the screen; ones with a `name` are drawn
+  straight away, for the prose that shows their values, so keep those cheap
+  to start.
+
+## Before committing
+
+1. Add an example to `content/posts/test.mdx`.
+2. `bun run typecheck` (`tsc` and `svelte-check`, which should report no
+   warnings).
+3. `bun run build`.
+4. Check it at phone width.
+5. Commit the component and the post that uses it separately.

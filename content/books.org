@@ -1,4 +1,0 @@
-#+title: Books
-#+layout: books
-
-Books I'm reading, have read, and want to read. Ratings are out of 10.

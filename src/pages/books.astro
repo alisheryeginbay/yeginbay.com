@@ -1,0 +1,85 @@
+---
+// The reading list in data/books.json, which scripts/export-books.ts makes
+// from ~/org/reading.org, under the prose in content/pages/books.mdx.
+import { getEntry, render } from "astro:content";
+import data from "../../data/books.json";
+import BookList, { type Book } from "../components/BookList.astro";
+import Heading from "../components/Heading.astro";
+import Base from "../layouts/Base.astro";
+import { longDate } from "../lib/dates.ts";
+
+const page = (await getEntry("pages", "books"))!;
+const { Content } = await render(page);
+
+const books = data.books as Book[];
+const withStatus = (status: Book["status"]) => books.filter((b) => b.status === status);
+const reading = withStatus("reading");
+const read = withStatus("read");
+const abandoned = withStatus("abandoned");
+const toRead = withStatus("to-read");
+
+// Read books by the year they were finished, newest first, then the undated.
+const dated = read.filter((b) => b.finished);
+const years = [...new Set(dated.map((b) => b.finished!.slice(0, 4)))];
+const undated = read.filter((b) => !b.finished);
+const updated = data.updated ? new Date(`${data.updated}T00:00:00Z`) : undefined;
+---
+
+<Base title={page.data.title}>
+  <article class="post">
+    <h1>{page.data.title}</h1>
+    {updated && <time datetime={data.updated}>Last updated {longDate(updated)}</time>}
+    <div class="post-content">
+      <Content />
+
+      {
+        reading.length > 0 && (
+          <>
+            <Heading level={2} text="Reading now" />
+            <BookList books={reading} />
+          </>
+        )
+      }
+
+      {
+        read.length > 0 && (
+          <>
+            <Heading level={2} text="Read" />
+            {years.map((year) => (
+              <>
+                <Heading level={3} text={year} />
+                <BookList books={dated.filter((b) => b.finished!.startsWith(`${year}-`))} />
+              </>
+            ))}
+            {undated.length > 0 && (
+              <>
+                <Heading level={3} text="Undated" />
+                <BookList books={undated} />
+              </>
+            )}
+          </>
+        )
+      }
+
+      {
+        abandoned.length > 0 && (
+          <>
+            <Heading level={2} text="Abandoned" />
+            <BookList books={abandoned} />
+          </>
+        )
+      }
+
+      {
+        toRead.length > 0 && (
+          <details class="book-shelf">
+            <summary>
+              <Heading level={2} text="Want to read" html={`Want to read <span class="book-count">${toRead.length}</span>`} unlinked />
+            </summary>
+            <BookList books={toRead} />
+          </details>
+        )
+      }
+    </div>
+  </article>
+</Base>

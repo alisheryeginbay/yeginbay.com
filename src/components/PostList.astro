@@ -1,0 +1,30 @@
+---
+// A list of posts with their dates: when they were started, or with
+// `updated`, when they last changed.
+import { isoDate, longDate } from "../lib/dates.ts";
+import type { Post } from "../lib/posts.ts";
+
+interface Props {
+  posts: Post[];
+  updated?: boolean;
+}
+
+const { posts, updated = false } = Astro.props;
+---
+
+<ul class="post-list">
+  {
+    posts.map((post) => {
+      const date = updated ? post.lastmod : post.date;
+      return (
+        <li>
+          <a href={post.url}>{post.title}</a>
+          <time datetime={isoDate(date)}>
+            {updated && "updated "}
+            {longDate(date)}
+          </time>
+        </li>
+      );
+    })
+  }
+</ul>
