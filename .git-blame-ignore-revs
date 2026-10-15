@@ -2,3 +2,6 @@
 # skips them (with `git config blame.ignoreRevsFile .git-blame-ignore-revs`),
 # GitHub's blame view does too, and so does a post's "Updated" date
 # (src/lib/git.ts).
+
+# Migration from Hugo and Org to Astro and MDX
+07b5df5b7ec9f45b6a7a6293f1d0b0406b82138b
