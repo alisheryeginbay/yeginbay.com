@@ -17,7 +17,7 @@ import subsetFont from "subset-font";
 const ROOT = path.resolve(import.meta.dirname, "..");
 const FONT_DIR = path.join(ROOT, "src", "assets", "fonts");
 const OUT_DIR = path.join(FONT_DIR, "subset");
-const SCAN = ["content", "data", "src/pages", "src/components", "src/layouts", "src/site.ts"];
+const SCAN = ["content", "src/pages", "src/components", "src/layouts", "src/site.ts"];
 const WEIGHTS = [400, 600];
 
 // Jamo, compatibility jamo, extended jamo and syllables: the same ranges as the
