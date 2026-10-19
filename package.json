@@ -7,7 +7,6 @@
     "build": "bun scripts/subset-korean.ts && astro build",
     "preview": "astro preview",
     "new": "bun scripts/new-post.ts",
-    "books": "bun scripts/export-books.ts",
     "typecheck": "astro check && svelte-check --tsconfig ./tsconfig.json --threshold warning"
   },
   "dependencies": {

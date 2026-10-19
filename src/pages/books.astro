@@ -1,34 +1,39 @@
 ---
-// The reading list in data/books.json, which scripts/export-books.ts makes
-// from ~/org/reading.org, under the prose in content/pages/books.mdx.
+// The reading list declared in the front matter of content/pages/books.mdx,
+// under the prose of that page. Books are sorted and grouped here.
 import { getEntry, render } from "astro:content";
-import data from "../../data/books.json";
-import BookList, { type Book } from "../components/BookList.astro";
+import BookList from "../components/BookList.astro";
 import Heading from "../components/Heading.astro";
+import type { Book } from "../content.config.ts";
 import Base from "../layouts/Base.astro";
-import { longDate } from "../lib/dates.ts";
+import { isoDate, longDate } from "../lib/dates.ts";
+import { lastCommitDate } from "../lib/git.ts";
 
 const page = (await getEntry("pages", "books"))!;
 const { Content } = await render(page);
+const updated = lastCommitDate("content/pages/books.mdx");
 
-const books = data.books as Book[];
+const books = page.data.books ?? [];
+// Within a section, the order the books are listed in, except that finished
+// books go newest first.
+const byFinished = (a: Book, b: Book) => (b.finished?.getTime() ?? 0) - (a.finished?.getTime() ?? 0);
 const withStatus = (status: Book["status"]) => books.filter((b) => b.status === status);
 const reading = withStatus("reading");
-const read = withStatus("read");
-const abandoned = withStatus("abandoned");
+const abandoned = withStatus("abandoned").sort(byFinished);
 const toRead = withStatus("to-read");
 
 // Read books by the year they were finished, newest first, then the undated.
+const read = withStatus("read").sort(byFinished);
+const year = (b: Book) => String(b.finished!.getUTCFullYear());
 const dated = read.filter((b) => b.finished);
-const years = [...new Set(dated.map((b) => b.finished!.slice(0, 4)))];
+const years = [...new Set(dated.map(year))];
 const undated = read.filter((b) => !b.finished);
-const updated = data.updated ? new Date(`${data.updated}T00:00:00Z`) : undefined;
 ---
 
 <Base title={page.data.title}>
   <article class="post">
     <h1>{page.data.title}</h1>
-    {updated && <time datetime={data.updated}>Last updated {longDate(updated)}</time>}
+    {updated && <time datetime={isoDate(updated)}>Last updated {longDate(updated)}</time>}
     <div class="post-content">
       <Content />
 
@@ -45,10 +50,10 @@ const updated = data.updated ? new Date(`${data.updated}T00:00:00Z`) : undefined
         read.length > 0 && (
           <>
             <Heading level={2} text="Read" />
-            {years.map((year) => (
+            {years.map((y) => (
               <>
-                <Heading level={3} text={year} />
-                <BookList books={dated.filter((b) => b.finished!.startsWith(`${year}-`))} />
+                <Heading level={3} text={y} />
+                <BookList books={dated.filter((b) => year(b) === y)} />
               </>
             ))}
             {undated.length > 0 && (

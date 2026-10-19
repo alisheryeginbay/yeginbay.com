@@ -497,13 +497,6 @@ main { min-height: 60vh; padding-bottom: 3rem; }
 
 .book-favourite { color: var(--link); }
 
-.book-review {
-  font-size: 0.95rem;
-  margin: 0.25rem 0 0.5rem;
-}
-
-.book-review p { margin: 0.25rem 0; }
-
 .book-shelf summary {
   cursor: pointer;
   margin-top: 2rem;

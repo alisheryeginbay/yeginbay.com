@@ -1,33 +1,20 @@
 ---
-// A list of books from data/books.json. Reviews are written in Markdown.
-import { renderMarkdown } from "../lib/markdown/index.ts";
-
-export type Book = {
-  title: string;
-  author: string;
-  status: "to-read" | "reading" | "read" | "abandoned";
-  rating: number | null;
-  added: string;
-  started: string | null;
-  finished: string | null;
-  tags: string[];
-  review: string | null;
-};
+// A list of books from the front matter of content/pages/books.mdx.
+import type { Book } from "../content.config.ts";
 
 interface Props {
   books: Book[];
 }
 
 const { books } = Astro.props;
-const reviews = await Promise.all(books.map((b) => (b.review ? renderMarkdown(b.review, `data/books.json (${b.title})`) : null)));
 ---
 
 <ul class="book-list">
   {
-    books.map((book, i) => (
+    books.map((book) => (
       <li>
         <span class="book-title">{book.title}</span> <span class="book-author">{book.author}</span>
-        {book.tags.includes("favourite") && (
+        {book.favourite && (
           <span class="book-favourite" title="Favourite">
             ♥
           </span>
@@ -37,7 +24,6 @@ const reviews = await Promise.all(books.map((b) => (b.review ? renderMarkdown(b.
             {book.rating}/10
           </span>
         )}
-        {reviews[i] && <div class="book-review" set:html={reviews[i]} />}
       </li>
     ))
   }
