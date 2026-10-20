@@ -1,0 +1,83 @@
+---
+// A photo on its own, with its title, date, place and caption, and links to
+// the photos either side of it in the grid.
+import { env } from "cloudflare:workers";
+import Base from "../../layouts/Base.astro";
+import { isoDate, longDate } from "../../lib/dates.ts";
+import {
+  CACHE_SECONDS,
+  fullSrcset,
+  getPhotos,
+  photoAlt,
+  photoDate,
+  photoTitle,
+  placeholder,
+  transitionName,
+  type Photo,
+} from "../../lib/photos.ts";
+
+export const prerender = false;
+
+const photos = await getPhotos();
+const index = photos.findIndex((p) => p.slug === Astro.params.slug);
+// The site's 404 page is built ahead of time, so it comes from the static
+// files rather than from a rewrite.
+if (index === -1) {
+  const page = await env.ASSETS.fetch(new URL("/404", Astro.url));
+  return new Response(page.body, { status: 404, headers: { "Content-Type": "text/html; charset=utf-8" } });
+}
+
+const photo = photos[index];
+// The grid runs newest first, so the previous photo is the newer one.
+const newer: Photo | undefined = photos[index - 1];
+const older: Photo | undefined = photos[index + 1];
+const date = photoDate(photo);
+// "claude-opus-5-5" as "Claude Opus 5.5".
+const model = photo.ai.model
+  ?.replace(/-(\d+)-(\d+)$/, " $1.$2")
+  .split("-")
+  .map((w) => w[0].toUpperCase() + w.slice(1))
+  .join(" ");
+
+Astro.response.headers.set("Cache-Control", `public, max-age=${CACHE_SECONDS}`);
+---
+
+<Base title={photoTitle(photo)} description={photo.caption ?? photo.alt ?? undefined}>
+  <article class="post photo">
+    <h1>{photoTitle(photo)}</h1>
+    <p class="post-meta">
+      <time datetime={isoDate(date)}>{longDate(date)}</time>
+      {photo.location && <span class="photo-location">{photo.location}</span>}
+    </p>
+    {
+      photo.title && photo.ai.title && (
+        <p class="post-meta photo-ai">
+          <a href="/ai-disclosure">Title suggested by {model ?? "AI"}</a>
+        </p>
+      )
+    }
+    <figure>
+      <img
+        class="photo-full"
+        srcset={fullSrcset(photo, [640, 1280, 2048])}
+        sizes="(min-width: 52rem) 46rem, 100vw"
+        width={photo.width}
+        height={photo.height}
+        alt={photoAlt(photo)}
+        fetchpriority="high"
+        style={`--ratio: ${photo.width / photo.height}; background-image: url(${placeholder(photo)}); view-transition-name: ${transitionName(photo)}`}
+      />
+      {photo.caption && <figcaption>{photo.caption}</figcaption>}
+    </figure>
+    <nav class="photo-nav" aria-label="More photos">
+      {newer ? <a href={`/photos/${newer.slug}`} rel="prev">← {photoTitle(newer)}</a> : <span />}
+      <a href="/photos">All photos</a>
+      {older ? <a href={`/photos/${older.slug}`} rel="next">{photoTitle(older)} →</a> : <span />}
+    </nav>
+  </article>
+</Base>
+
+<style is:global>
+  /* Animate between the grid and a photo's page in browsers that can. */
+  @view-transition { navigation: auto; }
+</style>

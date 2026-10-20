@@ -10,3 +10,6 @@
 *~
 \#*\#
 .\#*
+
+# Local state from the Cloudflare adapter and wrangler.
+.wrangler/

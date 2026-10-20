@@ -1,7 +1,10 @@
 name = "yeginbay-com"
 compatibility_date = "2026-08-16"
 
+# Built files are served as they are. The photo pages are rendered by the
+# Worker that @astrojs/cloudflare builds, so they go to it first: otherwise a
+# browser visiting one would get the 404 page, since there's no file for it.
 [assets]
-directory = "dist"
 html_handling = "drop-trailing-slash"
 not_found_handling = "404-page"
+run_worker_first = ["/photos", "/photos/*"]

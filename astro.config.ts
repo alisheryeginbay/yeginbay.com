@@ -1,3 +1,4 @@
+import cloudflare from "@astrojs/cloudflare";
 import mdx from "@astrojs/mdx";
 import { unified } from "@astrojs/markdown-remark";
 import svelte from "@astrojs/svelte";
@@ -50,6 +51,12 @@ export default defineConfig({
   site: SITE.url,
   // Pages are served without a trailing slash (wrangler.toml).
   build: { format: "directory" },
+  // Pages are built ahead of time; only those that opt out with
+  // `prerender = false` (the photos, read from their manifest on each
+  // request) run in the Worker. Pages are built in Node, where they can read
+  // files and git history, and their images are optimized as they're built.
+  adapter: cloudflare({ prerenderEnvironment: "node", imageService: "compile" }),
+  session: false,
   integrations: [mdx(), svelte(), mdRedirects],
   markdown: {
     processor: unified({ remarkPlugins, rehypePlugins, smartypants }),

@@ -10,6 +10,7 @@ export async function GET() {
     ["/", newest(posts)],
     ["/writings", newest(posts)],
     ["/books", undefined],
+    ["/photos", undefined],
     ["/posts", newest(posts.filter((p) => p.section === "posts"))],
     ["/proofs", newest(posts.filter((p) => p.section === "proofs"))],
     ["/tags", newest(posts)],
