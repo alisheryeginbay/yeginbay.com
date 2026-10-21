@@ -17,4 +17,5 @@ exclude = [
   '^https://([a-z0-9-]+\.)?medium\.com/',
   '^https://claude\.ai/',
   '^https://(www\.)?merriam-webster\.com/',
+  '^https://([a-z0-9-]+\.)?reddit\.com/',
 ]
