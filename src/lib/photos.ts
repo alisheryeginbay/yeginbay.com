@@ -50,6 +50,18 @@ export const photoTitle = (photo: Photo) => photo.title ?? longDate(photoDate(ph
 // Text for <img alt>: the description, or else the title.
 export const photoAlt = (photo: Photo) => photo.alt ?? photo.title ?? "";
 
+// The note on a title written by AI, naming the model: "claude-opus-5-5"
+// as "Claude Opus 5.5". Undefined when the title is mine.
+export function aiTitleNote(photo: Photo): string | undefined {
+  if (!photo.title || !photo.ai.title) return undefined;
+  const model = photo.ai.model
+    ?.replace(/-(\d+)-(\d+)$/, " $1.$2")
+    .split("-")
+    .map((w) => w[0].toUpperCase() + w.slice(1))
+    .join(" ");
+  return `Title suggested by ${model ?? "AI"}`;
+}
+
 // A blurred preview shown while the photo loads.
 export function placeholder(photo: Photo): string {
   const hash = Uint8Array.from(atob(photo.thumbhash), (c) => c.charCodeAt(0));
@@ -67,9 +79,9 @@ export function resized(photo: Photo, options: Record<string, string | number>):
   return `${RESIZE}/${opts}/${photo.url}`;
 }
 
-// A square crop for the grid, at each width in `widths`.
+// The photo for the grid, uncropped, at each width in `widths`.
 export const thumbSrcset = (photo: Photo, widths: number[]) =>
-  widths.map((w) => `${resized(photo, { width: w, height: w, fit: "cover", quality: 80 })} ${w}w`).join(", ");
+  widths.map((w) => `${resized(photo, { width: w, fit: "scale-down", quality: 80 })} ${w}w`).join(", ");
 
 // The whole photo, never enlarged past its own size.
 export const fullSrcset = (photo: Photo, widths: number[]) =>
@@ -77,7 +89,3 @@ export const fullSrcset = (photo: Photo, widths: number[]) =>
     .filter((w, i) => w <= photo.width || i === 0)
     .map((w) => `${resized(photo, { width: Math.min(w, photo.width), fit: "scale-down", quality: 85 })} ${Math.min(w, photo.width)}w`)
     .join(", ");
-
-// The name that ties a photo in the grid to the same photo on its own page,
-// so the browser can animate between them.
-export const transitionName = (photo: Photo) => `photo-${photo.slug}`;

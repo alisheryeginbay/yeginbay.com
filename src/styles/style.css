@@ -685,18 +685,33 @@ input.margin-toggle { display: none; }
 
 /* Photos, from src/pages/photos/. Each photo shows its blurred preview
    (src/lib/photos.ts) until it loads. */
+/* Tiles in the 3:4 shape of most of the photos, with every so often one
+   taking a square of four (photo-big in src/pages/photos/index.astro). Dense
+   packing fills the holes a big tile leaves where it doesn't fit. A photo of
+   another shape is cropped to its tile. */
 .photo-grid {
+  --columns: 2;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(var(--columns), 1fr);
+  grid-auto-flow: dense;
   gap: 0.5rem;
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
-@media (min-width: 32rem) { .photo-grid { grid-template-columns: repeat(3, 1fr); } }
+/* On a phone every photo takes one tile. */
+@media (min-width: 32rem) {
+  .photo-grid { --columns: 4; }
+
+  .photo-grid .photo-big {
+    grid-column: span 2;
+    grid-row: span 2;
+  }
+}
+
 @media (min-width: 52rem) {
-  .photo-grid { grid-template-columns: repeat(4, 1fr); }
+  .photo-grid { --columns: 6; }
 
   /* The grid spans the whole page, beyond the text column, while the
      heading stays in line with the header. */
@@ -713,7 +728,7 @@ input.margin-toggle { display: none; }
   main:has(> .photo-grid) > .photo-grid { grid-column: 1 / -1; }
 }
 
-.photo-grid a { display: block; }
+.photo-grid a { display: block; height: 100%; }
 
 .photo-grid img,
 .photo-full {
@@ -724,9 +739,15 @@ input.margin-toggle { display: none; }
 
 .photo-grid img {
   width: 100%;
-  height: auto;
-  aspect-ratio: 1;
+  height: 100%;
+  aspect-ratio: 3 / 4;
   object-fit: cover;
+}
+
+/* A big tile fills its two rows; the gap between them makes it a touch
+   taller than 3:4. */
+@media (min-width: 32rem) {
+  .photo-grid .photo-big img { aspect-ratio: auto; }
 }
 
 .photo-grid a:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
@@ -766,8 +787,105 @@ input.margin-toggle { display: none; }
 .photo-nav a:hover { text-decoration: underline; }
 .photo-nav [rel="next"] { text-align: right; }
 
+/* A photo opened over the grid (src/scripts/lightbox.ts): the photo as large
+   as the window allows, on the dark of the text colour, with its title,
+   caption and a link to its own page underneath. */
+html:has(dialog.lightbox[open]) { overflow: hidden; }
+
+.lightbox {
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--fg);
+  color: var(--bg);
+  display: none;
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.lightbox[open] { display: grid; animation: lightbox-in 150ms ease-out; }
+.lightbox::backdrop { background: var(--fg); }
+
+@keyframes lightbox-in { from { opacity: 0; } }
+
+.lightbox-stage {
+  container-type: size;
+  display: grid;
+  place-items: center;
+  padding: 1rem 3.5rem 0;
+}
+
+/* Fits the stage whatever the photo's shape (--ratio, width over height),
+   keeping its space, with the thumbnail behind it, before it loads. */
+.lightbox-stage img {
+  display: block;
+  width: min(100cqw, 100cqh * var(--ratio));
+  height: auto;
+  aspect-ratio: var(--ratio);
+  background-size: cover;
+  background-position: center;
+}
+
+.lightbox-info {
+  width: 100%;
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 0.75rem 1.25rem 1.25rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.lightbox-info p { margin: 0; }
+
+.lightbox-title {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.lightbox-ai,
+.lightbox-ai a { color: color-mix(in srgb, var(--bg) 60%, transparent); font-size: 0.8rem; }
+.lightbox-ai a { text-decoration: underline dashed; text-underline-offset: 0.2em; }
+
+.lightbox-info .lightbox-caption { font-style: italic; margin-top: 0.25rem; }
+
+.lightbox-page {
+  display: inline-block;
+  margin-top: 0.35rem;
+  color: var(--highlight);
+  font-size: 0.8rem;
+}
+
+.lightbox button {
+  position: absolute;
+  padding: 0.5rem 0.9rem;
+  border: 0;
+  background: none;
+  color: var(--bg);
+  font: 1.6rem/1 var(--font-body);
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.lightbox button:is(:hover, :focus-visible) { opacity: 1; }
+.lightbox button:focus-visible { outline: 2px solid var(--highlight); outline-offset: -2px; }
+.lightbox button[hidden] { display: none; }
+.lightbox-close { top: 0.5rem; right: 0.5rem; }
+.lightbox-prev,
+.lightbox-next { top: 50%; translate: 0 -50%; }
+.lightbox-prev { left: 0.25rem; }
+.lightbox-next { right: 0.25rem; }
+
+/* On a phone the photo takes the whole width; swipes move between photos. */
+@media (width < 32rem) {
+  .lightbox-stage { padding: 3rem 0 0; }
+  .lightbox :is(.lightbox-prev, .lightbox-next) { display: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(*),
-  ::view-transition-old(*),
-  ::view-transition-new(*) { animation: none; }
+  .lightbox[open] { animation: none; }
 }
