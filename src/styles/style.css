@@ -635,6 +635,14 @@ input.margin-toggle { display: none; }
 
 .post-content img { max-width: 100%; height: auto; }
 
+/* The photo on the home page, at the right with the text flowing around it. */
+.post-content .portrait {
+  float: right;
+  width: min(14rem, 40%);
+  margin: 0.3rem 0 1rem 1.5rem;
+  border-radius: 4px;
+}
+
 .post-content figure {
   margin: 1.5rem 0;
 }
