@@ -77,14 +77,14 @@
   --bg: #fdfdfc;
   --fg: #1a1a1a;
   --muted: #6b6b6b;
-  --link: #92406F;
-  --highlight: #C8AABF;
+  --link: #248F8F;
+  --highlight: #A8D2D2;
   --rule: #e4e4e0;
   --font-mono: "Source Code Pro", ui-monospace, Menlo, Consolas, monospace;
   /* Code sits on a pale warm grey, a step darker than the page. Keywords
-     take the plum of links; strings and numbers a muted moss green. */
+     take the teal of links; strings and numbers a muted moss green. */
   --code-bg: #f4f3ef;
-  --code-keyword: #92406F;
+  --code-keyword: #248F8F;
   --code-literal: #4d6b45;
   /* The ends of colour scales in figures: above and below zero. */
   --viz-pos: #d74545;
