@@ -74,18 +74,18 @@
   color-scheme: light;
   --font-heading: "Brygada 1918", "Source Han Serif KR", Georgia, "Times New Roman", serif;
   --font-body: "Source Serif 4", "Source Han Serif KR", Georgia, "Times New Roman", serif;
-  --bg: #fdfdfc;
+  --bg: #fdfdfd;
   --fg: #1a1a1a;
   --muted: #6b6b6b;
-  --link: #248F8F;
-  --highlight: #A8D2D2;
-  --rule: #e4e4e0;
+  --link: #4a4a4a;
+  --highlight: #d4d4d4;
+  --rule: #e4e4e4;
   --font-mono: "Source Code Pro", ui-monospace, Menlo, Consolas, monospace;
-  /* Code sits on a pale warm grey, a step darker than the page. Keywords
-     take the teal of links; strings and numbers a muted moss green. */
-  --code-bg: #f4f3ef;
-  --code-keyword: #248F8F;
-  --code-literal: #4d6b45;
+  /* Code sits on a pale grey, a step darker than the page. Keywords take
+     the dark grey of links; strings and numbers the muted grey. */
+  --code-bg: #f4f4f4;
+  --code-keyword: #4a4a4a;
+  --code-literal: #6b6b6b;
   /* The ends of colour scales in figures: above and below zero. */
   --viz-pos: #d74545;
   --viz-neg: #3b6fd6;
