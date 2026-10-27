@@ -26,6 +26,7 @@
 // turns a little as the pointer moves, or the phone tilts.
 import { GROOVES, type RecordShader } from "./record-shader.ts";
 import { scratcher, type Scratch } from "./scratch.ts";
+import type { SleeveShader } from "./sleeve-shader.ts";
 
 const turntable = document.querySelector<HTMLElement>(".turntable");
 
@@ -87,8 +88,16 @@ if (turntable) {
   // to a stop in about three.
   const spin = record.animate([{ rotate: "0turn" }, { rotate: "1turn" }], { duration: 1800, iterations: Infinity });
   spin.pause();
+  // Whether the record's off the platter, and so not turning.
+  let lifted = false;
   let speed = 0;
   let target = 0;
+  // How quickly the record comes up to speed, in seconds: pulled by the
+  // belt from a standstill, or caught up almost at once when it's set down
+  // on a platter that's already turning.
+  const BELT = 0.7;
+  const CATCH = 0.12;
+  let grip = BELT;
   let frame = 0;
   let last = 0;
 
@@ -155,11 +164,20 @@ if (turntable) {
   const tick = (now: number) => {
     frame = 0;
     if (hand) return;
+    // Off the platter while the song changes, the record keeps still.
+    if (lifted) {
+      speed = 0;
+      spin.pause();
+      return;
+    }
     const dt = Math.min((now - last) / 1000, 0.1);
     last = now;
-    if (target > speed) speed += (target - speed) * (1 - Math.exp(-dt / 0.7));
+    if (target > speed) speed += (target - speed) * (1 - Math.exp(-dt / grip));
     else speed = Math.max(0, speed - (0.1 + speed / 1.4) * dt);
-    if (Math.abs(target - speed) < 0.002) speed = target;
+    if (Math.abs(target - speed) < 0.002) {
+      speed = target;
+      grip = BELT;
+    }
     // An animation can't run backward for ever, so a record spun the wrong
     // way is turned by hand here until it's going forward again.
     if (speed < 0) {
@@ -193,7 +211,7 @@ if (turntable) {
 
   const motor = (on: boolean) => {
     target = on && !still.matches ? 1 : 0;
-    if (target && speed >= 0) spin.play();
+    if (target && speed >= 0 && !lifted) spin.play();
     run();
     paint();
   };
@@ -330,7 +348,7 @@ if (turntable) {
         down = true;
         playAudio();
       },
-      still.matches || there ? 0 : NEEDLE_MS,
+      still.matches || there ? 0 : Math.max(0, changeEnds - performance.now()) + NEEDLE_MS,
     );
   };
 
@@ -388,7 +406,7 @@ if (turntable) {
     const old = audio;
     audio = spare;
     spare = old;
-    select(index);
+    select(index, true);
     fading = old;
     level(audio, 0);
     playAudio();
@@ -507,41 +525,200 @@ if (turntable) {
       () => label.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 250, easing: "ease-out" }),
       () => {},
     );
+    printLabel(song.art!);
   };
 
-  // Changing records: the arm lifts, the record sinks below the deck,
-  // behind the title, fading into the page (style.css), and the new one
-  // rises from there. Changed again on the way, the record goes on down
-  // from wherever it's got to, and the newer one comes up.
+  // Changes the label under a copy of how it was, which fades away over
+  // `ms` once the new one's ready, so it never shows half-drawn or blank.
+  const relabel = (apply: () => void, ms: number) => {
+    const was = label.cloneNode() as HTMLImageElement;
+    label.after(was);
+    apply();
+    label
+      .decode()
+      .catch(() => {})
+      .then(() => was.animate([{ opacity: 1 }, { opacity: 0 }], { duration: ms, easing: "ease-in-out" }).finished)
+      .finally(() => was.remove());
+  };
+
+  // Where WebGPU works, the label is the cover printed on matte paper (src/
+  // scripts/sleeve-shader.ts), swapped in once it's ready.
+  const printLabel = (art: string) =>
+    sleeveShader?.label(art).then(
+      (src) => {
+        const printed = new Image();
+        printed.src = src;
+        return printed.decode().then(() => {
+          if (links[current].dataset.art === art && label.src !== src) relabel(() => (label.src = src), 400);
+        });
+      },
+      (e) => console.error(e),
+    );
+
+  // Changing records, seen from further back: the arm lifts and the
+  // player zooms out as the record's taken off, and the new song's sleeve
+  // comes up in front of it. The new record is drawn out of the sleeve's
+  // open side, to the right, as the sleeve is pulled to the left; then the
+  // sleeve drops away and the record goes onto the player as it zooms back
+  // in. Changed again on the way, everything goes on from wherever it's
+  // got to.
+  const platter = $(".platter");
+  const sleeve = $(".sleeve");
+  const sleeveArt = sleeve.querySelector("img")!;
+  // Where WebGPU works, the sleeve's cover is printed on board (src/
+  // scripts/sleeve-shader.ts), shown once it's drawn ("printed").
+  let sleeveShader: SleeveShader | null = null;
+  if ("gpu" in navigator)
+    import("./sleeve-shader.ts")
+      .then((m) => m.sleeveShader(sleeve.querySelector("canvas")!))
+      .then((s) => {
+        sleeveShader = s;
+        printLabel(links[current].dataset.art!);
+      }, (e) => console.error(e));
+  let printing = "";
+  const print = (url: string) => {
+    sleeve.classList.remove("printed");
+    printing = url;
+    sleeveShader?.setCover(url, () => printing === url).then(
+      (drawn) => drawn && sleeve.classList.add("printed"),
+      (e) => console.error(e),
+    );
+  };
+  const ZOOM = 0.55;
+  const CHANGE_MS = 2280;
+  // How far apart the sleeve and the record are pulled, each way: far
+  // enough that the record is all the way out before the sleeve goes.
+  const PULL = 0.47;
+  // As it's drawn out it rolls along the sleeve's edge, clockwise: the
+  // distance over the record's round, which is 0.92 of the deck across.
+  const ROLL = PULL / (0.92 * Math.PI);
+
+  // Turns the record by `turns` over `ms`, easing in and out with the
+  // slide, unless it's set down or the song changes again first.
+  const roll = (turns: number, ms: number, id: number) =>
+    new Promise<void>((done) => {
+      const from = performance.now();
+      let at = 0;
+      const step = (now: number) => {
+        if (id !== changing || !lifted) return done();
+        const t = Math.min(1, (now - from) / ms);
+        const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        turn((eased - at) * turns);
+        at = eased;
+        paint();
+        if (t < 1) requestAnimationFrame(step);
+        else done();
+      };
+      requestAnimationFrame(step);
+    });
+  const easeIn = "cubic-bezier(0.5, 0, 0.75, 0)";
+  const easeOut = "cubic-bezier(0.2, 0.8, 0.3, 1)";
+  const easeInOut = "cubic-bezier(0.65, 0, 0.35, 1)";
   let changing = 0;
-  const change = (song: DOMStringMap) => {
-    const id = ++changing;
-    const well = disc.parentElement!;
-    const depth = well.offsetHeight - disc.offsetTop;
-    const y = parseFloat(getComputedStyle(disc).translate.split(" ")[1] ?? "0") || 0;
-    for (const a of disc.getAnimations()) a.cancel();
-    turntable.classList.add("changing");
-    disc
-      .animate([{ translate: `0 ${y}px` }, { translate: `0 ${depth}px` }], {
-        duration: 380 * (1 - y / depth),
-        easing: "cubic-bezier(0.5, 0, 0.75, 0)",
-        fill: "forwards",
-      })
-      .finished.then(() => {
-        if (id !== changing) return;
-        dress(song);
-        disc
-          .animate([{ translate: `0 ${depth}px` }, { translate: "0 0" }], {
-            duration: 560,
-            easing: "cubic-bezier(0.2, 0.8, 0.3, 1)",
-          })
-          .finished.then(() => id === changing && turntable.classList.remove("changing"), () => {});
-        // Cancels the one that took it down, which held it there.
-        for (const a of disc.getAnimations().slice(0, -1)) a.cancel();
-      }, () => {});
+  // When the record will be back on the player.
+  let changeEnds = 0;
+
+  // Each of these also moves --lift, how high it's held over what's under
+  // it, which spreads and softens its shadow, and the sleeve --light, the
+  // sheen across its coating (style.css).
+  //
+  // Animates an element from where it is now (or `from`) to `target`, and
+  // holds it there. What it's been moved to so far stays put, in its style,
+  // until `rest` puts it back as it was.
+  const to = (el: HTMLElement, target: Keyframe, ms: number, easing: string, from?: Keyframe) => {
+    for (const a of el.getAnimations()) {
+      a.commitStyles();
+      a.cancel();
+    }
+    const style = getComputedStyle(el);
+    const start: Keyframe = from ?? {};
+    if (!from) for (const k in target) start[k] = style.getPropertyValue(k);
+    return el.animate([start, target], { duration: ms, easing, fill: "forwards" }).finished;
+  };
+  const rest = (el: HTMLElement) => {
+    for (const a of el.getAnimations()) a.cancel();
+    for (const k of ["opacity", "translate", "scale", "--lift", "--light", "--shade"]) el.style.removeProperty(k);
   };
 
-  const select = (index: number) => {
+  const change = async (song: DOMStringMap) => {
+    const id = ++changing;
+    const d = platter.offsetWidth;
+    changeEnds = performance.now() + CHANGE_MS;
+    turntable.classList.add("changing");
+    // Taken off, the record stops, and set down again it's brought up to
+    // speed, as when the turntable's started.
+    lifted = true;
+    speed = 0;
+    spin.pause();
+    // Printed while the record's taken off, so it's ready when the sleeve
+    // comes up.
+    const printed = Number(getComputedStyle(sleeve).opacity) > 0;
+    if (!printed) print(song.art!);
+    sleeveShader?.label(song.art!).catch(() => {});
+    try {
+      // Zoom out, and take the record off. A sleeve still out from a
+      // change cut short goes away first.
+      const zoom = to(platter, { scale: String(ZOOM) }, 650, easeInOut);
+      await Promise.all([
+        to(disc, { opacity: 0, translate: `0 ${0.12 * d}px`, "--lift": 0.6 }, 280, easeIn),
+        Number(getComputedStyle(sleeve).opacity) > 0 &&
+          to(sleeve, { opacity: 0, translate: `${-0.3 * d}px ${0.4 * d}px`, "--lift": 1 }, 220, easeIn),
+      ]);
+      if (id !== changing) return;
+
+      // The new sleeve comes up, with the new record in it.
+      if (printed) print(song.art!);
+      sleeveArt.src = song.art!;
+      sleeve.style.backgroundColor = song.bg ?? "";
+      dress(song);
+      await Promise.all([
+        to(sleeve, { opacity: 1, translate: "0 0", "--lift": 0.35, "--light": 0.3 }, 420, easeOut, {
+          opacity: 0,
+          translate: `0 ${0.3 * d}px`,
+          "--lift": 1,
+          "--light": 0,
+        }),
+        zoom,
+      ]);
+      if (id !== changing) return;
+
+      // All the way out of the sleeve.
+      // Inside the sleeve it has no shadow of its own; coming out, it casts
+      // one from the same height as the sleeve.
+      to(disc, { opacity: 1, translate: "0 0", "--lift": 0.35, "--shade": 0 }, 0, "linear");
+      await Promise.all([
+        to(sleeve, { translate: `${-PULL * d}px 0`, "--light": 0.65 }, 620, easeInOut),
+        to(disc, { translate: `${PULL * d}px 0`, "--shade": 1 }, 620, easeInOut),
+        roll(ROLL, 620, id),
+      ]);
+      if (id !== changing) return;
+
+      // The sleeve goes back down the way it came up, and once it's gone
+      // the record goes onto the player.
+      await to(sleeve, { opacity: 0, translate: `${-PULL * d}px ${0.3 * d}px`, "--lift": 1 }, 360, easeIn);
+      if (id !== changing) return;
+      const landed = Promise.all([
+        to(disc, { translate: "0 0", "--lift": 0 }, 600, easeOut),
+        to(platter, { scale: "1" }, 600, easeOut),
+      ]);
+      // It touches the platter a little before it's settled, and the
+      // platter, already turning, takes it up to speed at once.
+      await new Promise((r) => setTimeout(r, 300));
+      if (id !== changing) return;
+      lifted = false;
+      grip = CATCH;
+      run();
+      await landed;
+      if (id !== changing) return;
+      for (const el of [platter, disc, sleeve]) rest(el);
+      turntable.classList.remove("changing");
+    } catch {
+      // Cut short by the next change, which carries on from here.
+    }
+  };
+
+  // `mixed`, the record stays on, playing, and only its label changes.
+  const select = (index: number, mixed = false) => {
     unscratch();
     settle();
     if (winding) lift();
@@ -552,7 +729,8 @@ if (turntable) {
     links[index].setAttribute("aria-current", "true");
     current = index;
 
-    if (changed && !still.matches) change(song);
+    if (changed && mixed && !still.matches) relabel(() => dress(song), 900);
+    else if (changed && !still.matches) change(song);
     else dress(song);
     title.textContent = song.title!;
     artist.replaceChildren(`${song.artist} · `, Object.assign(document.createElement("i"), { textContent: song.album }));
@@ -567,7 +745,10 @@ if (turntable) {
     elapsed.textContent = "0:00";
     // The next cover, so the label changes at once when this song ends.
     const after = links[index + 1]?.dataset.art;
-    if (after) new Image().src = after;
+    if (after) {
+      new Image().src = after;
+      sleeveShader?.label(after).catch(() => {});
+    }
   };
 
   // The nearest song with a preview before (-1) or after (1) this one,
@@ -581,9 +762,41 @@ if (turntable) {
   };
 
   // Moves to a song, playing it from the start if the turntable is on.
+  // Changing records by hand, the needle comes up first, and the music
+  // with it; the next song starts once the new record's on and the arm's
+  // back down (start). The mix at the end of a song doesn't do this: it
+  // fades the next one in over the last.
+  const switchTo = (index: number) => {
+    if (index !== current && down && !still.matches) {
+      // The song that's on dies away on the spare deck as the needle comes
+      // up, rather than cutting off; the new one loads on the other.
+      const old = audio;
+      audio = spare;
+      spare = old;
+      hush(old);
+      lift();
+    }
+    select(index);
+  };
+
+  // Fades a deck out over a moment and stops it; at once without Web Audio.
+  const HUSH = 0.12;
+  const hush = (deck: HTMLAudioElement) => {
+    const gain = gains.get(deck)?.gain;
+    if (!gain || !context) return deck.pause();
+    gain.cancelScheduledValues(context.currentTime);
+    gain.setValueAtTime(gain.value, context.currentTime);
+    gain.linearRampToValueAtTime(0, context.currentTime + HUSH);
+    setTimeout(() => {
+      if (deck === audio) return;
+      deck.pause();
+      level(deck, 1);
+    }, HUSH * 1000 + 20);
+  };
+
   const go = (index: number) => {
     if (index === -1) return;
-    select(index);
+    switchTo(index);
     if (on) start();
   };
 
@@ -593,7 +806,7 @@ if (turntable) {
       e.preventDefault();
       wire();
       if (i === current && loaded()) return void toggle();
-      select(i);
+      switchTo(i);
       start();
     });
   }
@@ -694,7 +907,7 @@ if (turntable) {
   let held: { deg: number; offset: number } | null = null;
 
   grab.addEventListener("pointerdown", (e) => {
-    if (e.button !== 0 || !links[current].dataset.preview) return;
+    if (e.button !== 0 || !links[current].dataset.preview || turntable.classList.contains("changing")) return;
     e.preventDefault();
     wire();
     if (!loaded()) select(current);

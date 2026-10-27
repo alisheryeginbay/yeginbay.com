@@ -975,33 +975,47 @@ html:has(dialog.lightbox[open]) { overflow: hidden; }
 /* The record. Its shadow and the light on it (record-sheen) stay put while
    it turns; a faint unevenness in its grooves turns with it, so it can be
    seen to spin. */
-/* Where the record goes when the song changes (src/scripts/turntable.ts):
-   down below the deck, fading into the page as it goes, gone by the top of
-   the song's title, and the new one comes up from there. The well reaches
-   down through the gap between them, --sink, fading out across it. A
-   mask hides whatever's outside its box, so the well is also wider than
-   the deck by --bleed each side, for the record's shadow; on a narrow
-   screen, that's the space beside the deck. */
-.turntable { --sink: 1.5rem; }
-
+/* The record sits in a well of its own, so it can be taken off and put
+   back when the song changes (src/scripts/turntable.ts). */
 .well {
-  --bleed: 2rem;
   position: absolute;
-  inset: 0 calc(-1 * var(--bleed)) calc(-1 * var(--sink));
+  inset: 0;
   pointer-events: none;
-  mask: linear-gradient(#000 0 calc(100% - var(--sink)), transparent);
+}
+
+/* How high the record or the sleeve is held over what's under it, from 0
+   (resting on it) to 1, which spreads and softens its shadow; and where
+   the sheen is across the sleeve, from 0 (off its left) to 1 (off its
+   right); and how much of the record's shadow shows, none while it's in
+   the sleeve. All are moved by src/scripts/turntable.ts. */
+@property --lift {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --shade {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+
+@property --light {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
 }
 
 .disc {
   position: absolute;
   top: calc(0.04 * var(--d));
-  left: calc(var(--bleed) + 0.04 * var(--d));
+  left: calc(0.04 * var(--d));
   width: calc(0.92 * var(--d));
   height: calc(0.92 * var(--d));
   border-radius: 50%;
   box-shadow:
-    0 1.5rem 2.5rem -1rem rgb(0 0 0 / 0.4),
-    0 0.4rem 0.8rem -0.3rem rgb(0 0 0 / 0.25);
+    0 calc(1.5rem + 1.5rem * var(--lift)) calc(2.5rem + 2rem * var(--lift)) -1rem rgb(0 0 0 / calc((0.4 - 0.15 * var(--lift)) * var(--shade))),
+    0 calc(0.4rem + 0.8rem * var(--lift)) calc(0.8rem + 1rem * var(--lift)) -0.3rem rgb(0 0 0 / calc((0.25 - 0.1 * var(--lift)) * var(--shade)));
   /* It can be held and turned by hand (src/scripts/turntable.ts). */
   pointer-events: auto;
   cursor: grab;
@@ -1112,6 +1126,86 @@ html:has(dialog.lightbox[open]) { overflow: hidden; }
   box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.5);
 }
 
+/* The sleeve the next record comes out of when the song changes: the
+   song's cover, a little larger than the record, held in front of the
+   player while it's zoomed out (src/scripts/turntable.ts). Hidden the
+   rest of the time. Its open edge, at the right, is a little shaded. */
+.sleeve {
+  position: absolute;
+  inset: 2%;
+  border-radius: 0.2rem;
+  overflow: hidden;
+  background: #2a2a2a;
+  /* Its shadow, and close round its edges a darker one, falling on the
+     record as it's drawn out. */
+  --lift: 1;
+  box-shadow:
+    0 0 0.35rem rgb(0 0 0 / 0.3),
+    0 calc(0.4rem + 1.4rem * var(--lift)) calc(0.8rem + 2rem * var(--lift)) calc(-0.3rem - 0.7rem * var(--lift)) rgb(0 0 0 / calc(0.5 - 0.2 * var(--lift))),
+    0 calc(0.15rem + 0.3rem * var(--lift)) calc(0.3rem + 0.5rem * var(--lift)) -0.2rem rgb(0 0 0 / 0.3);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sleeve img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Where WebGPU works, the cover printed on board over it (src/scripts/
+   sleeve-shader.ts), once it's drawn. */
+.sleeve-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  visibility: hidden;
+}
+
+.sleeve.printed .sleeve-canvas { visibility: visible; }
+
+/* Ring wear: the record inside rubbing a faint circle into the board,
+   worn more in some places than others. */
+.sleeve::before {
+  content: "";
+  position: absolute;
+  inset: 4%;
+  z-index: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle closest-side, transparent 0 89%, rgb(255 255 255 / 0.16) 94%, transparent 99%);
+  mask: conic-gradient(from 40deg, #000, transparent 18%, #000 34%, rgb(0 0 0 / 0.4) 52%, transparent 66%, #000 84%, #000);
+  mix-blend-mode: screen;
+}
+
+/* The board: its coating catching the light, a sheen that crosses it as
+   it moves (--light), its open edge, at the right, in shade, and its cut
+   edges and worn corners showing the white board under the print. */
+.sleeve::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 0 0, rgb(255 255 255 / 0.5), transparent 0.45rem),
+    radial-gradient(circle at 100% 0, rgb(255 255 255 / 0.3), transparent 0.3rem),
+    radial-gradient(circle at 0 100%, rgb(255 255 255 / 0.35), transparent 0.35rem),
+    radial-gradient(circle at 100% 100%, rgb(255 255 255 / 0.55), transparent 0.55rem),
+    linear-gradient(to left, rgb(0 0 0 / 0.25), transparent 6%),
+    linear-gradient(
+      115deg,
+      transparent calc(var(--light) * 140% - 50%),
+      rgb(255 255 255 / 0.2) calc(var(--light) * 140% - 20%),
+      transparent calc(var(--light) * 140% + 10%)
+    ),
+    linear-gradient(135deg, rgb(255 255 255 / 0.08), transparent 35%);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.8),
+    inset 0 0 0 2px rgb(0 0 0 / 0.06);
+}
+
 /* The tonearm, pivoting at the top right corner beside the record. It
    rests off the record, swings on while a song plays (cued), and moves
    inward with --progress, from 0 to 1 through the preview. The pivot stays
@@ -1150,7 +1244,8 @@ html:has(dialog.lightbox[open]) { overflow: hidden; }
   touch-action: none;
 }
 
-.turntable:has(.now-play:disabled) .tonearm-grab { pointer-events: none; }
+.turntable:has(.now-play:disabled) .tonearm-grab,
+.turntable.changing .tonearm-grab { pointer-events: none; }
 
 /* Held, it's lifted off the record: its shadow falls further. */
 .turntable.holding .tonearm-arm { transition: none; }
@@ -1228,7 +1323,7 @@ html:has(dialog.lightbox[open]) { overflow: hidden; }
 /* The song that's on, centred under the record. */
 .now {
   width: var(--d);
-  margin-top: var(--sink);
+  margin-top: 1.5rem;
   text-align: center;
 }
 

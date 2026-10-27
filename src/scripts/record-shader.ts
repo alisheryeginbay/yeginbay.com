@@ -1,7 +1,8 @@
 // The record on /music drawn with WebGPU through vgpu (src/shaders/
 // record.wgsl), lit in the colours of the song's cover. Where WebGPU isn't
 // available this gives nothing, and the record keeps its CSS drawing.
-import { effect, frame, init, sampler, surface, texture, type Gpu, type Texture } from "vgpu";
+import { effect, frame, sampler, surface, texture, type Texture } from "vgpu";
+import { gpu as sharedGpu } from "./gpu.ts";
 import recordWgsl from "../shaders/record.wgsl";
 
 export interface RecordShader {
@@ -31,13 +32,8 @@ const SIZE = 24;
 
 // `label` is the label's radius as a fraction of the record's.
 export async function recordShader(canvas: HTMLCanvasElement, label: number): Promise<RecordShader | null> {
-  if (!("gpu" in navigator)) return null;
-  let gpu: Gpu;
-  try {
-    gpu = await init();
-  } catch {
-    return null;
-  }
+  const gpu = await sharedGpu();
+  if (!gpu) return null;
 
   const out = surface(gpu, canvas, { dpr: [1, 2], clearColor: [0, 0, 0, 0] });
   const cover = () =>
