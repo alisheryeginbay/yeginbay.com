@@ -36,7 +36,6 @@ const number = (i: number) => String(i + 1).padStart(2, "0");
 ---
 
 <Base title="Music" description={playlist?.description ?? "What I'm listening to."}>
-  <h1>Music</h1>
   {playlist?.description && <p class="music-intro">{playlist.description}</p>}
   {!playlist && <p class="post-meta">The playlist couldn’t be loaded just now.</p>}
 
