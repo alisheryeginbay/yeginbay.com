@@ -1002,7 +1002,16 @@ html:has(dialog.lightbox[open]) { overflow: hidden; }
   box-shadow:
     0 1.5rem 2.5rem -1rem rgb(0 0 0 / 0.4),
     0 0.4rem 0.8rem -0.3rem rgb(0 0 0 / 0.25);
+  /* It can be held and turned by hand (src/scripts/turntable.ts). */
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
 }
+
+.turntable.scratching .disc { cursor: grabbing; }
+
+/* Under a hand, the arm and ring follow the record at once. */
+.turntable.scratching :is(.tonearm-arm, .ring-fill, .ring-dot) { transition: none; }
 
 .record,
 .record-sheen {

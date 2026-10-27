@@ -15,10 +15,17 @@
 // from there: across the record is the whole preview, outside to inside.
 // Lifting it stops the music; the record keeps turning.
 //
+// The record can be held, too: under a hand it turns only as the hand
+// turns it, and the music with it, forward or back (src/scripts/
+// scratch.ts). Let go, it's picked up by the motor again, from however
+// fast it was going, or spun the wrong way, and the music comes up to
+// speed with it.
+//
 // Where the record is drawn with WebGPU, its grooves are cut from the
 // song's loudness, its light swells a little with the beat, and the light
 // turns a little as the pointer moves, or the phone tilts.
 import { GROOVES, type RecordShader } from "./record-shader.ts";
+import { scratcher, type Scratch } from "./scratch.ts";
 
 const turntable = document.querySelector<HTMLElement>(".turntable");
 
@@ -85,6 +92,14 @@ if (turntable) {
   let frame = 0;
   let last = 0;
 
+  // A hand on the record (further down): the angle round the record's
+  // middle it was last at, and how far, in turns, it's turned the record
+  // since the last frame. While the needle's down under it, the music comes
+  // from the scratch rather than the deck (`scratching`), until the record's
+  // back up to speed.
+  let hand: { angle: number; turned: number } | null = null;
+  let scratching = false;
+
   // Winding down: the needle still in the groove after the motor's switched
   // off, so the music follows the record's speed, fading as it goes, until
   // the arm lifts. Below about a third of the speed it's too slow to hear.
@@ -113,6 +128,14 @@ if (turntable) {
         context.createMediaElementSource(deck).connect(gain).connect(analyser);
         gains.set(deck, gain);
       }
+      // The record under a hand. Without it, a held record is silent.
+      scratcher(context, analyser).then(
+        (s) => {
+          voice = s;
+          cut(links[current].dataset.preview);
+        },
+        (e) => console.error(e),
+      );
     }
     if (context?.state === "suspended") context.resume().catch(() => {});
   };
@@ -127,13 +150,26 @@ if (turntable) {
   // Where to play from, once the preview's length is known.
   let seek: number | null = null;
 
+  // Under a hand, the record turns as it's turned, and neither the motor
+  // nor friction has a say.
   const tick = (now: number) => {
+    frame = 0;
+    if (hand) return;
     const dt = Math.min((now - last) / 1000, 0.1);
     last = now;
     if (target > speed) speed += (target - speed) * (1 - Math.exp(-dt / 0.7));
     else speed = Math.max(0, speed - (0.1 + speed / 1.4) * dt);
     if (Math.abs(target - speed) < 0.002) speed = target;
-    spin.playbackRate = speed;
+    // An animation can't run backward for ever, so a record spun the wrong
+    // way is turned by hand here until it's going forward again.
+    if (speed < 0) {
+      spin.pause();
+      turn(speed * dt);
+    } else {
+      spin.playbackRate = speed;
+      if (speed > 0 && spin.playState !== "running") spin.play();
+    }
+    if (scratching) follow();
     if (winding) {
       if (target === 0 && speed <= QUIET) lift();
       else if (speed === 1) winding = false;
@@ -145,19 +181,29 @@ if (turntable) {
         level(audio, 1);
       }
     }
-    frame = 0;
     if (speed === 0) spin.pause();
     else if (speed !== target) frame = requestAnimationFrame(tick);
   };
 
-  const motor = (run: boolean) => {
-    target = run && !still.matches ? 1 : 0;
-    if (target) spin.play();
-    if (!frame) {
-      last = performance.now();
-      frame = requestAnimationFrame(tick);
-    }
+  const run = () => {
+    if (frame) return;
+    last = performance.now();
+    frame = requestAnimationFrame(tick);
+  };
+
+  const motor = (on: boolean) => {
+    target = on && !still.matches ? 1 : 0;
+    if (target && speed >= 0) spin.play();
+    run();
     paint();
+  };
+
+  // Turns the record by `turns` without the animation, the way it's
+  // turning or the other.
+  const TURN_MS = 1800;
+  const turn = (turns: number) => {
+    const t = Number(spin.currentTime ?? 0) + turns * TURN_MS;
+    spin.currentTime = ((t % TURN_MS) + TURN_MS) % TURN_MS;
   };
 
   // The beat: the bass, below about 190 Hz, against its own recent
@@ -228,7 +274,7 @@ if (turntable) {
     lamp += (lampTo - lamp) * (1 - Math.exp(-dt / 0.3));
     if (Math.abs(lampTo - lamp) < 0.0005) lamp = lampTo;
     shader!.draw(angle(), pulse, lamp);
-    if (seen && (speed > 0 || target > 0 || pulse > 0 || lamp !== lampTo || shader!.blending()))
+    if (seen && (speed !== 0 || target > 0 || hand || pulse > 0 || lamp !== lampTo || shader!.blending()))
       painting = requestAnimationFrame(paintFrame);
     else painted = 0;
   };
@@ -292,6 +338,7 @@ if (turntable) {
   // just stops.
   const stop = () => {
     clearTimeout(timer);
+    unscratch();
     settle();
     on = false;
     turntable.classList.remove("playing");
@@ -372,6 +419,18 @@ if (turntable) {
     time.hidden = !on;
   };
 
+  // The preview's file, fetched once for both its grooves and its scratch.
+  // Decoding takes the bytes, so each gets a copy.
+  const files = new Map<string, Promise<ArrayBuffer>>();
+  const file = async (url: string) => {
+    if (!files.has(url)) {
+      const bytes = fetch(url, { mode: "cors", priority: "low" }).then((r) => r.arrayBuffer());
+      files.set(url, bytes);
+      bytes.catch(() => files.delete(url));
+    }
+    return (await files.get(url)!).slice(0);
+  };
+
   // The song's loudness, for the grooves: the preview, fetched and decoded
   // (which a browser does even before anything's been clicked), cut into
   // GROOVES pieces, each piece's loudness against the loudest's. Kept for
@@ -379,8 +438,7 @@ if (turntable) {
   // it can't be.
   const loudness = new Map<string, Promise<Uint8Array>>();
   const measure = async (url: string) => {
-    const bytes = await (await fetch(url, { mode: "cors", priority: "low" })).arrayBuffer();
-    const sound = await new OfflineAudioContext(1, 1, 22050).decodeAudioData(bytes);
+    const sound = await new OfflineAudioContext(1, 1, 22050).decodeAudioData(await file(url));
     const channels = Array.from({ length: sound.numberOfChannels }, (_, c) => sound.getChannelData(c));
     const n = channels[0].length;
     const rms = new Float32Array(GROOVES);
@@ -415,12 +473,35 @@ if (turntable) {
     );
   };
 
+  // The song, decoded for the scratch, once there's somewhere to play it.
+  // `scratchable` is the song it's ready for.
+  let voice: Scratch | null = null;
+  let scratchable: string | null = null;
+  const cut = (url: string | undefined) => {
+    const v = voice;
+    if (!v || !context || url === scratchable) return;
+    scratchable = null;
+    v.load(null);
+    if (!url) return;
+    file(url)
+      .then((bytes) => context!.decodeAudioData(bytes))
+      .then(
+        (sound) => {
+          if (links[current].dataset.preview !== url) return;
+          v.load(sound);
+          scratchable = url;
+        },
+        (e) => console.error(e),
+      );
+  };
+
   // The record for a song: its cover on the label, which fades in once
   // it's loaded, so it never shows half-drawn, and its colours and grooves.
   const dress = (song: DOMStringMap) => {
     label.src = song.art!;
     recolor(song.swatch, 700);
     engrave(song.preview);
+    cut(song.preview);
     label.style.backgroundColor = song.bg ?? "";
     label.decode().then(
       () => label.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 250, easing: "ease-out" }),
@@ -461,6 +542,7 @@ if (turntable) {
   };
 
   const select = (index: number) => {
+    unscratch();
     settle();
     if (winding) lift();
     seek = null;
@@ -550,7 +632,7 @@ if (turntable) {
 
   heed("pause", () => {
     setTimeout(() => {
-      if (on && down && audio.paused && !audio.ended) stop();
+      if (on && down && !scratching && audio.paused && !audio.ended) stop();
     }, 50);
   });
 
@@ -566,7 +648,7 @@ if (turntable) {
     elapsed.textContent = format(audio.currentTime);
     position();
     // Time to bring in the next song, unless this is the last.
-    if (context && on && down && !winding && !held && !fading && audio.duration - audio.currentTime <= FADE) {
+    if (context && on && down && !winding && !held && !scratching && !fading && audio.duration - audio.currentTime <= FADE) {
       const after = nearest(1);
       if (after > current) mix(after);
     }
@@ -617,6 +699,7 @@ if (turntable) {
     wire();
     if (!loaded()) select(current);
     clearTimeout(timer);
+    unscratch();
     settle();
     if (winding) lift();
     else if (down) {
@@ -654,6 +737,142 @@ if (turntable) {
 
   grab.addEventListener("pointerup", letGo);
   grab.addEventListener("pointercancel", letGo);
+
+  // The record under a hand. Held, it turns as far as the pointer goes
+  // round its middle, and its speed is how fast that is, eased over a few
+  // hundredths of a second as a heavy platter would; caught while turning,
+  // it's brought to a stop. Let go, the motor takes it from there (tick).
+  const scratchReady = () => !!voice && scratchable === links[current].dataset.preview;
+  const songAt = () => (scratching && scratchReady() ? voice!.position() : audio.currentTime);
+
+  const around = (e: PointerEvent) => {
+    const r = disc.getBoundingClientRect();
+    return Math.atan2(e.clientY - (r.top + r.height / 2), e.clientX - (r.left + r.width / 2));
+  };
+
+  // The ring, the arm and the time, at `seconds` into the song.
+  const show = (seconds: number) => {
+    if (!audio.duration) return;
+    turntable.style.setProperty("--progress", String(seconds / audio.duration));
+    elapsed.textContent = format(seconds);
+  };
+
+  let feeling = 0;
+  let felt = 0;
+  const feel = (t: number) => {
+    if (!hand) return;
+    const dt = Math.max((t - felt) / 1000, 1 / 240);
+    felt = t;
+    const turning = clamp((hand.turned * TURN_MS) / 1000 / dt, -8, 8);
+    hand.turned = 0;
+    speed += (turning - speed) * (1 - Math.exp(-dt / 0.04));
+    if (scratching) {
+      if (scratchReady()) voice!.speed(speed);
+      show(songAt());
+    }
+    feeling = requestAnimationFrame(feel);
+  };
+
+  disc.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0 || hand || turntable.classList.contains("changing")) return;
+    e.preventDefault();
+    wire();
+    settle();
+    if (winding) lift();
+    // A needle on its way down lands now.
+    if (on && !down && loaded()) {
+      clearTimeout(timer);
+      down = true;
+    }
+    if (on && down && !scratching) {
+      scratching = true;
+      if (scratchReady()) {
+        voice!.seek(audio.currentTime);
+        voice!.speed(speed);
+        voice!.fade(1, 0.01);
+      }
+      audio.pause();
+    }
+    hand = { angle: around(e), turned: 0 };
+    spin.pause();
+    disc.setPointerCapture(e.pointerId);
+    turntable.classList.add("scratching");
+    felt = performance.now();
+    feeling = requestAnimationFrame(feel);
+    paint();
+  });
+
+  disc.addEventListener("pointermove", (e) => {
+    if (!hand) return;
+    const a = around(e);
+    let d = a - hand.angle;
+    d -= 2 * Math.PI * Math.round(d / (2 * Math.PI));
+    hand.angle = a;
+    hand.turned += d / (2 * Math.PI);
+    turn(d / (2 * Math.PI));
+    paint();
+  });
+
+  const release = () => {
+    if (!hand) return;
+    hand = null;
+    cancelAnimationFrame(feeling);
+    turntable.classList.remove("scratching");
+    if (still.matches) {
+      speed = 0;
+      handBack();
+    }
+    run();
+    paint();
+  };
+
+  disc.addEventListener("pointerup", release);
+  disc.addEventListener("pointercancel", release);
+
+  // Let go, the scratch follows the record as it comes back up to speed
+  // (tick), and then hands back to the deck, from where it's got to: the
+  // deck starts there, and the two cross over in a moment, so there's no
+  // gap while the deck gets going.
+  function follow() {
+    if (scratchReady()) voice!.speed(speed);
+    show(songAt());
+    if (speed === target && target === 1) handBack();
+  }
+
+  function handBack() {
+    if (!scratching) return;
+    const v = scratchReady() ? voice : null;
+    scratching = false;
+    if (v) audio.currentTime = v.position();
+    if (!on || !down) return void v?.fade(0, 0.05);
+    const gain = gains.get(audio);
+    if (gain && context) gain.gain.setValueAtTime(0, context.currentTime);
+    audio.play().then(
+      () => {
+        if (scratching) return;
+        v?.fade(0, 0.06);
+        if (!gain || !context) return;
+        gain.gain.cancelScheduledValues(context.currentTime);
+        gain.gain.setValueAtTime(0, context.currentTime);
+        gain.gain.linearRampToValueAtTime(1, context.currentTime + 0.06);
+      },
+      (e: DOMException) => {
+        if (gain) level(audio, 1);
+        v?.fade(0, 0.05);
+        if (e.name !== "AbortError" && on) stop();
+      },
+    );
+  }
+
+  // Stops the scratch at once: the deck is left where it had got to, paused.
+  function unscratch() {
+    if (!scratching) return;
+    scratching = false;
+    if (scratchReady()) {
+      audio.currentTime = voice!.position();
+      voice!.fade(0, 0.05);
+    }
+  }
 
   // The lock screen, Control Centre, headphones and media keys: the song
   // and its cover shown there, and their buttons working the turntable as
