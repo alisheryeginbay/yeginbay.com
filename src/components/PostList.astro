@@ -1,6 +1,7 @@
 ---
-// A list of posts with their dates: when they were started, or with
-// `updated`, when they last changed.
+// A list of posts laid out like the tracklist on /music: the title, then
+// dots across to the date it was started, or with `updated`, when it last
+// changed.
 import { isoDate, longDate } from "../lib/dates.ts";
 import type { Post } from "../lib/posts.ts";
 
@@ -12,17 +13,19 @@ interface Props {
 const { posts, updated = false } = Astro.props;
 ---
 
-<ul class="post-list">
+<ul class="tracks post-list">
   {
     posts.map((post) => {
       const date = updated ? post.lastmod : post.date;
       return (
         <li>
-          <a href={post.url}>{post.title}</a>
-          <time datetime={isoDate(date)}>
-            {updated && "updated "}
-            {longDate(date)}
-          </time>
+          <a href={post.url}>
+            <span class="track-title">{post.title}</span>
+            <span class="track-leader" aria-hidden="true" />
+            <time class="track-time" datetime={isoDate(date)} title={updated ? "Last updated" : undefined}>
+              {longDate(date)}
+            </time>
+          </a>
         </li>
       );
     })

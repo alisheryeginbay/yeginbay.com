@@ -352,28 +352,28 @@ main > .post > .post-content:first-child > :first-child { margin-top: 0; }
 
 main { min-height: 60vh; padding-bottom: 3rem; }
 
-.post-list {
+ul.post-list:not(.tracks) {
   padding-left: 1.25rem;
   margin: 0;
 }
 
-.post-list li {
+ul.post-list:not(.tracks) li {
   padding: 0.35rem 0;
 }
 
-.post-list a {
+ul.post-list:not(.tracks) a {
   color: var(--fg);
   text-decoration: none;
   font-weight: 500;
 }
 
-.post-list a:hover { text-decoration: underline; }
+ul.post-list:not(.tracks) a:hover { text-decoration: underline; }
 
-.post-list time {
+ul.post-list:not(.tracks) time {
   margin-left: 0.6rem;
 }
 
-.post-list time,
+ul.post-list:not(.tracks) time,
 .post time {
   color: var(--muted);
   font-size: 0.85rem;
@@ -1391,7 +1391,7 @@ html:has(dialog.lightbox[open]) { overflow: hidden; }
 .track-leader {
   height: 2px;
   background: radial-gradient(circle closest-side, var(--muted) 85%, transparent) left center / 0.4rem 2px repeat-x;
-  opacity: 0.7;
+  opacity: 0.35;
 }
 
 .track-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
@@ -1408,8 +1408,8 @@ html:has(dialog.lightbox[open]) { overflow: hidden; }
 
 /* A song with no preview can't play here, so it opens Apple Music: it's
    dimmed, with an arrow out. */
-.tracks a:not([data-preview]) .track-text { opacity: 0.6; }
-.tracks a:not([data-preview]):is(:hover, :focus-visible) .track-text { opacity: 1; }
+.playlist .tracks a:not([data-preview]) .track-text { opacity: 0.6; }
+.playlist .tracks a:not([data-preview]):is(:hover, :focus-visible) .track-text { opacity: 1; }
 .track-away {
   width: 0.7em;
   height: 0.7em;
@@ -1417,6 +1417,12 @@ html:has(dialog.lightbox[open]) { overflow: hidden; }
   vertical-align: 0;
   fill: var(--muted);
 }
+
+/* Posts in the same layout (src/components/PostList.astro), with dates
+   for lengths. A long title wraps rather than being cut off. */
+.post-list .track-title { font-size: 1rem; white-space: normal; line-height: 1.35; text-wrap: pretty; }
+.post-list .track-time { font-size: 0.9rem; white-space: nowrap; }
+.post-list a { grid-template-columns: minmax(0, max-content) minmax(1.5rem, 1fr) auto; padding: 0.45rem 0; }
 
 @media (prefers-reduced-motion: reduce) {
   .ring-fill,
