@@ -384,32 +384,6 @@ ul.post-list:not(.tracks) time,
   margin-bottom: 0.25rem;
 }
 
-.post-tags {
-  display: flex;
-  flex-wrap: wrap;
-  list-style: none;
-  padding: 0;
-  margin: 0.6rem 0 0;
-  font-size: 0.9rem;
-  font-style: italic;
-  color: var(--muted);
-}
-
-.post-tags li:not(:last-child)::after {
-  content: ",";
-  margin-right: 0.3em;
-}
-
-.post-tags a {
-  color: inherit;
-  text-decoration: underline dashed;
-  text-underline-offset: 0.2em;
-}
-
-.post-tags a:hover {
-  color: var(--fg);
-}
-
 .post-content {
   margin-top: 1.5rem;
 }
@@ -686,8 +660,23 @@ input.margin-toggle { display: none; }
   margin: 0;
 }
 
-.post-meta a { color: var(--muted); }
-.post-meta a:hover { color: var(--fg); }
+.post-meta a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.post-meta a:hover {
+  color: var(--fg);
+  text-decoration: underline;
+}
+
+.post-meta .post-tag { font-style: italic; }
+
+.post-footer {
+  margin-top: 3rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule);
+}
 
 .post-status {
   text-transform: uppercase;

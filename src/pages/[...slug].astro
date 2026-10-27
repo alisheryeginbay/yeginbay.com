@@ -92,29 +92,28 @@ const history = post && `${SITE.repo}/commits/main/${post.source}`;
             )}
             {post.status !== "finished" && "Started "}
             <time datetime={started}>{longDate(post.date)}</time>
-            {updated! > started! && (
+            {post.tags.map((tag) => (
               <>
                 {" "}
-                · Updated <time datetime={updated}>{longDate(post.lastmod)}</time>
+                · <a class="post-tag" href={`/tags/${tag}`}>{tag}</a>
               </>
-            )}{" "}
-            · <a href={post.sourceUrl}>source</a> ·{" "}
-            <a href={history} {...external(history!)}>
-              history
-            </a>
+            ))}
           </p>
-          {post.tags.length > 0 && (
-            <ul class="post-tags">
-              {post.tags.map((tag) => (
-                <li>
-                  <a href={`/tags/${tag}`}>{tag}</a>
-                </li>
-              ))}
-            </ul>
-          )}
           <div class:list={["post-content", { "drop-cap": hasDropCap(post, rendered) }]}>
             <rendered.Content components={components} />
           </div>
+          {/* Details for the curious, out of the way at the end. */}
+          <footer class="post-meta post-footer">
+            {updated! > started! && (
+              <>
+                Updated <time datetime={updated}>{longDate(post.lastmod)}</time> ·{" "}
+              </>
+            )}
+            <a href={post.sourceUrl}>source</a> ·{" "}
+            <a href={history} {...external(history!)}>
+              history
+            </a>
+          </footer>
         </article>
       </Base>
     )
