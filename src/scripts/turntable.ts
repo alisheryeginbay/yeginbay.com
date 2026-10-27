@@ -1,9 +1,10 @@
 // Plays the songs on /music (src/pages/music.astro) on the page: choosing one
 // puts its cover on the record's label and plays its 30-second preview,
 // with the ring round the record filling as it goes. The buttons under the
-// record play and pause, and move to the song before or after; when one
-// song ends the next begins. A song without a preview, or a click with a
-// modifier key, still opens Apple Music.
+// record play and pause, and move to the song before or after. Near the end
+// of one song the next fades in over it, so the list plays as one mix. A
+// song without a preview, or a click with a modifier key, still opens
+// Apple Music.
 //
 // It goes like a belt-driven turntable: on play the record starts turning
 // and the arm swings over, and the music begins as the needle lands; on
@@ -20,7 +21,12 @@ const turntable = document.querySelector<HTMLElement>(".turntable");
 if (turntable) {
   const $ = <T extends HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
   const links = [...document.querySelectorAll<HTMLAnchorElement>(".tracks a")];
-  const audio = turntable.querySelector("audio")!;
+  // Two decks, so one song can fade out while the next fades in. `audio` is
+  // the one that's on; `spare` is the other, playing only while it fades out.
+  let audio = turntable.querySelector("audio")!;
+  let spare = audio.cloneNode() as HTMLAudioElement;
+  audio.after(spare);
+  const decks = [audio, spare];
   const record = $(".record");
   const label = $<HTMLImageElement>(".record-label");
   const controls = $(".now-controls");
@@ -78,7 +84,33 @@ if (turntable) {
   // the arm lifts. Below about a third of the speed it's too slow to hear.
   let winding = false;
   const QUIET = 0.3;
-  audio.preservesPitch = false;
+  for (const deck of decks) deck.preservesPitch = false;
+
+  // Each deck's volume, set through Web Audio, since iOS ignores a media
+  // element's own. The previews are served to any site (CORS), so the
+  // decks can be wired in; that's done on the first click, as a browser
+  // only lets sound start from one. Without Web Audio, songs don't fade
+  // into each other, and change when they end.
+  let context: AudioContext | null = null;
+  const gains = new Map<HTMLAudioElement, GainNode>();
+  const wire = () => {
+    if (!context && "AudioContext" in window) {
+      context = new AudioContext();
+      for (const deck of decks) {
+        const gain = context.createGain();
+        context.createMediaElementSource(deck).connect(gain).connect(context.destination);
+        gains.set(deck, gain);
+      }
+    }
+    if (context?.state === "suspended") context.resume().catch(() => {});
+  };
+
+  const level = (deck: HTMLAudioElement, v: number) => {
+    const gain = gains.get(deck);
+    if (!gain || !context) return void (deck.volume = v);
+    gain.gain.cancelScheduledValues(context.currentTime);
+    gain.gain.setValueAtTime(v, context.currentTime);
+  };
 
   // Where to play from, once the preview's length is known.
   let seek: number | null = null;
@@ -95,10 +127,10 @@ if (turntable) {
       else if (speed === 1) winding = false;
       if (winding) {
         audio.playbackRate = Math.max(speed, QUIET);
-        audio.volume = Math.min(1, (speed - QUIET) / 0.5);
+        level(audio, Math.min(1, (speed - QUIET) / 0.5));
       } else {
         audio.playbackRate = 1;
-        audio.volume = 1;
+        level(audio, 1);
       }
     }
     frame = 0;
@@ -164,6 +196,7 @@ if (turntable) {
   // the record.
   const start = (there = false) => {
     if (!loaded()) return;
+    wire();
     clearTimeout(timer);
     on = true;
     turntable.classList.add("playing", "cued");
@@ -183,6 +216,7 @@ if (turntable) {
   // just stops.
   const stop = () => {
     clearTimeout(timer);
+    settle();
     on = false;
     turntable.classList.remove("playing");
     play.setAttribute("aria-label", "Play preview");
@@ -201,8 +235,53 @@ if (turntable) {
     down = false;
     audio.pause();
     audio.playbackRate = 1;
-    audio.volume = 1;
+    level(audio, 1);
     turntable.classList.remove("cued");
+  };
+
+  // The mix: FADE seconds before a song ends, the next one starts on the
+  // spare deck and the two cross over, the old one dying away as the new
+  // one rises, at an even loudness all the way (an equal-power fade). The
+  // record changes to the new song as it starts, and the arm goes back to
+  // the outside of the record.
+  const FADE = 4;
+  let fading: HTMLAudioElement | null = null;
+  let fadeTimer: ReturnType<typeof setTimeout> | undefined;
+
+  const curve = (rise: boolean) =>
+    Float32Array.from({ length: 64 }, (_, i) => {
+      const t = i / 63;
+      return rise ? Math.sin((t * Math.PI) / 2) : Math.cos((t * Math.PI) / 2);
+    });
+
+  const ramp = (deck: HTMLAudioElement, rise: boolean) => {
+    const gain = gains.get(deck)!.gain;
+    gain.cancelScheduledValues(context!.currentTime);
+    gain.setValueCurveAtTime(curve(rise), context!.currentTime, FADE);
+  };
+
+  const mix = (index: number) => {
+    const old = audio;
+    audio = spare;
+    spare = old;
+    select(index);
+    fading = old;
+    level(audio, 0);
+    playAudio();
+    ramp(old, false);
+    ramp(audio, true);
+    fadeTimer = setTimeout(settle, FADE * 1000);
+  };
+
+  // Ends the mix at once: the old song stops and the new one is at full.
+  // Pausing, holding the arm or choosing another song does this.
+  const settle = () => {
+    clearTimeout(fadeTimer);
+    if (!fading) return;
+    fading.pause();
+    level(fading, 1);
+    level(audio, 1);
+    fading = null;
   };
 
   const toggle = () => (on ? stop() : start());
@@ -217,6 +296,7 @@ if (turntable) {
   };
 
   const select = (index: number) => {
+    settle();
     if (winding) lift();
     seek = null;
     const song = links[index].dataset;
@@ -268,6 +348,7 @@ if (turntable) {
     a.addEventListener("click", (e) => {
       if (!a.dataset.preview || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
       e.preventDefault();
+      wire();
       if (i === current && loaded()) return void toggle();
       select(i);
       start();
@@ -275,6 +356,7 @@ if (turntable) {
   }
 
   play.addEventListener("click", () => {
+    wire();
     if (!loaded()) select(current);
     toggle();
   });
@@ -290,7 +372,13 @@ if (turntable) {
   // Played or paused from outside the page, as with the keyboard's media
   // keys: the turntable follows at once. A pause while changing songs
   // passes, since the next song is already playing by the time it's seen.
-  audio.addEventListener("play", () => {
+  // Events from either deck, heeded only from the one that's on: the other
+  // is only ever fading out.
+  const heed = (type: string, fn: () => void) => {
+    for (const deck of decks) deck.addEventListener(type, () => deck === audio && fn());
+  };
+
+  heed("play", () => {
     if (on) return;
     on = down = true;
     turntable.classList.add("playing", "cued");
@@ -298,27 +386,32 @@ if (turntable) {
     motor(true);
   });
 
-  audio.addEventListener("pause", () => {
+  heed("pause", () => {
     setTimeout(() => {
       if (on && down && audio.paused && !audio.ended) stop();
     }, 50);
   });
 
-  audio.addEventListener("loadedmetadata", () => {
+  heed("loadedmetadata", () => {
     length.textContent = format(audio.duration);
     if (seek !== null) audio.currentTime = seek * audio.duration;
     seek = null;
   });
 
-  audio.addEventListener("timeupdate", () => {
+  heed("timeupdate", () => {
     if (!audio.duration) return;
     turntable.style.setProperty("--progress", String(audio.currentTime / audio.duration));
     elapsed.textContent = format(audio.currentTime);
+    // Time to bring in the next song, unless this is the last.
+    if (context && on && down && !winding && !held && !fading && audio.duration - audio.currentTime <= FADE) {
+      const after = nearest(1);
+      if (after > current) mix(after);
+    }
   });
 
   // At the end of the list it stops rather than going round. A song that
   // runs out while winding down just stops.
-  audio.addEventListener("ended", () => {
+  heed("ended", () => {
     if (!on) return lift();
     const after = nearest(1);
     if (after > current) go(after);
@@ -358,8 +451,10 @@ if (turntable) {
   grab.addEventListener("pointerdown", (e) => {
     if (e.button !== 0 || !links[current].dataset.preview) return;
     e.preventDefault();
+    wire();
     if (!loaded()) select(current);
     clearTimeout(timer);
+    settle();
     if (winding) lift();
     else if (down) {
       // Before pausing, so the pause isn't taken for a stop.
