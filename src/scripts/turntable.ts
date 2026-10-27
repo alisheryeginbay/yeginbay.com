@@ -491,6 +491,57 @@ if (turntable) {
 
   const format = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
+  // The times count like a meter: each character that changes rolls out
+  // and the next rolls in after it, upward as the time goes on and
+  // downward as it goes back, as when the arm's moved back or the record's
+  // turned backward by hand. Each character keeps its own slot, so the
+  // others stay put.
+  const counter = (el: HTMLElement) => {
+    let shown = el.textContent ?? "";
+    const seconds = (t: string) => t.split(":").reduce((sum, part) => sum * 60 + Number(part), 0);
+    const glyph = (c: string) => Object.assign(document.createElement("span"), { textContent: c });
+    const slot = (c: string) => {
+      const s = document.createElement("span");
+      s.className = "roll";
+      s.append(glyph(c));
+      return s;
+    };
+    el.replaceChildren(...[...shown].map(slot));
+    return (next: string) => {
+      if (next === shown) return;
+      const was = shown;
+      shown = next;
+      el.setAttribute("aria-label", next);
+      // A different number of characters, or no motion: it's just written.
+      if (next.length !== was.length || still.matches) return void el.replaceChildren(...[...next].map(slot));
+      const by = seconds(next) >= seconds(was) ? 1 : -1;
+      [...next].forEach((c, i) => {
+        if (c === was[i]) return;
+        const s = el.children[i] as HTMLElement;
+        const old = s.lastElementChild as HTMLElement;
+        old.classList.add("rolled");
+        old
+          .animate([{ opacity: 0, translate: `0 ${-1 * by}em`, filter: "blur(1.5px)" }], {
+            duration: 220,
+            easing: "cubic-bezier(0.5, 0, 0.75, 0)",
+            fill: "forwards",
+          })
+          .finished.then(() => old.remove(), () => old.remove());
+        const fresh = glyph(c);
+        s.append(fresh);
+        fresh.animate(
+          [
+            { opacity: 0, translate: `0 ${1 * by}em`, filter: "blur(1.5px)" },
+            { opacity: 1, translate: "0 0", filter: "blur(0)" },
+          ],
+          { duration: 300, easing: "cubic-bezier(0.2, 0.8, 0.3, 1)" },
+        );
+      });
+    };
+  };
+  const showElapsed = counter(elapsed);
+  const showLength = counter(length);
+
   // A song without a preview can't be played here, so has no time either.
   const showControls = (on: boolean) => {
     play.disabled = !on;
@@ -856,7 +907,7 @@ if (turntable) {
     if (song.preview) audio.src = song.preview;
     else audio.removeAttribute("src");
     turntable.style.setProperty("--progress", "0");
-    elapsed.textContent = "0:00";
+    showElapsed("0:00");
     // The next cover, so the label changes at once when this song ends.
     const after = links[index + 1]?.dataset.art;
     if (after) {
@@ -962,7 +1013,7 @@ if (turntable) {
   });
 
   heed("loadedmetadata", () => {
-    length.textContent = format(audio.duration);
+    showLength(format(audio.duration));
     if (seek !== null) audio.currentTime = seek * audio.duration;
     seek = null;
   });
@@ -970,7 +1021,7 @@ if (turntable) {
   heed("timeupdate", () => {
     if (!audio.duration) return;
     turntable.style.setProperty("--progress", String(audio.currentTime / audio.duration));
-    elapsed.textContent = format(audio.currentTime);
+    showElapsed(format(audio.currentTime));
     position();
     // Time to bring in the next song, unless this is the last.
     if (context && on && needle === "down" && !scratching && !fading && audio.duration - audio.currentTime <= FADE) {
@@ -1045,7 +1096,7 @@ if (turntable) {
     held.deg = clamp(pointing(e) + held.offset, REST, IN + 2);
     arm.style.rotate = `${held.deg}deg`;
     // The time it would play from.
-    if (audio.duration && held.deg >= ON - LEAD) elapsed.textContent = format(at(held.deg) * audio.duration);
+    if (audio.duration && held.deg >= ON - LEAD) showElapsed(format(at(held.deg) * audio.duration));
   });
 
   const letGo = () => {
@@ -1080,7 +1131,7 @@ if (turntable) {
   const show = (seconds: number) => {
     if (!audio.duration) return;
     turntable.style.setProperty("--progress", String(seconds / audio.duration));
-    elapsed.textContent = format(seconds);
+    showElapsed(format(seconds));
   };
 
   let feeling = 0;
