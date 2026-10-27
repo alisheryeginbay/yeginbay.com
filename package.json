@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "astro dev",
+    "dev": "portless run --name yeginbay astro dev",
     "build": "bun scripts/subset-korean.ts && astro build",
     "preview": "astro preview",
     "new": "bun scripts/new-post.ts",
@@ -42,6 +42,7 @@
     "@types/subset-font": "^2.3.0",
     "@types/unist": "^3.0.3",
     "mdast-util-mdx-jsx": "^3.2.0",
+    "portless": "0.15.11",
     "simple-icons": "^16.34.0",
     "subset-font": "^2.9.0",
     "svelte-check": "^4.7.6",
