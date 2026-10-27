@@ -552,7 +552,11 @@ main { min-height: 60vh; padding-bottom: 3rem; }
 /* Syntax colours for source blocks come from the theme in astro.config.ts,
    which colours tokens with the variables above. */
 
-.post-content a { color: var(--link); }
+/* The underline is a fainter shade of the link's own colour. */
+.post-content a {
+  color: var(--link);
+  text-decoration-color: color-mix(in srgb, currentColor 50%, transparent);
+}
 
 /* A link with a site's logo takes the logo's colour on hover. */
 .post-content a[style*="--brand"]:is(:hover, :focus-visible) { color: var(--brand); }
