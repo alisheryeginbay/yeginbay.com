@@ -2,6 +2,7 @@ import cloudflare from "@astrojs/cloudflare";
 import mdx from "@astrojs/mdx";
 import { unified } from "@astrojs/markdown-remark";
 import svelte from "@astrojs/svelte";
+import { wgslVitePlugin } from "@vgpu/wgsl/loader-vite";
 import { defineConfig } from "astro/config";
 import type { AstroIntegration } from "astro";
 import { readdir, writeFile } from "node:fs/promises";
@@ -63,4 +64,7 @@ export default defineConfig({
     shikiConfig: { theme: codeTheme },
   },
   devToolbar: { enabled: false },
+  // .wgsl shaders (the record on /music) are prepared for vgpu as they're
+  // built, so the browser never needs a WGSL parser.
+  vite: { plugins: [wgslVitePlugin()] },
 });

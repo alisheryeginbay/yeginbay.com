@@ -1,12 +1,10 @@
 ---
 // The songs in my Apple Music playlist (src/lib/music.ts): a record with the
-// song's cover as its label at the left, with buttons to play and move
-// between songs under it, and beside it the song that's on and the
-// tracklist. A song plays its 30-second preview on the page
+// song's cover as its label at the left, with the song's title and buttons
+// to play and move between songs under it, and beside it the tracklist. A song plays its 30-second preview on the page
 // (src/scripts/turntable.ts); without JavaScript, or with a modifier key, it
 // opens in Apple Music instead.
 import Base from "../layouts/Base.astro";
-import { isoDate, longDate } from "../lib/dates.ts";
 import { artwork, CACHE_SECONDS, duration, getPlaylist, type Playlist } from "../lib/music.ts";
 
 export const prerender = false;
@@ -30,18 +28,6 @@ const number = (i: number) => String(i + 1).padStart(2, "0");
 <Base title="Music" description={playlist?.description ?? "What I'm listening to."}>
   <h1>Music</h1>
   {playlist?.description && <p class="music-intro">{playlist.description}</p>}
-  {
-    playlist && (
-      <p class="post-meta">
-        {playlist.updated && (
-          <>
-            Updated <time datetime={isoDate(playlist.updated)}>{longDate(playlist.updated)}</time> ·{" "}
-          </>
-        )}
-        <a href={playlist.url}>The playlist on Apple Music</a>
-      </p>
-    )
-  }
   {!playlist && <p class="post-meta">The playlist couldn’t be loaded just now.</p>}
 
   {
@@ -61,7 +47,7 @@ const number = (i: number) => String(i + 1).padStart(2, "0");
                 <div class="record">
                   <img
                     class="record-label"
-                    src={artwork(first, 300)}
+                    src={artwork(first, 400)}
                     width="150"
                     height="150"
                     alt=""
@@ -69,6 +55,7 @@ const number = (i: number) => String(i + 1).padStart(2, "0");
                     style={first.artwork.bg ? `background-color: ${first.artwork.bg}` : undefined}
                   />
                 </div>
+                <canvas class="record-canvas" aria-hidden="true" />
                 <div class="record-sheen" />
               </div>
               <svg class="tonearm" viewBox="0 0 100 100" aria-hidden="true">
@@ -82,6 +69,12 @@ const number = (i: number) => String(i + 1).padStart(2, "0");
                 <circle class="tonearm-cap" cx="92" cy="8" r="1.7" />
               </svg>
             </div>
+          </div>
+          <div class="now">
+            <p class="now-title">{first.title}</p>
+            <p class="now-artist">
+              {first.artist} · <i>{first.album}</i>
+            </p>
           </div>
           <div class="now-controls" hidden>
             <button class="now-prev" type="button" aria-label="Previous song">
@@ -102,11 +95,6 @@ const number = (i: number) => String(i + 1).padStart(2, "0");
         </section>
 
         <div class="playlist">
-          <p class="now-title">{first.title}</p>
-          <p class="now-artist">
-            {first.artist} · <i>{first.album}</i>
-          </p>
-
           <ol class="tracks">
             {songs.map((song, i) => (
               <li>
@@ -114,35 +102,24 @@ const number = (i: number) => String(i + 1).padStart(2, "0");
                   href={song.url}
                   aria-current={i === 0 ? "true" : undefined}
                   data-preview={song.preview ?? undefined}
-                  data-art={artwork(song, 300)}
+                  data-art={artwork(song, 400)}
+                  data-swatch={artwork(song, 64)}
                   data-bg={song.artwork.bg ?? undefined}
                   data-title={song.title}
                   data-artist={song.artist}
                   data-album={song.album}
                 >
                   <span class="track-number">{number(i)}</span>
-                  <img
-                    src={artwork(song, 120)}
-                    width="40"
-                    height="40"
-                    alt=""
-                    loading={i < 12 ? "eager" : "lazy"}
-                    decoding="async"
-                    style={song.artwork.bg ? `background-color: ${song.artwork.bg}` : undefined}
-                  />
                   <span class="track-text">
                     <span class="track-title">{song.title}</span>
                     <span class="track-artist">{song.artist}</span>
                   </span>
+                  <span class="track-leader" aria-hidden="true" />
                   <span class="track-time">{duration(song.durationMs)}</span>
                 </a>
               </li>
             ))}
           </ol>
-
-          <a class="now-link" href={first.url}>
-            Listen in full on Apple Music
-          </a>
         </div>
       </div>
     )
