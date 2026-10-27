@@ -733,6 +733,9 @@ if (turntable) {
       sleeveArt.src = song.art!;
       sleeve.style.backgroundColor = song.bg ?? "";
       dress(song);
+      // Turned in the sleeve so that, rolled out, it comes out upright.
+      spin.currentTime = (1 - ROLL) * TURN_MS;
+      paint();
       await Promise.all([
         to(sleeve, { opacity: 1, translate: "0 0", "--lift": 0.35, "--light": 0.3 }, 420, easeOut, {
           opacity: 0,
