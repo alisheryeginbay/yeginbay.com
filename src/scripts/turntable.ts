@@ -88,8 +88,60 @@ if (turntable) {
   // to a stop in about three.
   const spin = record.animate([{ rotate: "0turn" }, { rotate: "1turn" }], { duration: 1800, iterations: Infinity });
   spin.pause();
-  // Whether the record's off the platter, and so not turning.
-  let lifted = false;
+  // The record and the needle are each in one state at a time, moving
+  // only between the states their tables allow; the page's classes follow
+  // them (sync, further down).
+  //
+  // The record: on the platter; under a hand, which has got to `angle`
+  // round its middle, and turned it by `turned` since the last frame;
+  // away, taken off while the song changes, and still; or landing, back on
+  // the platter and turning, but not yet settled. `change` is which change
+  // of song took it off.
+  type Place =
+    | { at: "platter" }
+    | { at: "hand"; angle: number; turned: number }
+    | { at: "away"; change: number }
+    | { at: "landing"; change: number };
+  const PLACES: Record<Place["at"], Place["at"][]> = {
+    platter: ["hand", "away"],
+    hand: ["platter", "away"],
+    away: ["away", "landing"],
+    landing: ["platter", "away"],
+  };
+  let place: Place = { at: "platter" };
+
+  // The needle: up, the arm at its rest; lowering, the arm swinging on
+  // until the needle lands; down, playing; winding, still in the groove
+  // while the record changes speed, so the music follows it (switched
+  // off, or switched on again before it stopped); or held, the arm in a
+  // hand.
+  type Needle = "up" | "lowering" | "down" | "winding" | "held";
+  const NEEDLES: Record<Needle, Needle[]> = {
+    up: ["lowering", "down", "held"],
+    lowering: ["down", "up", "held"],
+    down: ["winding", "up", "held"],
+    winding: ["down", "up", "held"],
+    held: ["lowering", "up"],
+  };
+  let needle: Needle = "up";
+  // In the groove, and so playing, whether at speed or not.
+  const grooved = () => needle === "down" || needle === "winding";
+
+  // A move the tables don't allow is a mistake here; it's made anyway,
+  // and said so while developing.
+  const allowed = <T extends string>(moves: Record<T, T[]>, from: T, to: T) => {
+    if (import.meta.env.DEV && from !== to && !moves[from].includes(to)) console.warn(`turntable: ${from} → ${to}`);
+  };
+  const moveNeedle = (to: Needle) => {
+    allowed(NEEDLES, needle, to);
+    needle = to;
+    sync();
+  };
+  const moveRecord = (to: Place) => {
+    allowed(PLACES, place.at, to.at);
+    place = to;
+    sync();
+  };
   let speed = 0;
   let target = 0;
   // How quickly the record comes up to speed, in seconds: pulled by the
@@ -101,18 +153,14 @@ if (turntable) {
   let frame = 0;
   let last = 0;
 
-  // A hand on the record (further down): the angle round the record's
-  // middle it was last at, and how far, in turns, it's turned the record
-  // since the last frame. While the needle's down under it, the music comes
-  // from the scratch rather than the deck (`scratching`), until the record's
+  // While the needle's down under a hand on the record (further down), the
+  // music comes from the scratch rather than the deck, until the record's
   // back up to speed.
-  let hand: { angle: number; turned: number } | null = null;
   let scratching = false;
 
-  // Winding down: the needle still in the groove after the motor's switched
-  // off, so the music follows the record's speed, fading as it goes, until
-  // the arm lifts. Below about a third of the speed it's too slow to hear.
-  let winding = false;
+  // Winding, the music follows the record's speed, fading as it slows,
+  // until the arm lifts. Below about a third of the speed it's too slow to
+  // hear.
   const QUIET = 0.3;
   for (const deck of decks) deck.preservesPitch = false;
 
@@ -163,9 +211,9 @@ if (turntable) {
   // nor friction has a say.
   const tick = (now: number) => {
     frame = 0;
-    if (hand) return;
+    if (place.at === "hand") return;
     // Off the platter while the song changes, the record keeps still.
-    if (lifted) {
+    if (place.at === "away") {
       speed = 0;
       spin.pause();
       return;
@@ -188,10 +236,10 @@ if (turntable) {
       if (speed > 0 && spin.playState !== "running") spin.play();
     }
     if (scratching) follow();
-    if (winding) {
+    if (needle === "winding") {
       if (target === 0 && speed <= QUIET) lift();
-      else if (speed === 1) winding = false;
-      if (winding) {
+      else if (speed === 1) moveNeedle("down");
+      if (needle === "winding") {
         audio.playbackRate = Math.max(speed, QUIET);
         level(audio, Math.min(1, (speed - QUIET) / 0.5));
       } else {
@@ -211,7 +259,7 @@ if (turntable) {
 
   const motor = (on: boolean) => {
     target = on && !still.matches ? 1 : 0;
-    if (target && speed >= 0 && !lifted) spin.play();
+    if (target && speed >= 0 && place.at !== "away") spin.play();
     run();
     paint();
   };
@@ -292,7 +340,7 @@ if (turntable) {
     lamp += (lampTo - lamp) * (1 - Math.exp(-dt / 0.3));
     if (Math.abs(lampTo - lamp) < 0.0005) lamp = lampTo;
     shader!.draw(angle(), pulse, lamp);
-    if (seen && (speed !== 0 || target > 0 || hand || pulse > 0 || lamp !== lampTo || shader!.blending()))
+    if (seen && (speed !== 0 || target > 0 || place.at === "hand" || pulse > 0 || lamp !== lampTo || shader!.blending()))
       painting = requestAnimationFrame(paintFrame);
     else painted = 0;
   };
@@ -318,9 +366,28 @@ if (turntable) {
     );
   };
 
-  // Whether the turntable is on, and whether the needle is down on it.
+  // Whether the turntable is switched on.
   let on = false;
-  let down = false;
+  const power = (yes: boolean) => {
+    on = yes;
+    play.setAttribute("aria-label", yes ? "Pause preview" : "Play preview");
+    playing(yes);
+    sync();
+  };
+
+  // The page's classes, from the power, the needle and the record
+  // (style.css).
+  const sync = () => {
+    const c = turntable.classList;
+    c.toggle("playing", on);
+    c.toggle("cued", needle === "lowering" || grooved());
+    c.toggle("holding", needle === "held");
+    c.toggle("scratching", place.at === "hand");
+    c.toggle("changing", place.at === "away" || place.at === "landing");
+  };
+
+  // The needle drops when the arm's done swinging on (`timer`), and the
+  // motor stops a moment after the arm lifts.
   let timer: ReturnType<typeof setTimeout> | undefined;
 
   // If the browser won't play it, the turntable stops rather than turning
@@ -337,15 +404,13 @@ if (turntable) {
     if (!loaded()) return;
     wire();
     clearTimeout(timer);
-    on = true;
-    turntable.classList.add("playing", "cued");
-    play.setAttribute("aria-label", "Pause preview");
-    playing(true);
+    power(true);
     motor(true);
-    if (down) return void playAudio();
+    if (grooved()) return void playAudio();
+    moveNeedle("lowering");
     timer = setTimeout(
       () => {
-        down = true;
+        moveNeedle("down");
         playAudio();
       },
       still.matches || there ? 0 : Math.max(0, changeEnds - performance.now()) + NEEDLE_MS,
@@ -358,12 +423,9 @@ if (turntable) {
     clearTimeout(timer);
     unscratch();
     settle();
-    on = false;
-    turntable.classList.remove("playing");
-    play.setAttribute("aria-label", "Play preview");
-    playing(false);
-    if (down && !audio.paused && !still.matches && !document.hidden) {
-      winding = true;
+    power(false);
+    if (grooved() && !audio.paused && !still.matches && !document.hidden) {
+      moveNeedle("winding");
       motor(false);
     } else {
       lift();
@@ -373,12 +435,10 @@ if (turntable) {
 
   // The needle comes up and the arm goes back to its rest.
   const lift = () => {
-    winding = false;
-    down = false;
+    moveNeedle("up");
     audio.pause();
     audio.playbackRate = 1;
     level(audio, 1);
-    turntable.classList.remove("cued");
   };
 
   // The mix: FADE seconds before a song ends, the next one starts on the
@@ -600,7 +660,7 @@ if (turntable) {
       const from = performance.now();
       let at = 0;
       const step = (now: number) => {
-        if (id !== changing || !lifted) return done();
+        if (place.at !== "away" || place.change !== id) return done();
         const t = Math.min(1, (now - from) / ms);
         const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
         turn((eased - at) * turns);
@@ -614,7 +674,10 @@ if (turntable) {
   const easeIn = "cubic-bezier(0.5, 0, 0.75, 0)";
   const easeOut = "cubic-bezier(0.2, 0.8, 0.3, 1)";
   const easeInOut = "cubic-bezier(0.65, 0, 0.35, 1)";
-  let changing = 0;
+  // How many changes of song there have been, so one cut short by the
+  // next can tell.
+  let changes = 0;
+  const changing = (id: number) => (place.at === "away" || place.at === "landing") && place.change === id;
   // When the record will be back on the player.
   let changeEnds = 0;
 
@@ -641,13 +704,12 @@ if (turntable) {
   };
 
   const change = async (song: DOMStringMap) => {
-    const id = ++changing;
+    const id = ++changes;
     const d = platter.offsetWidth;
     changeEnds = performance.now() + CHANGE_MS;
-    turntable.classList.add("changing");
     // Taken off, the record stops, and set down again it's brought up to
     // speed, as when the turntable's started.
-    lifted = true;
+    moveRecord({ at: "away", change: id });
     speed = 0;
     spin.pause();
     // Printed while the record's taken off, so it's ready when the sleeve
@@ -664,7 +726,7 @@ if (turntable) {
         Number(getComputedStyle(sleeve).opacity) > 0 &&
           to(sleeve, { opacity: 0, translate: `${-0.3 * d}px ${0.4 * d}px`, "--lift": 1 }, 220, easeIn),
       ]);
-      if (id !== changing) return;
+      if (!changing(id)) return;
 
       // The new sleeve comes up, with the new record in it.
       if (printed) print(song.art!);
@@ -680,7 +742,7 @@ if (turntable) {
         }),
         zoom,
       ]);
-      if (id !== changing) return;
+      if (!changing(id)) return;
 
       // All the way out of the sleeve.
       // Inside the sleeve it has no shadow of its own; coming out, it casts
@@ -691,12 +753,12 @@ if (turntable) {
         to(disc, { translate: `${PULL * d}px 0`, "--shade": 1 }, 620, easeInOut),
         roll(ROLL, 620, id),
       ]);
-      if (id !== changing) return;
+      if (!changing(id)) return;
 
       // The sleeve goes back down the way it came up, and once it's gone
       // the record goes onto the player.
       await to(sleeve, { opacity: 0, translate: `${-PULL * d}px ${0.3 * d}px`, "--lift": 1 }, 360, easeIn);
-      if (id !== changing) return;
+      if (!changing(id)) return;
       const landed = Promise.all([
         to(disc, { translate: "0 0", "--lift": 0 }, 600, easeOut),
         to(platter, { scale: "1" }, 600, easeOut),
@@ -704,14 +766,14 @@ if (turntable) {
       // It touches the platter a little before it's settled, and the
       // platter, already turning, takes it up to speed at once.
       await new Promise((r) => setTimeout(r, 300));
-      if (id !== changing) return;
-      lifted = false;
+      if (!changing(id)) return;
+      moveRecord({ at: "landing", change: id });
       grip = CATCH;
       run();
       await landed;
-      if (id !== changing) return;
+      if (!changing(id)) return;
       for (const el of [platter, disc, sleeve]) rest(el);
-      turntable.classList.remove("changing");
+      moveRecord({ at: "platter" });
     } catch {
       // Cut short by the next change, which carries on from here.
     }
@@ -721,7 +783,7 @@ if (turntable) {
   const select = (index: number, mixed = false) => {
     unscratch();
     settle();
-    if (winding) lift();
+    if (needle === "winding") lift();
     seek = null;
     const song = links[index].dataset;
     const changed = index !== current;
@@ -767,7 +829,7 @@ if (turntable) {
   // back down (start). The mix at the end of a song doesn't do this: it
   // fades the next one in over the last.
   const switchTo = (index: number) => {
-    if (index !== current && down && !still.matches) {
+    if (index !== current && grooved() && !still.matches) {
       // The song that's on dies away on the spare deck as the needle comes
       // up, rather than cutting off; the new one loads on the other.
       const old = audio;
@@ -836,16 +898,14 @@ if (turntable) {
 
   heed("play", () => {
     if (on) return;
-    on = down = true;
-    turntable.classList.add("playing", "cued");
-    play.setAttribute("aria-label", "Pause preview");
-    playing(true);
+    moveNeedle("down");
+    power(true);
     motor(true);
   });
 
   heed("pause", () => {
     setTimeout(() => {
-      if (on && down && !scratching && audio.paused && !audio.ended) stop();
+      if (on && grooved() && !scratching && audio.paused && !audio.ended) stop();
     }, 50);
   });
 
@@ -861,7 +921,7 @@ if (turntable) {
     elapsed.textContent = format(audio.currentTime);
     position();
     // Time to bring in the next song, unless this is the last.
-    if (context && on && down && !winding && !held && !scratching && !fading && audio.duration - audio.currentTime <= FADE) {
+    if (context && on && needle === "down" && !scratching && !fading && audio.duration - audio.currentTime <= FADE) {
       const after = nearest(1);
       if (after > current) mix(after);
     }
@@ -903,27 +963,28 @@ if (turntable) {
   };
 
   // The arm's angle while it's held, and how far that is from the pointer,
-  // so it doesn't jump to wherever along it it was picked up.
+  // so it doesn't jump to wherever along it it was picked up. Set only
+  // while the needle's held.
   let held: { deg: number; offset: number } | null = null;
 
   grab.addEventListener("pointerdown", (e) => {
-    if (e.button !== 0 || !links[current].dataset.preview || turntable.classList.contains("changing")) return;
+    if (e.button !== 0 || !links[current].dataset.preview || place.at === "away" || place.at === "landing") return;
     e.preventDefault();
     wire();
     if (!loaded()) select(current);
     clearTimeout(timer);
     unscratch();
     settle();
-    if (winding) lift();
-    else if (down) {
-      // Before pausing, so the pause isn't taken for a stop.
-      down = false;
+    if (needle === "winding") lift();
+    else if (needle === "down") {
+      // Held before pausing, so the pause isn't taken for a stop.
+      moveNeedle("held");
       audio.pause();
     }
     const deg = parseFloat(getComputedStyle(arm).rotate) || REST;
     held = { deg, offset: deg - pointing(e) };
+    moveNeedle("held");
     grab.setPointerCapture(e.pointerId);
-    turntable.classList.add("holding");
     arm.style.rotate = `${deg}deg`;
   });
 
@@ -939,13 +1000,13 @@ if (turntable) {
     if (!held) return;
     const { deg } = held;
     held = null;
-    turntable.classList.remove("holding");
     arm.style.rotate = "";
     if (deg >= ON - LEAD) {
       seekTo(at(deg));
       start(true);
     } else if (on) stop();
-    else turntable.classList.remove("cued");
+    // Put back at its rest, or anywhere it couldn't play from.
+    if (needle === "held") moveNeedle("up");
   };
 
   grab.addEventListener("pointerup", letGo);
@@ -973,7 +1034,8 @@ if (turntable) {
   let feeling = 0;
   let felt = 0;
   const feel = (t: number) => {
-    if (!hand) return;
+    const hand = place;
+    if (hand.at !== "hand") return;
     const dt = Math.max((t - felt) / 1000, 1 / 240);
     felt = t;
     const turning = clamp((hand.turned * TURN_MS) / 1000 / dt, -8, 8);
@@ -987,17 +1049,17 @@ if (turntable) {
   };
 
   disc.addEventListener("pointerdown", (e) => {
-    if (e.button !== 0 || hand || turntable.classList.contains("changing")) return;
+    if (e.button !== 0 || place.at !== "platter") return;
     e.preventDefault();
     wire();
     settle();
-    if (winding) lift();
+    if (needle === "winding") lift();
     // A needle on its way down lands now.
-    if (on && !down && loaded()) {
+    if (on && needle === "lowering" && loaded()) {
       clearTimeout(timer);
-      down = true;
+      moveNeedle("down");
     }
-    if (on && down && !scratching) {
+    if (on && needle === "down" && !scratching) {
       scratching = true;
       if (scratchReady()) {
         voice!.seek(audio.currentTime);
@@ -1006,17 +1068,17 @@ if (turntable) {
       }
       audio.pause();
     }
-    hand = { angle: around(e), turned: 0 };
+    moveRecord({ at: "hand", angle: around(e), turned: 0 });
     spin.pause();
     disc.setPointerCapture(e.pointerId);
-    turntable.classList.add("scratching");
     felt = performance.now();
     feeling = requestAnimationFrame(feel);
     paint();
   });
 
   disc.addEventListener("pointermove", (e) => {
-    if (!hand) return;
+    const hand = place;
+    if (hand.at !== "hand") return;
     const a = around(e);
     let d = a - hand.angle;
     d -= 2 * Math.PI * Math.round(d / (2 * Math.PI));
@@ -1027,10 +1089,9 @@ if (turntable) {
   });
 
   const release = () => {
-    if (!hand) return;
-    hand = null;
+    if (place.at !== "hand") return;
+    moveRecord({ at: "platter" });
     cancelAnimationFrame(feeling);
-    turntable.classList.remove("scratching");
     if (still.matches) {
       speed = 0;
       handBack();
@@ -1057,7 +1118,7 @@ if (turntable) {
     const v = scratchReady() ? voice : null;
     scratching = false;
     if (v) audio.currentTime = v.position();
-    if (!on || !down) return void v?.fade(0, 0.05);
+    if (!on || !grooved()) return void v?.fade(0, 0.05);
     const gain = gains.get(audio);
     if (gain && context) gain.gain.setValueAtTime(0, context.currentTime);
     audio.play().then(
