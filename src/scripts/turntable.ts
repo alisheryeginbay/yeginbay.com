@@ -782,6 +782,58 @@ if (turntable) {
     }
   };
 
+  // The song's title, artist and note. Changed, the old lines drift up and
+  // blur away, one after another, and the new ones come up after them; the
+  // space they take eases to its new height, so the buttons under them
+  // don't jump. Changed again on the way, the newest is written.
+  const now = $(".now");
+  const lines = [title, artist, note];
+  let retitling = 0;
+  const write = (song: DOMStringMap) => {
+    title.textContent = song.title!;
+    artist.replaceChildren(`${song.artist} · `, Object.assign(document.createElement("i"), { textContent: song.album }));
+    note.textContent = song.note ?? "";
+    note.hidden = !song.note;
+  };
+  const retitle = (song: DOMStringMap, animated: boolean) => {
+    const id = ++retitling;
+    if (!animated) return write(song);
+    const gone = lines.map((el, i) => {
+      for (const a of el.getAnimations()) {
+        // A hidden note has nothing to keep.
+        try {
+          a.commitStyles();
+        } catch {}
+        a.cancel();
+      }
+      return el.animate([{ opacity: 0, translate: "0 -0.3em", filter: "blur(3px)" }], {
+        duration: 160,
+        delay: i * 30,
+        easing: easeIn,
+        fill: "forwards",
+      }).finished;
+    });
+    Promise.all(gone).then(() => {
+      if (id !== retitling) return;
+      const was = now.offsetHeight;
+      write(song);
+      const is = now.offsetHeight;
+      if (was !== is)
+        now.animate([{ height: `${was}px` }, { height: `${is}px` }], { duration: 420, easing: easeOut });
+      lines.forEach((el, i) => {
+        for (const a of el.getAnimations()) a.cancel();
+        for (const k of ["opacity", "translate", "filter"]) el.style.removeProperty(k);
+        el.animate(
+          [
+            { opacity: 0, translate: "0 0.4em", filter: "blur(3px)" },
+            { opacity: 1, translate: "0 0", filter: "blur(0)" },
+          ],
+          { duration: 420, delay: i * 60, easing: easeOut, fill: "backwards" },
+        );
+      });
+    }, () => {});
+  };
+
   // `mixed`, the record stays on, playing, and only its label changes.
   const select = (index: number, mixed = false) => {
     unscratch();
@@ -797,10 +849,7 @@ if (turntable) {
     if (changed && mixed && !still.matches) relabel(() => dress(song), 900);
     else if (changed && !still.matches) change(song);
     else dress(song);
-    title.textContent = song.title!;
-    artist.replaceChildren(`${song.artist} · `, Object.assign(document.createElement("i"), { textContent: song.album }));
-    note.textContent = song.note ?? "";
-    note.hidden = !song.note;
+    retitle(song, changed && !still.matches);
     describe(song);
     showControls(!!song.preview);
     // Setting src to "" would point it at the page itself.
