@@ -63,13 +63,19 @@ export function normalizeHost(rawUrl: string): string | null {
   }
 }
 
-export function iconFor(href: string): Icon | null {
+// The rule a link falls under, as the site's domain and its logo:
+// ["wikipedia.org", siWikipedia] for en.wikipedia.org.
+export function siteFor(href: string): [domain: string, icon: Icon] | null {
   const host = normalizeHost(href);
   if (!host) return null;
   for (const [domain, icon] of Object.entries(RULES)) {
-    if (host === domain || host.endsWith(`.${domain}`)) return icon;
+    if (host === domain || host.endsWith(`.${domain}`)) return [domain, icon];
   }
   return null;
+}
+
+export function iconFor(href: string): Icon | null {
+  return siteFor(href)?.[1] ?? null;
 }
 
 // How many characters at the end of the link text stay glued to the icon, so

@@ -1424,6 +1424,10 @@ html:has(dialog.lightbox[open]) { overflow: hidden; }
 .post-list .track-time { font-size: 0.9rem; white-space: nowrap; }
 .post-list a { grid-template-columns: minmax(0, max-content) minmax(1.5rem, 1fr) auto; padding: 0.45rem 0; }
 
+/* The same list in a post (src/components/People.astro). */
+.post-content .rows { margin: 1em 0; }
+.post-content .rows a { color: inherit; }
+
 @media (prefers-reduced-motion: reduce) {
   .ring-fill,
   .ring-dot,

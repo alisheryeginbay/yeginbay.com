@@ -1,6 +1,7 @@
 ---
 // Every post, at /<name> for content/posts/ and /<section>/<name> for other
 // sections, and a redirect to it from each of its `aliases`.
+import People from "../components/People.astro";
 import Toc from "../components/Toc.astro";
 import SetWords from "../components/viz/Set.astro";
 import Show from "../components/viz/Show.astro";
@@ -29,7 +30,7 @@ const target = redirect && new URL(redirect, SITE.url).href;
 
 const rendered = post && (await renderPost(post));
 // Components posts use without importing them.
-const components = { Set: SetWords, Show, Var, Viz };
+const components = { People, Set: SetWords, Show, Var, Viz };
 const external = (href: string) => (isExternal(href) ? { target: "_blank", rel: "noopener noreferrer" } : {});
 // A post by the site's author alone needs no byline.
 const byline = post && post.authors.join(",") !== SITE.author ? post.authors : [];

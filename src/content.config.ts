@@ -15,6 +15,8 @@ import { typstLoader } from "./lib/typst.ts";
 //   aliases: [/k3]                 # old addresses that redirect here
 //   dropcap: false                 # no floriated initial
 //   description: …                 # default: the opening paragraphs
+//   people:                        # for <People />, see src/components/People.astro
+//     - { name: Richard Feynman, url: https://en.wikipedia.org/wiki/Richard_Feynman }
 //   ---
 //
 // Posts written in Typst give the same fields in their #metadata.
@@ -30,6 +32,7 @@ const post = z.object({
   aliases: z.array(z.string()).default([]),
   dropcap: z.boolean().default(true),
   description: z.string().optional(),
+  people: z.array(z.object({ name: z.string().min(1), url: z.string().url() })).optional(),
   // Left out of the built site, but shown by `astro dev`.
   draft: z.boolean().default(false),
 });
