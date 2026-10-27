@@ -13,3 +13,5 @@
 
 # Local state from the Cloudflare adapter and wrangler.
 .wrangler/
+# Secrets for `astro dev`.
+.dev.vars

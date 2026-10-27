@@ -1,0 +1,154 @@
+---
+// The songs in my Apple Music playlist (src/lib/music.ts): a record with the
+// song's cover as its label at the left, with buttons to play and move
+// between songs under it, and beside it the song that's on and the
+// tracklist. A song plays its 30-second preview on the page
+// (src/scripts/turntable.ts); without JavaScript, or with a modifier key, it
+// opens in Apple Music instead.
+import Base from "../layouts/Base.astro";
+import { isoDate, longDate } from "../lib/dates.ts";
+import { artwork, CACHE_SECONDS, duration, getPlaylist, type Playlist } from "../lib/music.ts";
+
+export const prerender = false;
+
+let playlist: Playlist | undefined;
+try {
+  playlist = await getPlaylist();
+  Astro.response.headers.set("Cache-Control", `public, max-age=${CACHE_SECONDS}`);
+} catch (e) {
+  // The page still renders, saying so, and isn't cached.
+  console.error(e);
+  Astro.response.headers.set("Cache-Control", "no-store");
+}
+
+const songs = playlist?.songs ?? [];
+const first = songs[0];
+// 01, 02, …
+const number = (i: number) => String(i + 1).padStart(2, "0");
+---
+
+<Base title="Music" description={playlist?.description ?? "What I'm listening to."}>
+  <h1>Music</h1>
+  {playlist?.description && <p class="music-intro">{playlist.description}</p>}
+  {
+    playlist && (
+      <p class="post-meta">
+        {playlist.updated && (
+          <>
+            Updated <time datetime={isoDate(playlist.updated)}>{longDate(playlist.updated)}</time> ·{" "}
+          </>
+        )}
+        <a href={playlist.url}>The playlist on Apple Music</a>
+      </p>
+    )
+  }
+  {!playlist && <p class="post-meta">The playlist couldn’t be loaded just now.</p>}
+
+  {
+    first && (
+      <div class="music">
+        <section class="turntable" aria-label="Now playing">
+          <div class="deck">
+            <div class="platter">
+              <svg class="ring" viewBox="0 0 100 100" aria-hidden="true">
+                <path class="ring-track" d="M50 0.75 A49.25 49.25 0 0 1 50 99.25 A49.25 49.25 0 0 1 50 0.75" pathLength="1" />
+                <path class="ring-fill" d="M50 0.75 A49.25 49.25 0 0 1 50 99.25 A49.25 49.25 0 0 1 50 0.75" pathLength="1" />
+                <g class="ring-dot">
+                  <circle cx="50" cy="0.75" r="1.3" />
+                </g>
+              </svg>
+              <div class="disc">
+                <div class="record">
+                  <img
+                    class="record-label"
+                    src={artwork(first, 300)}
+                    width="150"
+                    height="150"
+                    alt=""
+                    fetchpriority="high"
+                    style={first.artwork.bg ? `background-color: ${first.artwork.bg}` : undefined}
+                  />
+                </div>
+                <div class="record-sheen" />
+              </div>
+              <svg class="tonearm" viewBox="0 0 100 100" aria-hidden="true">
+                <g class="tonearm-arm">
+                  <rect class="tonearm-weight" x="89.4" y="-1.5" width="5.2" height="6.5" rx="1.2" />
+                  <path class="tonearm-rod" d="M92 2 V62 L89 70" />
+                  <path class="tonearm-rod-shine" d="M92 2 V62 L89 70" />
+                  <rect class="tonearm-head" x="86.6" y="66.5" width="4.4" height="7" rx="0.8" transform="rotate(20 88.8 70)" />
+                </g>
+                <circle class="tonearm-base" cx="92" cy="8" r="4.2" />
+                <circle class="tonearm-cap" cx="92" cy="8" r="1.7" />
+              </svg>
+            </div>
+          </div>
+          <div class="now-controls" hidden>
+            <button class="now-prev" type="button" aria-label="Previous song">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3h2v10H3zM13 3v10L6 8z" /></svg>
+            </button>
+            <button class="now-play" type="button" aria-label="Play preview">
+              <svg class="icon-play" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 2.5v11l9-5.5z" /></svg>
+              <svg class="icon-pause" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5h2.75v11H4zM9.25 2.5H12v11H9.25z" /></svg>
+            </button>
+            <button class="now-next" type="button" aria-label="Next song">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11 3h2v10h-2zM3 3v10l7-5z" /></svg>
+            </button>
+          </div>
+          <p class="now-time" hidden>
+            <span class="now-elapsed">0:00</span> / <span class="now-length">0:30</span>
+          </p>
+          <audio preload="none" />
+        </section>
+
+        <div class="playlist">
+          <p class="now-title">{first.title}</p>
+          <p class="now-artist">
+            {first.artist} · <i>{first.album}</i>
+          </p>
+
+          <ol class="tracks">
+            {songs.map((song, i) => (
+              <li>
+                <a
+                  href={song.url}
+                  aria-current={i === 0 ? "true" : undefined}
+                  data-preview={song.preview ?? undefined}
+                  data-art={artwork(song, 300)}
+                  data-bg={song.artwork.bg ?? undefined}
+                  data-title={song.title}
+                  data-artist={song.artist}
+                  data-album={song.album}
+                >
+                  <span class="track-number">{number(i)}</span>
+                  <img
+                    src={artwork(song, 120)}
+                    width="40"
+                    height="40"
+                    alt=""
+                    loading={i < 12 ? "eager" : "lazy"}
+                    decoding="async"
+                    style={song.artwork.bg ? `background-color: ${song.artwork.bg}` : undefined}
+                  />
+                  <span class="track-text">
+                    <span class="track-title">{song.title}</span>
+                    <span class="track-artist">{song.artist}</span>
+                  </span>
+                  <span class="track-time">{duration(song.durationMs)}</span>
+                </a>
+              </li>
+            ))}
+          </ol>
+
+          <a class="now-link" href={first.url}>
+            Listen in full on Apple Music
+          </a>
+        </div>
+      </div>
+    )
+  }
+</Base>
+
+<script>
+  import "../scripts/turntable.ts";
+</script>
