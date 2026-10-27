@@ -54,6 +54,12 @@ const book = z
 
 export type Book = z.infer<typeof book>;
 
+// A liner note on a song on /music, in the front matter of
+// content/pages/music.mdx.
+const note = z.object({ title: z.string().min(1), artist: z.string().min(1).optional(), note: z.string().min(1) });
+
+export type Note = z.infer<typeof note>;
+
 function noDuplicates(books: Book[], ctx: z.RefinementCtx) {
   const seen = new Set<string>();
   books.forEach((b, i) => {
@@ -79,6 +85,10 @@ export const collections = {
   // Pages with prose of their own, such as the home page.
   pages: defineCollection({
     loader: glob({ pattern: "*.mdx", base: "./content/pages" }),
-    schema: z.object({ title: z.string(), books: z.array(book).superRefine(noDuplicates).optional() }),
+    schema: z.object({
+      title: z.string(),
+      books: z.array(book).superRefine(noDuplicates).optional(),
+      notes: z.array(note).optional(),
+    }),
   }),
 };

@@ -1084,9 +1084,11 @@ html:has(dialog.lightbox[open]) { overflow: hidden; }
 }
 
 /* The tonearm, pivoting at the top right corner beside the record. It
-   rests off the record, swings on while a song plays, and moves inward
-   with --progress, from 0 to 1 through the preview. The pivot stays put;
-   only the arm turns. */
+   rests off the record, swings on while a song plays (cued), and moves
+   inward with --progress, from 0 to 1 through the preview. The pivot stays
+   put; only the arm turns. It can be picked up and moved (holding), by a
+   wider, invisible stroke along it (tonearm-grab); its angles are also in
+   src/scripts/turntable.ts. */
 .tonearm {
   position: absolute;
   inset: 0;
@@ -1104,7 +1106,24 @@ html:has(dialog.lightbox[open]) { overflow: hidden; }
   transition: rotate 0.9s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.turntable.playing .tonearm-arm { rotate: calc(16deg + 10deg * var(--progress, 0)); }
+.turntable.cued .tonearm-arm { rotate: calc(16deg + 10deg * var(--progress, 0)); }
+
+.tonearm-grab {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 7;
+  stroke-linecap: round;
+  pointer-events: stroke;
+  cursor: grab;
+  touch-action: none;
+}
+
+.turntable:has(.now-play:disabled) .tonearm-grab { pointer-events: none; }
+
+/* Held, it's lifted off the record: its shadow falls further. */
+.turntable.holding .tonearm-arm { transition: none; }
+.turntable.holding .tonearm-grab { cursor: grabbing; }
+.turntable.holding .tonearm { filter: drop-shadow(0 0.7rem 0.6rem rgb(0 0 0 / 0.25)); }
 
 .tonearm-rod { fill: none; stroke: #8f8f8f; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 .tonearm-rod-shine { fill: none; stroke: #e4e4e4; stroke-width: 0.6; stroke-linecap: round; stroke-linejoin: round; }
@@ -1196,6 +1215,18 @@ html:has(dialog.lightbox[open]) { overflow: hidden; }
   color: var(--muted);
   font-size: 0.9rem;
 }
+
+/* The liner note, if the song has one. */
+.now .now-note {
+  max-width: 30ch;
+  margin: 0.8rem auto 0;
+  font-size: 0.9rem;
+  font-style: italic;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.now-note[hidden] { display: none; }
 
 .playlist { min-width: 0; }
 

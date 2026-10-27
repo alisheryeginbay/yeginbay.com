@@ -1,11 +1,14 @@
 ---
 // The songs in my Apple Music playlist (src/lib/music.ts): a record with the
 // song's cover as its label at the left, with the song's title and buttons
-// to play and move between songs under it, and beside it the tracklist. A song plays its 30-second preview on the page
-// (src/scripts/turntable.ts); without JavaScript, or with a modifier key, it
-// opens in Apple Music instead.
+// to play and move between songs under it, and beside it the tracklist. A
+// song plays its 30-second preview on the page (src/scripts/turntable.ts);
+// without JavaScript, or with a modifier key, it opens in Apple Music
+// instead. A song with a liner note (content/pages/music.mdx) shows it
+// under its title.
+import { getEntry } from "astro:content";
 import Base from "../layouts/Base.astro";
-import { artwork, CACHE_SECONDS, duration, getPlaylist, type Playlist } from "../lib/music.ts";
+import { artwork, CACHE_SECONDS, duration, getPlaylist, type Playlist, type Song } from "../lib/music.ts";
 
 export const prerender = false;
 
@@ -21,6 +24,13 @@ try {
 
 const songs = playlist?.songs ?? [];
 const first = songs[0];
+
+// The liner note on a song, if there is one.
+const notes = (await getEntry("pages", "music"))?.data.notes ?? [];
+const same = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: "base" }) === 0;
+const noteOn = (song: Song) =>
+  notes.find((n) => same(n.title, song.title) && (!n.artist || same(n.artist, song.artist)))?.note;
+const firstNote = first && noteOn(first);
 // 01, 02, …
 const number = (i: number) => String(i + 1).padStart(2, "0");
 ---
@@ -63,6 +73,7 @@ const number = (i: number) => String(i + 1).padStart(2, "0");
                   <rect class="tonearm-weight" x="89.4" y="-1.5" width="5.2" height="6.5" rx="1.2" />
                   <path class="tonearm-rod" d="M92 2 V62 L89 70" />
                   <path class="tonearm-rod-shine" d="M92 2 V62 L89 70" />
+                  <path class="tonearm-grab" d="M92 14 V62 L89 70" />
                   <rect class="tonearm-head" x="86.6" y="66.5" width="4.4" height="7" rx="0.8" transform="rotate(20 88.8 70)" />
                 </g>
                 <circle class="tonearm-base" cx="92" cy="8" r="4.2" />
@@ -75,6 +86,7 @@ const number = (i: number) => String(i + 1).padStart(2, "0");
             <p class="now-artist">
               {first.artist} · <i>{first.album}</i>
             </p>
+            <p class="now-note" hidden={!firstNote}>{firstNote}</p>
           </div>
           <div class="now-controls" hidden>
             <button class="now-prev" type="button" aria-label="Previous song">
@@ -108,6 +120,7 @@ const number = (i: number) => String(i + 1).padStart(2, "0");
                   data-title={song.title}
                   data-artist={song.artist}
                   data-album={song.album}
+                  data-note={noteOn(song)}
                 >
                   <span class="track-number">{number(i)}</span>
                   <span class="track-text">

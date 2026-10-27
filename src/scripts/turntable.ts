@@ -7,7 +7,12 @@
 //
 // It goes like a belt-driven turntable: on play the record starts turning
 // and the arm swings over, and the music begins as the needle lands; on
-// pause the music stops, the arm lifts, and the record coasts to a stop.
+// pause the motor stops and the music slows and sinks in pitch with the
+// record, until the arm lifts and the record coasts to a stop.
+//
+// The arm can be picked up and put down anywhere on the record, to play
+// from there: across the record is the whole preview, outside to inside.
+// Lifting it stops the music; the record keeps turning.
 import type { RecordShader } from "./record-shader.ts";
 
 const turntable = document.querySelector<HTMLElement>(".turntable");
@@ -27,6 +32,9 @@ if (turntable) {
   const length = $(".now-length");
   const title = $(".now-title");
   const artist = $(".now-artist");
+  const note = $(".now-note");
+  const arm = turntable.querySelector<SVGGElement>(".tonearm-arm")!;
+  const grab = turntable.querySelector<SVGPathElement>(".tonearm-grab")!;
   const still = matchMedia("(prefers-reduced-motion: reduce)");
   let current = 0;
 
@@ -65,6 +73,16 @@ if (turntable) {
   let frame = 0;
   let last = 0;
 
+  // Winding down: the needle still in the groove after the motor's switched
+  // off, so the music follows the record's speed, fading as it goes, until
+  // the arm lifts. Below about a third of the speed it's too slow to hear.
+  let winding = false;
+  const QUIET = 0.3;
+  audio.preservesPitch = false;
+
+  // Where to play from, once the preview's length is known.
+  let seek: number | null = null;
+
   const tick = (now: number) => {
     const dt = Math.min((now - last) / 1000, 0.1);
     last = now;
@@ -72,6 +90,17 @@ if (turntable) {
     else speed = Math.max(0, speed - (0.1 + speed / 1.4) * dt);
     if (Math.abs(target - speed) < 0.002) speed = target;
     spin.playbackRate = speed;
+    if (winding) {
+      if (target === 0 && speed <= QUIET) lift();
+      else if (speed === 1) winding = false;
+      if (winding) {
+        audio.playbackRate = Math.max(speed, QUIET);
+        audio.volume = Math.min(1, (speed - QUIET) / 0.5);
+      } else {
+        audio.playbackRate = 1;
+        audio.volume = 1;
+      }
+    }
     frame = 0;
     if (speed === 0) spin.pause();
     else if (speed !== target) frame = requestAnimationFrame(tick);
@@ -130,11 +159,14 @@ if (turntable) {
       if (e.name !== "AbortError" && on) stop();
     });
 
-  const start = () => {
+  // `there`: the arm is already over the record, so the needle drops at
+  // once. Started again while winding down, the music speeds back up with
+  // the record.
+  const start = (there = false) => {
     if (!loaded()) return;
     clearTimeout(timer);
     on = true;
-    turntable.classList.add("playing");
+    turntable.classList.add("playing", "cued");
     play.setAttribute("aria-label", "Pause preview");
     motor(true);
     if (down) return void playAudio();
@@ -143,18 +175,34 @@ if (turntable) {
         down = true;
         playAudio();
       },
-      still.matches ? 0 : NEEDLE_MS,
+      still.matches || there ? 0 : NEEDLE_MS,
     );
   };
 
+  // In a hidden tab there are no frames to slow the music down with, so it
+  // just stops.
   const stop = () => {
     clearTimeout(timer);
     on = false;
-    down = false;
-    audio.pause();
     turntable.classList.remove("playing");
     play.setAttribute("aria-label", "Play preview");
-    timer = setTimeout(() => motor(false), still.matches ? 0 : LIFT_MS);
+    if (down && !audio.paused && !still.matches && !document.hidden) {
+      winding = true;
+      motor(false);
+    } else {
+      lift();
+      timer = setTimeout(() => motor(false), still.matches ? 0 : LIFT_MS);
+    }
+  };
+
+  // The needle comes up and the arm goes back to its rest.
+  const lift = () => {
+    winding = false;
+    down = false;
+    audio.pause();
+    audio.playbackRate = 1;
+    audio.volume = 1;
+    turntable.classList.remove("cued");
   };
 
   const toggle = () => (on ? stop() : start());
@@ -169,6 +217,8 @@ if (turntable) {
   };
 
   const select = (index: number) => {
+    if (winding) lift();
+    seek = null;
     const song = links[index].dataset;
     links[current].removeAttribute("aria-current");
     links[index].setAttribute("aria-current", "true");
@@ -184,6 +234,8 @@ if (turntable) {
     );
     title.textContent = song.title!;
     artist.replaceChildren(`${song.artist} · `, Object.assign(document.createElement("i"), { textContent: song.album }));
+    note.textContent = song.note ?? "";
+    note.hidden = !song.note;
     showControls(!!song.preview);
     // Setting src to "" would point it at the page itself.
     if (song.preview) audio.src = song.preview;
@@ -241,7 +293,7 @@ if (turntable) {
   audio.addEventListener("play", () => {
     if (on) return;
     on = down = true;
-    turntable.classList.add("playing");
+    turntable.classList.add("playing", "cued");
     play.setAttribute("aria-label", "Pause preview");
     motor(true);
   });
@@ -254,6 +306,8 @@ if (turntable) {
 
   audio.addEventListener("loadedmetadata", () => {
     length.textContent = format(audio.duration);
+    if (seek !== null) audio.currentTime = seek * audio.duration;
+    seek = null;
   });
 
   audio.addEventListener("timeupdate", () => {
@@ -262,12 +316,86 @@ if (turntable) {
     elapsed.textContent = format(audio.currentTime);
   });
 
-  // At the end of the list it stops rather than going round.
+  // At the end of the list it stops rather than going round. A song that
+  // runs out while winding down just stops.
   audio.addEventListener("ended", () => {
+    if (!on) return lift();
     const after = nearest(1);
     if (after > current) go(after);
     else stop();
   });
+
+  // The arm. Its angle (style.css) is REST off the record, and from ON at
+  // the outside of the record to IN at the inside; let go within LEAD of
+  // ON, it drops at the start. It turns about its pivot, at (92, 8) in the
+  // tonearm's drawing, where at no angle the head is at (88.8, 70).
+  const REST = -4;
+  const ON = 16;
+  const IN = 26;
+  const LEAD = 3;
+  const HEAD = Math.atan2(70 - 8, 88.8 - 92);
+  const svg = grab.ownerSVGElement!;
+  const clamp = (x: number, lo: number, hi: number) => Math.min(Math.max(x, lo), hi);
+  const at = (deg: number) => clamp((deg - ON) / (IN - ON), 0, 1);
+
+  // Where the pointer is, as an angle of the arm, in degrees.
+  const pointing = (e: PointerEvent) => {
+    const r = svg.getBoundingClientRect();
+    const a = Math.atan2(e.clientY - (r.top + 0.08 * r.height), e.clientX - (r.left + 0.92 * r.width));
+    return (((a - HEAD) * 180) / Math.PI + 540) % 360 - 180;
+  };
+
+  const seekTo = (p: number) => {
+    turntable.style.setProperty("--progress", String(p));
+    if (audio.duration) audio.currentTime = p * audio.duration;
+    else seek = p;
+  };
+
+  // The arm's angle while it's held, and how far that is from the pointer,
+  // so it doesn't jump to wherever along it it was picked up.
+  let held: { deg: number; offset: number } | null = null;
+
+  grab.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0 || !links[current].dataset.preview) return;
+    e.preventDefault();
+    if (!loaded()) select(current);
+    clearTimeout(timer);
+    if (winding) lift();
+    else if (down) {
+      // Before pausing, so the pause isn't taken for a stop.
+      down = false;
+      audio.pause();
+    }
+    const deg = parseFloat(getComputedStyle(arm).rotate) || REST;
+    held = { deg, offset: deg - pointing(e) };
+    grab.setPointerCapture(e.pointerId);
+    turntable.classList.add("holding");
+    arm.style.rotate = `${deg}deg`;
+  });
+
+  grab.addEventListener("pointermove", (e) => {
+    if (!held) return;
+    held.deg = clamp(pointing(e) + held.offset, REST, IN + 2);
+    arm.style.rotate = `${held.deg}deg`;
+    // The time it would play from.
+    if (audio.duration && held.deg >= ON - LEAD) elapsed.textContent = format(at(held.deg) * audio.duration);
+  });
+
+  const letGo = () => {
+    if (!held) return;
+    const { deg } = held;
+    held = null;
+    turntable.classList.remove("holding");
+    arm.style.rotate = "";
+    if (deg >= ON - LEAD) {
+      seekTo(at(deg));
+      start(true);
+    } else if (on) stop();
+    else turntable.classList.remove("cued");
+  };
+
+  grab.addEventListener("pointerup", letGo);
+  grab.addEventListener("pointercancel", letGo);
 
   controls.hidden = !links.some((a) => a.dataset.preview);
   showControls(!!links[0]?.dataset.preview);
