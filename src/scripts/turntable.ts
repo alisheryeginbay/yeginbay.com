@@ -187,8 +187,12 @@ if (turntable) {
   // across the window, easing after it.
   let lamp = 0;
   let lampTo = 0;
+  // Moves smaller than about half a degree are let pass, so a phone's
+  // sensor, which never quite settles, doesn't keep the record drawing.
   const aim = (x: number, y: number) => {
-    lampTo = 0.45 * (-0.8 * Math.max(-1, Math.min(1, x)) + 0.5 * Math.max(-1, Math.min(1, y)));
+    const to = 0.45 * (-0.8 * Math.max(-1, Math.min(1, x)) + 0.5 * Math.max(-1, Math.min(1, y)));
+    if (Math.abs(to - lampTo) < 0.01) return;
+    lampTo = to;
     paint();
   };
   if (matchMedia("(pointer: fine)").matches) {
@@ -206,7 +210,13 @@ if (turntable) {
 
   // Frames of the WebGPU record, drawn while it turns, its colours or
   // grooves change, the beat dies away or the light moves, each at the
-  // angle the label has reached.
+  // angle the label has reached. None while it's scrolled out of sight; it
+  // catches up when it's back.
+  let seen = true;
+  new IntersectionObserver(([entry]) => {
+    seen = entry.isIntersecting;
+    paint();
+  }).observe(canvas);
   let painting = 0;
   let painted = 0;
   const angle = () => ((Number(spin.currentTime ?? 0) % 1800) / 1800) * 2 * Math.PI;
@@ -218,12 +228,12 @@ if (turntable) {
     lamp += (lampTo - lamp) * (1 - Math.exp(-dt / 0.3));
     if (Math.abs(lampTo - lamp) < 0.0005) lamp = lampTo;
     shader!.draw(angle(), pulse, lamp);
-    if (speed > 0 || target > 0 || pulse > 0 || lamp !== lampTo || shader!.blending())
+    if (seen && (speed > 0 || target > 0 || pulse > 0 || lamp !== lampTo || shader!.blending()))
       painting = requestAnimationFrame(paintFrame);
     else painted = 0;
   };
   const paint = () => {
-    if (shader && !painting) painting = requestAnimationFrame(paintFrame);
+    if (shader && seen && !painting) painting = requestAnimationFrame(paintFrame);
   };
   new ResizeObserver(paint).observe(canvas);
 
@@ -266,6 +276,7 @@ if (turntable) {
     on = true;
     turntable.classList.add("playing", "cued");
     play.setAttribute("aria-label", "Pause preview");
+    playing(true);
     motor(true);
     if (down) return void playAudio();
     timer = setTimeout(
@@ -285,6 +296,7 @@ if (turntable) {
     on = false;
     turntable.classList.remove("playing");
     play.setAttribute("aria-label", "Play preview");
+    playing(false);
     if (down && !audio.paused && !still.matches && !document.hidden) {
       winding = true;
       motor(false);
@@ -464,6 +476,7 @@ if (turntable) {
     artist.replaceChildren(`${song.artist} · `, Object.assign(document.createElement("i"), { textContent: song.album }));
     note.textContent = song.note ?? "";
     note.hidden = !song.note;
+    describe(song);
     showControls(!!song.preview);
     // Setting src to "" would point it at the page itself.
     if (song.preview) audio.src = song.preview;
@@ -531,6 +544,7 @@ if (turntable) {
     on = down = true;
     turntable.classList.add("playing", "cued");
     play.setAttribute("aria-label", "Pause preview");
+    playing(true);
     motor(true);
   });
 
@@ -550,6 +564,7 @@ if (turntable) {
     if (!audio.duration) return;
     turntable.style.setProperty("--progress", String(audio.currentTime / audio.duration));
     elapsed.textContent = format(audio.currentTime);
+    position();
     // Time to bring in the next song, unless this is the last.
     if (context && on && down && !winding && !held && !fading && audio.duration - audio.currentTime <= FADE) {
       const after = nearest(1);
@@ -639,6 +654,52 @@ if (turntable) {
 
   grab.addEventListener("pointerup", letGo);
   grab.addEventListener("pointercancel", letGo);
+
+  // The lock screen, Control Centre, headphones and media keys: the song
+  // and its cover shown there, and their buttons working the turntable as
+  // the ones on the page do. Its state is set here, not left to the audio,
+  // since the music goes on for a moment after a pause as the record winds
+  // down.
+  const session = "mediaSession" in navigator ? navigator.mediaSession : null;
+  function describe(song: DOMStringMap) {
+    if (!session || !song.preview) return;
+    session.metadata = new MediaMetadata({
+      title: song.title,
+      artist: song.artist,
+      album: song.album,
+      artwork: [{ src: song.art!, sizes: "400x400", type: "image/jpeg" }],
+    });
+  }
+  function playing(yes: boolean) {
+    if (session) session.playbackState = yes ? "playing" : "paused";
+  }
+  function position() {
+    if (!session?.setPositionState || !Number.isFinite(audio.duration)) return;
+    try {
+      session.setPositionState({ duration: audio.duration, position: Math.min(audio.currentTime, audio.duration) });
+    } catch {}
+  }
+  if (session) {
+    const handle = (action: MediaSessionAction, fn: MediaSessionActionHandler) => {
+      try {
+        session.setActionHandler(action, fn);
+      } catch {}
+    };
+    handle("play", () => {
+      wire();
+      if (!loaded()) select(current);
+      if (!on) start();
+    });
+    handle("pause", () => on && stop());
+    handle("previoustrack", () => prev.click());
+    handle("nexttrack", () => go(nearest(1)));
+    handle("seekto", ({ seekTime }) => {
+      if (seekTime === undefined || !audio.duration) return;
+      audio.currentTime = Math.min(seekTime, audio.duration);
+      position();
+    });
+    describe(links[current].dataset);
+  }
 
   controls.hidden = !links.some((a) => a.dataset.preview);
   showControls(!!links[0]?.dataset.preview);

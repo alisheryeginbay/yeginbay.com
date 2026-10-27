@@ -126,7 +126,14 @@ const number = (i: number) => String(i + 1).padStart(2, "0");
                 >
                   <span class="track-number">{number(i)}</span>
                   <span class="track-text">
-                    <span class="track-title">{song.title}</span>
+                    <span class="track-title">
+                      {song.title}
+                      {!song.preview && (
+                        <svg class="track-away" viewBox="0 0 16 16" role="img" aria-label="(no preview; opens in Apple Music)">
+                          <path d="M5 3h8v8h-1.6V5.7l-6.8 6.8-1.1-1.1 6.8-6.8H5z" />
+                        </svg>
+                      )}
+                    </span>
                     <span class="track-artist">{song.artist}</span>
                   </span>
                   <span class="track-leader" aria-hidden="true" />

@@ -1298,6 +1298,18 @@ html:has(dialog.lightbox[open]) { overflow: hidden; }
 .tracks a[aria-current] .track-title { font-weight: 600; }
 .tracks a[aria-current] .track-number { color: var(--fg); }
 
+/* A song with no preview can't play here, so it opens Apple Music: it's
+   dimmed, with an arrow out. */
+.tracks a:not([data-preview]) .track-text { opacity: 0.6; }
+.tracks a:not([data-preview]):is(:hover, :focus-visible) .track-text { opacity: 1; }
+.track-away {
+  width: 0.7em;
+  height: 0.7em;
+  margin-left: 0.3em;
+  vertical-align: 0;
+  fill: var(--muted);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ring-fill,
   .ring-dot,
