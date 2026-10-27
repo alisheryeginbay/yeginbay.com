@@ -975,9 +975,29 @@ html:has(dialog.lightbox[open]) { overflow: hidden; }
 /* The record. Its shadow and the light on it (record-sheen) stay put while
    it turns; a faint unevenness in its grooves turns with it, so it can be
    seen to spin. */
+/* Where the record goes when the song changes (src/scripts/turntable.ts):
+   down below the deck, fading into the page as it goes, gone by the top of
+   the song's title, and the new one comes up from there. The well reaches
+   down through the gap between them, --sink, fading out across it. A
+   mask hides whatever's outside its box, so the well is also wider than
+   the deck by --bleed each side, for the record's shadow; on a narrow
+   screen, that's the space beside the deck. */
+.turntable { --sink: 1.5rem; }
+
+.well {
+  --bleed: 2rem;
+  position: absolute;
+  inset: 0 calc(-1 * var(--bleed)) calc(-1 * var(--sink));
+  pointer-events: none;
+  mask: linear-gradient(#000 0 calc(100% - var(--sink)), transparent);
+}
+
 .disc {
   position: absolute;
-  inset: 4%;
+  top: calc(0.04 * var(--d));
+  left: calc(var(--bleed) + 0.04 * var(--d));
+  width: calc(0.92 * var(--d));
+  height: calc(0.92 * var(--d));
   border-radius: 50%;
   box-shadow:
     0 1.5rem 2.5rem -1rem rgb(0 0 0 / 0.4),
@@ -1108,6 +1128,9 @@ html:has(dialog.lightbox[open]) { overflow: hidden; }
 
 .turntable.cued .tonearm-arm { rotate: calc(16deg + 10deg * var(--progress, 0)); }
 
+/* Off the record while it's changed. */
+.turntable.cued.changing .tonearm-arm { rotate: -4deg; }
+
 .tonearm-grab {
   fill: none;
   stroke: transparent;
@@ -1196,7 +1219,7 @@ html:has(dialog.lightbox[open]) { overflow: hidden; }
 /* The song that's on, centred under the record. */
 .now {
   width: var(--d);
-  margin-top: 1.5rem;
+  margin-top: var(--sink);
   text-align: center;
 }
 

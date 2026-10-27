@@ -5,14 +5,25 @@ import { effect, frame, init, sampler, surface, texture, type Gpu, type Texture 
 import recordWgsl from "../shaders/record.wgsl";
 
 export interface RecordShader {
-  // Draws a frame with the record turned `rotation` radians clockwise.
-  draw(rotation: number): void;
+  // Draws a frame with the record turned `rotation` radians clockwise, the
+  // beat at `pulse` (0 to 1), and the beams turned `lamp` radians
+  // anticlockwise.
+  draw(rotation: number, pulse?: number, lamp?: number): void;
   // Changes to a cover's colours over `ms`, unless `wanted` says, once it's
   // loaded, that another has been chosen since.
   setCover(url: string, ms: number, wanted?: () => boolean): Promise<void>;
-  // True while the colours are still changing.
+  // Cuts the song's loudness, GROOVES values from 0 to 255 from its start
+  // to its end, into the grooves, fading them in; or, given null, goes
+  // back to plain grooves at once.
+  setGrooves(levels: Uint8Array | null): void;
+  // True while the colours or the grooves are still changing.
   blending(): boolean;
 }
+
+// How many points of the song's loudness the grooves are cut from.
+export const GROOVES = 256;
+// How long new grooves take to fade in.
+const ETCH_MS = 900;
 
 // The covers are read at this size: small enough that their colours come
 // out soft, which is how light on the grooves looks.
@@ -45,13 +56,21 @@ export async function recordShader(canvas: HTMLCanvasElement, label: number): Pr
   fill(from);
   fill(to);
 
+  const grooves = texture(gpu, {
+    kind: "2d",
+    size: [GROOVES, 1],
+    format: "r8unorm",
+    usage: ["texture_binding", "copy_dst"],
+  });
+
   const record = effect(gpu, recordWgsl, {
     label: "record",
     set: {
-      params: { res: [1, 1], rotation: 0, label, blend: 1 },
+      params: { res: [1, 1], rotation: 0, label, blend: 1, pulse: 0, lamp: 0, etch: 0 },
       from_cover: from,
       to_cover: to,
       cover_sampler: sampler(gpu, { minFilter: "linear", magFilter: "linear" }),
+      grooves,
     },
   });
   out.onResize(({ width, height }) => record.set({ params: { res: [width, height] } }));
@@ -63,9 +82,16 @@ export async function recordShader(canvas: HTMLCanvasElement, label: number): Pr
     return t * t * (3 - 2 * t);
   };
 
+  // 0 until a song's grooves are in, then rising to 1.
+  let etched = -Infinity;
+  const etch = () => {
+    const t = Math.min(1, (performance.now() - etched) / ETCH_MS);
+    return t * t * (3 - 2 * t);
+  };
+
   return {
-    draw(rotation) {
-      record.set({ params: { rotation, blend: blend() } });
+    draw(rotation, pulse = 0, lamp = 0) {
+      record.set({ params: { rotation, blend: blend(), pulse, lamp, etch: etch() } });
       frame(gpu, (f) => f.pass(out, record));
     },
 
@@ -82,8 +108,15 @@ export async function recordShader(canvas: HTMLCanvasElement, label: number): Pr
       duration = Math.max(ms, 1);
     },
 
+    setGrooves(levels) {
+      if (!levels) return void (etched = -Infinity);
+      gpu.gpu.queue.writeTexture({ texture: grooves.gpu }, levels, { bytesPerRow: GROOVES }, [GROOVES, 1]);
+      etched = performance.now();
+    },
+
     blending() {
-      return performance.now() - started < duration;
+      const now = performance.now();
+      return now - started < duration || now - etched < ETCH_MS;
     },
   };
 }

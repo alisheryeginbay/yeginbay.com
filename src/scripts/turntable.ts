@@ -14,7 +14,11 @@
 // The arm can be picked up and put down anywhere on the record, to play
 // from there: across the record is the whole preview, outside to inside.
 // Lifting it stops the music; the record keeps turning.
-import type { RecordShader } from "./record-shader.ts";
+//
+// Where the record is drawn with WebGPU, its grooves are cut from the
+// song's loudness, its light swells a little with the beat, and the light
+// turns a little as the pointer moves, or the phone tilts.
+import { GROOVES, type RecordShader } from "./record-shader.ts";
 
 const turntable = document.querySelector<HTMLElement>(".turntable");
 
@@ -29,6 +33,7 @@ if (turntable) {
   const decks = [audio, spare];
   const record = $(".record");
   const label = $<HTMLImageElement>(".record-label");
+  const disc = $(".disc");
   const controls = $(".now-controls");
   const play = $<HTMLButtonElement>(".now-play");
   const prev = $<HTMLButtonElement>(".now-prev");
@@ -58,6 +63,7 @@ if (turntable) {
       if (!s) return;
       shader = s;
       recolor(links[current]?.dataset.swatch, 0);
+      engrave(links[current]?.dataset.preview);
     },
     (e) => console.error(e),
   );
@@ -91,14 +97,20 @@ if (turntable) {
   // decks can be wired in; that's done on the first click, as a browser
   // only lets sound start from one. Without Web Audio, songs don't fade
   // into each other, and change when they end.
+  // Both decks go through `analyser` too, which hears the beat.
   let context: AudioContext | null = null;
+  let analyser: AnalyserNode | null = null;
   const gains = new Map<HTMLAudioElement, GainNode>();
   const wire = () => {
     if (!context && "AudioContext" in window) {
       context = new AudioContext();
+      analyser = context.createAnalyser();
+      analyser.fftSize = 1024;
+      analyser.smoothingTimeConstant = 0.5;
+      analyser.connect(context.destination);
       for (const deck of decks) {
         const gain = context.createGain();
-        context.createMediaElementSource(deck).connect(gain).connect(context.destination);
+        context.createMediaElementSource(deck).connect(gain).connect(analyser);
         gains.set(deck, gain);
       }
     }
@@ -148,14 +160,67 @@ if (turntable) {
     paint();
   };
 
-  // Frames of the WebGL record, drawn while it turns or its colours change,
-  // each at the angle the label has reached.
+  // The beat: the bass, below about 190 Hz, against its own recent
+  // average, so a kick drum stands out from a held bass note. It rises at
+  // once and dies away over a fifth of a second or so.
+  let bins: Uint8Array<ArrayBuffer> | null = null;
+  let bass = 0;
+  let pulse = 0;
+  const listen = (dt: number) => {
+    let hit = 0;
+    if (analyser && on && !still.matches) {
+      bins ??= new Uint8Array(analyser.frequencyBinCount);
+      analyser.getByteFrequencyData(bins);
+      const top = Math.max(2, Math.round((190 / context!.sampleRate) * analyser.fftSize));
+      let sum = 0;
+      for (let i = 1; i <= top; i++) sum += bins[i];
+      const now = sum / top / 255;
+      bass += (now - bass) * (1 - Math.exp(-dt / 0.6));
+      hit = Math.min(1, Math.max(0, (now - bass) * 4));
+    }
+    pulse = Math.max(hit, pulse * Math.exp(-dt / 0.18));
+    if (pulse < 0.005) pulse = 0;
+  };
+
+  // The light: where it's coming from turns the beams, by up to about a
+  // fifth of a turn each way, following the pointer (or the phone's tilt)
+  // across the window, easing after it.
+  let lamp = 0;
+  let lampTo = 0;
+  const aim = (x: number, y: number) => {
+    lampTo = 0.45 * (-0.8 * Math.max(-1, Math.min(1, x)) + 0.5 * Math.max(-1, Math.min(1, y)));
+    paint();
+  };
+  if (matchMedia("(pointer: fine)").matches) {
+    window.addEventListener("pointermove", (e) => aim((2 * e.clientX) / innerWidth - 1, (2 * e.clientY) / innerHeight - 1), {
+      passive: true,
+    });
+  } else {
+    // Held upright and level, a phone is at 0; tipped 40 degrees, at the
+    // most. iOS asks before it tells a page this, so there it stays still.
+    window.addEventListener("deviceorientation", (e) => {
+      if (e.gamma === null || e.beta === null) return;
+      aim(e.gamma / 40, (e.beta - 45) / 40);
+    });
+  }
+
+  // Frames of the WebGPU record, drawn while it turns, its colours or
+  // grooves change, the beat dies away or the light moves, each at the
+  // angle the label has reached.
   let painting = 0;
+  let painted = 0;
   const angle = () => ((Number(spin.currentTime ?? 0) % 1800) / 1800) * 2 * Math.PI;
-  const paintFrame = () => {
+  const paintFrame = (now: number) => {
     painting = 0;
-    shader!.draw(angle());
-    if (speed > 0 || target > 0 || shader!.blending()) painting = requestAnimationFrame(paintFrame);
+    const dt = painted ? Math.min((now - painted) / 1000, 0.1) : 0;
+    painted = now;
+    listen(dt);
+    lamp += (lampTo - lamp) * (1 - Math.exp(-dt / 0.3));
+    if (Math.abs(lampTo - lamp) < 0.0005) lamp = lampTo;
+    shader!.draw(angle(), pulse, lamp);
+    if (speed > 0 || target > 0 || pulse > 0 || lamp !== lampTo || shader!.blending())
+      painting = requestAnimationFrame(paintFrame);
+    else painted = 0;
   };
   const paint = () => {
     if (shader && !painting) painting = requestAnimationFrame(paintFrame);
@@ -295,23 +360,106 @@ if (turntable) {
     time.hidden = !on;
   };
 
-  const select = (index: number) => {
-    settle();
-    if (winding) lift();
-    seek = null;
-    const song = links[index].dataset;
-    links[current].removeAttribute("aria-current");
-    links[index].setAttribute("aria-current", "true");
-    current = index;
+  // The song's loudness, for the grooves: the preview, fetched and decoded
+  // (which a browser does even before anything's been clicked), cut into
+  // GROOVES pieces, each piece's loudness against the loudest's. Kept for
+  // each song once it's been worked out. Plain grooves until it's in, or if
+  // it can't be.
+  const loudness = new Map<string, Promise<Uint8Array>>();
+  const measure = async (url: string) => {
+    const bytes = await (await fetch(url, { mode: "cors", priority: "low" })).arrayBuffer();
+    const sound = await new OfflineAudioContext(1, 1, 22050).decodeAudioData(bytes);
+    const channels = Array.from({ length: sound.numberOfChannels }, (_, c) => sound.getChannelData(c));
+    const n = channels[0].length;
+    const rms = new Float32Array(GROOVES);
+    for (let g = 0; g < GROOVES; g++) {
+      const from = Math.floor((g * n) / GROOVES);
+      const to = Math.floor(((g + 1) * n) / GROOVES);
+      let sum = 0;
+      for (const data of channels) for (let i = from; i < to; i += 4) sum += data[i] * data[i];
+      rms[g] = Math.sqrt(sum / Math.max(1, ((to - from) / 4) * channels.length));
+    }
+    const loudest = Math.max(...rms, 1e-6);
+    return Uint8Array.from(rms, (v) => Math.round(255 * Math.pow(v / loudest, 0.8)));
+  };
 
-    // The new label fades in once it's loaded, so it never shows half-drawn.
+  const engrave = (url: string | undefined) => {
+    const s = shader;
+    if (!s) return;
+    s.setGrooves(null);
+    paint();
+    if (!url) return;
+    if (!loudness.has(url)) loudness.set(url, measure(url));
+    loudness.get(url)!.then(
+      (levels) => {
+        if (links[current].dataset.preview !== url) return;
+        s.setGrooves(levels);
+        paint();
+      },
+      (e) => {
+        loudness.delete(url);
+        console.error(e);
+      },
+    );
+  };
+
+  // The record for a song: its cover on the label, which fades in once
+  // it's loaded, so it never shows half-drawn, and its colours and grooves.
+  const dress = (song: DOMStringMap) => {
     label.src = song.art!;
     recolor(song.swatch, 700);
+    engrave(song.preview);
     label.style.backgroundColor = song.bg ?? "";
     label.decode().then(
       () => label.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 250, easing: "ease-out" }),
       () => {},
     );
+  };
+
+  // Changing records: the arm lifts, the record sinks below the deck,
+  // behind the title, fading into the page (style.css), and the new one
+  // rises from there. Changed again on the way, the record goes on down
+  // from wherever it's got to, and the newer one comes up.
+  let changing = 0;
+  const change = (song: DOMStringMap) => {
+    const id = ++changing;
+    const well = disc.parentElement!;
+    const depth = well.offsetHeight - disc.offsetTop;
+    const y = parseFloat(getComputedStyle(disc).translate.split(" ")[1] ?? "0") || 0;
+    for (const a of disc.getAnimations()) a.cancel();
+    turntable.classList.add("changing");
+    disc
+      .animate([{ translate: `0 ${y}px` }, { translate: `0 ${depth}px` }], {
+        duration: 380 * (1 - y / depth),
+        easing: "cubic-bezier(0.5, 0, 0.75, 0)",
+        fill: "forwards",
+      })
+      .finished.then(() => {
+        if (id !== changing) return;
+        dress(song);
+        disc
+          .animate([{ translate: `0 ${depth}px` }, { translate: "0 0" }], {
+            duration: 560,
+            easing: "cubic-bezier(0.2, 0.8, 0.3, 1)",
+          })
+          .finished.then(() => id === changing && turntable.classList.remove("changing"), () => {});
+        // Cancels the one that took it down, which held it there.
+        for (const a of disc.getAnimations().slice(0, -1)) a.cancel();
+      }, () => {});
+  };
+
+  const select = (index: number) => {
+    settle();
+    if (winding) lift();
+    seek = null;
+    const song = links[index].dataset;
+    const changed = index !== current;
+    links[current].removeAttribute("aria-current");
+    links[index].setAttribute("aria-current", "true");
+    current = index;
+
+    if (changed && !still.matches) change(song);
+    else dress(song);
     title.textContent = song.title!;
     artist.replaceChildren(`${song.artist} · `, Object.assign(document.createElement("i"), { textContent: song.album }));
     note.textContent = song.note ?? "";

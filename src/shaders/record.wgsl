@@ -3,6 +3,11 @@
 // rainbow on a CD. The beams stay where the light is while the record turns
 // under them; the fine streaks pressed into the vinyl turn with it. The
 // middle is left clear for the label, the cover itself, underneath.
+//
+// The grooves follow the song: how loud it is, start to end, runs from the
+// outside of the record in, and quiet passages show as glossy bands, as on
+// a real pressing. The beams swell a little with the beat, and turn a
+// little toward wherever the light is coming from.
 
 struct Params {
   // The canvas, in pixels.
@@ -13,12 +18,20 @@ struct Params {
   label: f32,
   // From the last cover's colours (0) to this one's (1).
   blend: f32,
+  // The beat, from 0 to 1.
+  pulse: f32,
+  // How far the beams have turned, anticlockwise, in radians.
+  lamp: f32,
+  // From plain grooves (0) to the song's (1).
+  etch: f32,
 }
 
 @group(0) @binding(0) var<uniform> params: Params;
 @group(0) @binding(1) var from_cover: texture_2d<f32>;
 @group(0) @binding(2) var to_cover: texture_2d<f32>;
 @group(0) @binding(3) var cover_sampler: sampler;
+// The song's loudness, from its start (left) to its end (right), 0 to 1.
+@group(0) @binding(4) var grooves: texture_2d<f32>;
 
 const TAU = 6.2831853;
 
@@ -79,21 +92,37 @@ fn tint(th: f32) -> vec3f {
   bands += 1.0 - smoothstep(0.0, 0.004, abs(r - 0.92));
   bands = min(bands, 1.0);
 
+  // The song, from just inside the rim to just outside the smooth ring,
+  // where the music on a record ends. Its quiet passages are bands in
+  // place of the made-up ones; its loud ones are dull with the needle's
+  // wider swings.
+  let inner = params.label + 0.08;
+  let outer = 0.965;
+  let music = step(inner, r) * step(r, outer);
+  let t = clamp((outer - r) / (outer - inner), 0.0, 1.0);
+  let loud = textureSampleLevel(grooves, cover_sampler, vec2f(t, 0.5), 0.0).r;
+  let quiet = (1.0 - smoothstep(0.06, 0.2, loud)) * music;
+  bands = mix(bands, quiet, params.etch);
+
   // The light: two pairs of beams across the record, one broad and one
   // narrow, as a lamp above it would make on the grooves.
-  var light = pow(abs(cos(th - 2.2)), 9.0) + 0.6 * pow(abs(cos(th - 0.5)), 28.0);
+  let lit = th - params.lamp;
+  var light = pow(abs(cos(lit - 2.2)), 9.0) + 0.6 * pow(abs(cos(lit - 0.5)), 28.0);
   light *= mix(0.45, 1.4, streak);
   light *= mix(0.88, 1.0, groove) * (1.0 - 0.55 * wax) * (1.0 - 0.6 * bands);
   light *= 0.45 + 0.55 * smoothstep(params.label, 1.0, r);
+  light *= mix(1.0, mix(0.75, 1.2, loud), params.etch * music);
+  light *= 1.0 + 0.5 * params.pulse;
 
   let colour = tint(th);
   var c = vec3f(0.022 + 0.016 * streak);
   c += colour * light * 0.85;
   c += vec3f(0.025) * bands;
+  c += vec3f(0.012) * loud * music * params.etch;
 
   // A thin rim, lit in the same colours.
   let rim = smoothstep(0.972, 0.986, r) * (1.0 - smoothstep(0.986, 1.0, r));
-  c += (colour * 0.5 + 0.12) * rim * (0.4 + light);
+  c += (colour * 0.5 + 0.12) * rim * (0.4 + light + 0.6 * params.pulse);
 
   return vec4f(c * alpha, alpha);
 }
