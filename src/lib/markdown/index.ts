@@ -17,6 +17,7 @@ import rehypeHeadings, { type Heading } from "./rehype-headings.ts";
 import rehypeLinks from "./rehype-links.ts";
 import rehypeMath from "./rehype-math.ts";
 import rehypeSidenotes from "./rehype-sidenotes.ts";
+import remarkCitations from "./remark-citations.ts";
 import remarkPostInfo from "./remark-post-info.ts";
 import remarkViz from "./remark-viz.ts";
 
@@ -26,7 +27,9 @@ export type { Heading };
 // quotes stay straight.
 export const smartypants = { dashes: "oldschool", quotes: false, backticks: false } as const;
 
-export const remarkPlugins: RemarkPlugins = [remarkMath, remarkPostInfo, remarkViz];
+// Citations become numbers before the summary is taken, so it reads [1]
+// rather than [@key].
+export const remarkPlugins: RemarkPlugins = [remarkMath, remarkCitations, remarkPostInfo, remarkViz];
 
 // Headings take their ids before footnotes become sidenotes, so a heading
 // holding a footnote is still seen to hold a link.

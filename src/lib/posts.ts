@@ -80,6 +80,8 @@ export type Rendered = {
   startsWithLetter: boolean;
   hasMath: boolean;
   summary: string;
+  // How many times each reference is cited, by key (remark-citations.ts).
+  citations: Record<string, number>;
   typstCss?: string;
 };
 
@@ -92,6 +94,7 @@ export async function renderPost(post: Post): Promise<Rendered> {
       startsWithLetter: Boolean(fm.startsWithLetter),
       hasMath: Boolean(fm.hasMath),
       summary: String(fm.summary ?? ""),
+      citations: (fm.citations as Record<string, number> | undefined) ?? {},
     };
   }
   const meta = post.entry.rendered?.metadata as TypstMetadata | undefined;
@@ -108,6 +111,7 @@ export async function renderPost(post: Post): Promise<Rendered> {
     startsWithLetter: /^\s*(<[^>]+>\s*)*[A-Za-z]/.test(html),
     hasMath: false,
     summary: summary.join(" "),
+    citations: {},
     typstCss: meta?.css,
   };
 }

@@ -17,9 +17,40 @@ import { typstLoader } from "./lib/typst.ts";
 //   description: …                 # default: the opening paragraphs
 //   people:                        # for <People />, see src/components/People.astro
 //     - { name: Richard Feynman, url: https://en.wikipedia.org/wiki/Richard_Feynman }
+//   references:                    # what the post draws on, cited as [@li2022]
+//     - { key: li2022, title: Emergent World Representations, author: Kenneth Li et al., year: 2022, url: https://arxiv.org/abs/2210.13382 }
+//     - https://gwern.net/silk-road   # a bare link, when that's all there is
+//   further:                       # what to read next, not cited
+//     - { title: Book of Proof, author: Richard Hammack, note: A gentle start on proofs. }
 //   ---
 //
+// Both lists are shown after the post (src/components/Sources.astro).
 // Posts written in Typst give the same fields in their #metadata.
+
+// A work in `references` or `further`: a link alone, or the work described.
+// A reference with a `key` can be cited in the text (remark-citations.ts).
+const link = z.string().url().transform((url) => ({ url }));
+const described = z.object({
+  title: z.string().min(1),
+  author: z.string().min(1).optional(),
+  year: z.union([z.number().int(), z.string().min(1)]).optional(),
+  url: z.string().url().optional(),
+  note: z.string().min(1).optional(),
+});
+const work = z.union([link, described]);
+const citable = z.union([link, described.extend({ key: z.string().regex(/^[\w-]+$/, "is a key of letters, digits, _ and -").optional() })]);
+
+export type Work = { key?: string; title?: string; author?: string; year?: number | string; url?: string; note?: string };
+
+function uniqueKeys(refs: Work[], ctx: z.RefinementCtx) {
+  const seen = new Set<string>();
+  refs.forEach((r, i) => {
+    if (!r.key) return;
+    if (seen.has(r.key)) ctx.addIssue({ code: "custom", path: [i, "key"], message: `${r.key} is used twice` });
+    seen.add(r.key);
+  });
+}
+
 const post = z.object({
   title: z.string(),
   date: z.coerce.date(),
@@ -33,6 +64,8 @@ const post = z.object({
   dropcap: z.boolean().default(true),
   description: z.string().optional(),
   people: z.array(z.object({ name: z.string().min(1), url: z.string().url() })).optional(),
+  references: z.array(citable).superRefine(uniqueKeys).default([]),
+  further: z.array(work).default([]),
   // Left out of the built site, but shown by `astro dev`.
   draft: z.boolean().default(false),
 });

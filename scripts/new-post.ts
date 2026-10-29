@@ -38,6 +38,7 @@ title: ${title}
 date: ${date}
 status: notes
 tags: []
+references: []
 ---
 
 ## Question
@@ -45,8 +46,6 @@ tags: []
 ## Current understanding
 
 ## Open questions
-
-## Sources
 `,
 );
 console.log(`new-post: wrote ${path.relative(process.cwd(), file)}`);

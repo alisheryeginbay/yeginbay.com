@@ -1,0 +1,85 @@
+---
+// A post's References and Further reading, from its front matter
+// (src/content.config.ts), after the text. References are numbered in the
+// order they're listed, as citations in the text are (remark-citations.ts),
+// and each links back to where it's cited. The headings are made like the
+// post's own (rehype-headings.ts), and src/pages/[...slug].astro adds them
+// to the table of contents.
+import type { Element } from "hast";
+import { toHtml } from "hast-util-to-html";
+import type { Work } from "../content.config.ts";
+import { anchorHeading } from "../lib/markdown/rehype-headings.ts";
+import { brandStyle, iconFor, iconHtml, splitGluedTail } from "../lib/markdown/link-icons.ts";
+import { isExternal } from "../lib/markdown/rehype-links.ts";
+
+interface Props {
+  references: Work[];
+  further: Work[];
+  citations: Record<string, number>;
+}
+
+const { references, further, citations } = Astro.props;
+
+const escape = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+const heading = (id: string, text: string) => {
+  const node: Element = { type: "element", tagName: "h2", properties: { id }, children: [{ type: "text", value: text }] };
+  anchorHeading(node, false);
+  return toHtml(node);
+};
+
+// Author, Title (year). Note. The title links to the work, with the site's
+// logo glued to its last few characters, as links in the text have. A link
+// alone shows its address, without https:// or a trailing slash.
+const entry = (work: Work) => {
+  const text = work.title ?? work.url!.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
+  let title = `<span class="work-title">${escape(text)}</span>`;
+  if (work.url) {
+    const icon = iconFor(work.url);
+    const [head, tail] = icon ? splitGluedTail(text) : [text, ""];
+    const attrs = [`href="${escape(work.url)}"`, isExternal(work.url) ? `target="_blank" rel="noopener noreferrer"` : "", icon ? `style="${brandStyle(icon)}"` : ""];
+    title = `<a class="work-title" ${attrs.filter(Boolean).join(" ")}>${escape(head)}${icon ? iconHtml(icon, tail) : ""}</a>`;
+  }
+  const author = work.author ? `<span class="work-author">${escape(work.author)}</span>, ` : "";
+  const year = work.year !== undefined ? ` (${escape(String(work.year))})` : "";
+  const note = work.note ? ` <span class="work-note">${escape(work.note)}</span>` : "";
+  // No full stop after a bare link, or a title that ends in its own
+  // punctuation.
+  const stop = work.title && (year || !/[.?!]$/.test(text)) ? "." : "";
+  return `${author}${title}${year}${stop}${note}`;
+};
+
+// Links back to each place a reference is cited: ↩ for one, ↩ a b c for
+// several, as on Wikipedia.
+const backlinks = (key: string | undefined) => {
+  const n = (key && citations[key]) || 0;
+  if (n === 0) return "";
+  const links = Array.from({ length: n }, (_, i) => `<a href="#cite-${key}-${i + 1}" aria-label="Back to citation ${i + 1}">${n === 1 ? "↩" : String.fromCharCode(97 + i)}</a>`);
+  return ` <span class="ref-backlinks">${n > 1 ? "↩ " : ""}${links.join(" ")}</span>`;
+};
+---
+
+{
+  references.length > 0 && (
+    <section class="sources" aria-labelledby="references">
+      <Fragment set:html={heading("references", "References")} />
+      <ol class="references">
+        {references.map((work, i) => (
+          <li id={`ref-${work.key ?? i + 1}`} set:html={entry(work) + backlinks(work.key)} />
+        ))}
+      </ol>
+    </section>
+  )
+}
+{
+  further.length > 0 && (
+    <section class="sources" aria-labelledby="further-reading">
+      <Fragment set:html={heading("further-reading", "Further reading")} />
+      <ul class="further-reading">
+        {further.map((work) => (
+          <li set:html={entry(work)} />
+        ))}
+      </ul>
+    </section>
+  )
+}

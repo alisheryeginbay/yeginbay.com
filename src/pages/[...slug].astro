@@ -2,6 +2,7 @@
 // Every post, at /<name> for content/posts/ and /<section>/<name> for other
 // sections, and a redirect to it from each of its `aliases`.
 import People from "../components/People.astro";
+import Sources from "../components/Sources.astro";
 import Toc from "../components/Toc.astro";
 import SetWords from "../components/viz/Set.astro";
 import Show from "../components/viz/Show.astro";
@@ -29,6 +30,18 @@ const { post, redirect } = Astro.props;
 const target = redirect && new URL(redirect, SITE.url).href;
 
 const rendered = post && (await renderPost(post));
+// References and Further reading follow the text, and the table of contents.
+const sources = post && { references: post.entry.data.references, further: post.entry.data.further };
+const headings = rendered ? [...rendered.headings] : [];
+if (post && sources) {
+  const depth = Math.min(2, ...headings.map((h) => h.depth));
+  const add = (slug: string, text: string) => {
+    if (headings.some((h) => h.slug === slug)) throw new Error(`${post.source}: a heading's id is "${slug}", which ${text} uses`);
+    headings.push({ depth, slug, text });
+  };
+  if (sources.references.length) add("references", "References");
+  if (sources.further.length) add("further-reading", "Further reading");
+}
 // Components posts use without importing them.
 const components = { People, Set: SetWords, Show, Var, Viz };
 const external = (href: string) => (isExternal(href) ? { target: "_blank", rel: "noopener noreferrer" } : {});
@@ -61,7 +74,7 @@ const history = post && `${SITE.repo}/commits/main/${post.source}`;
         hasMath={rendered.hasMath}
         typstCss={rendered.typstCss}
       >
-        {rendered.headings.length >= 2 && <Toc slot="sidebar" headings={rendered.headings} />}
+        {headings.length >= 2 && <Toc slot="sidebar" headings={headings} />}
         <article class="post">
           <h1>{post.title}</h1>
           <p class="post-meta">
@@ -102,6 +115,7 @@ const history = post && `${SITE.repo}/commits/main/${post.source}`;
           <div class:list={["post-content", { "drop-cap": hasDropCap(post, rendered) }]}>
             <rendered.Content components={components} />
           </div>
+          <Sources {...sources!} citations={rendered.citations} />
           {/* Details for the curious, out of the way at the end. */}
           <footer class="post-meta post-footer">
             {updated! > started! && (
