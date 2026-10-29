@@ -1,30 +1,47 @@
 ---
-// A list of books from the front matter of content/pages/books.mdx.
+// A list of books from the front matter of content/pages/books.mdx. A book
+// with notes links its title to their post.
 import type { Book } from "../content.config.ts";
+import { allPosts } from "../lib/posts.ts";
 
 interface Props {
   books: Book[];
 }
 
 const { books } = Astro.props;
+
+// Only posts that are built: a draft's notes aren't linked outside `astro dev`.
+const posts = await allPosts();
+const notesUrl = (book: Book) => book.notes && posts.find((p) => p.section === "posts" && p.entry.id === book.notes!.id)?.url;
 ---
 
 <ul class="book-list">
   {
-    books.map((book) => (
-      <li>
-        <span class="book-title">{book.title}</span> <span class="book-author">{book.author}</span>
-        {book.favourite && (
-          <span class="book-favourite" title="Favourite">
-            ♥
-          </span>
-        )}
-        {book.rating && (
-          <span class="book-rating" title={`${book.rating} out of 10`}>
-            {book.rating}/10
-          </span>
-        )}
-      </li>
-    ))
+    books.map((book) => {
+      const url = notesUrl(book);
+      return (
+        <li>
+          {url ? (
+            <a class="book-title" href={url}>
+              {book.title}
+            </a>
+          ) : (
+            <span class="book-title">{book.title}</span>
+          )}{" "}
+          <span class="book-author">{book.author}</span>
+          {url && <span class="book-notes">notes</span>}
+          {book.favourite && (
+            <span class="book-favourite" title="Favourite">
+              ♥
+            </span>
+          )}
+          {book.rating && (
+            <span class="book-rating" title={`${book.rating} out of 10`}>
+              {book.rating}/10
+            </span>
+          )}
+        </li>
+      );
+    })
   }
 </ul>

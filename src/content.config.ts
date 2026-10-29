@@ -1,4 +1,4 @@
-import { defineCollection } from "astro:content";
+import { defineCollection, reference } from "astro:content";
 import { glob } from "astro/loaders";
 import { z } from "astro/zod";
 import { typstLoader } from "./lib/typst.ts";
@@ -40,6 +40,10 @@ const post = z.object({
 // A book on the reading list, in the front matter of content/pages/books.mdx:
 //
 //   - { title: Klara and the Sun, author: Kazuo Ishiguro, status: read, rating: 8, finished: 2026-04-14 }
+//
+// A book with notes names the post they're in, by its id in content/posts/:
+//
+//   - { title: Linear Algebra Done Right, author: Sheldon Axler, status: reading, notes: linear-algebra-done-right }
 const book = z
   .object({
     title: z.string().min(1),
@@ -52,6 +56,7 @@ const book = z
       .refine((d) => d <= new Date(), "is in the future")
       .optional(),
     favourite: z.boolean().default(false),
+    notes: reference("posts").optional(),
   })
   .refine((b) => b.status !== "to-read" || (!b.rating && !b.finished), "is to-read but has a rating or finished date");
 

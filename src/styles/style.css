@@ -456,18 +456,21 @@ ul.post-list:not(.tracks) time,
 
 .book-author,
 .book-rating,
+.book-notes,
 .book-count {
   color: var(--muted);
 }
 
 .book-rating,
+.book-notes,
 .book-count {
   font-size: 0.85rem;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 
-.book-rating { margin-left: 0.4rem; }
+.book-rating,
+.book-notes { margin-left: 0.4rem; }
 
 .book-favourite { color: var(--link); }
 
