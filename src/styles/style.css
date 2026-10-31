@@ -1469,8 +1469,8 @@ html:has(dialog.lightbox[open]) { overflow: hidden; }
 
 /* Posts in the same layout (src/components/PostList.astro), with dates
    for lengths. A long title wraps rather than being cut off. */
-.post-list .track-title { font-size: 1rem; white-space: normal; line-height: 1.35; text-wrap: pretty; }
-.post-list .track-time { font-size: 0.9rem; white-space: nowrap; }
+.post-list .track-title { font-size: 1em; white-space: normal; line-height: 1.35; text-wrap: pretty; }
+.post-list .track-time { font-size: 0.85em; white-space: nowrap; }
 .post-list a { grid-template-columns: minmax(0, max-content) minmax(1.5rem, 1fr) auto; padding: 0.45rem 0; }
 
 /* The same list in a post (src/components/People.astro). */
