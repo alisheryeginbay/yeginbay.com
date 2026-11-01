@@ -3,7 +3,7 @@
 export const SITE = {
   url: "https://yeginbay.com",
   title: "Alisher Yeginbay",
-  description: "Notes and writing.",
+  description: "Interpretability research, notes, and writing by Alisher Yeginbay.",
   // Posts without `authors` in their front matter are by this author.
   author: "Alisher Yeginbay",
   repo: "https://github.com/alisheryeginbay/yeginbay.com",
