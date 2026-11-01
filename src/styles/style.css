@@ -1449,7 +1449,6 @@ html:has(dialog.lightbox[open]) { overflow: hidden; }
 .track-artist { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .track-title { font-size: 0.95rem; }
-.track-note { color: var(--muted); }
 .track-artist { color: var(--muted); font-size: 0.8rem; font-style: italic; }
 
 .tracks a:hover .track-title { text-decoration: underline; text-decoration-color: var(--highlight); text-underline-offset: 0.2em; }
@@ -1472,9 +1471,10 @@ html:has(dialog.lightbox[open]) { overflow: hidden; }
    for lengths. A long title wraps rather than being cut off. */
 .post-list .track-title { font-size: 1em; white-space: normal; line-height: 1.35; text-wrap: pretty; }
 .post-list .track-time { font-size: 0.85em; white-space: nowrap; }
+.post-list .track-note { color: var(--muted); font-size: 0.85em; line-height: 1.35; }
 .post-list a { grid-template-columns: minmax(0, max-content) minmax(1.5rem, 1fr) auto; padding: 0.45rem 0; }
 
-/* The same list in a post (src/components/LinkList.astro). */
+/* The same lists in a post or page (LinkList.astro, SelectedPosts.astro). */
 .post-content .rows { margin: 1em 0; }
 .post-content .rows a { color: inherit; }
 

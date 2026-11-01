@@ -134,6 +134,7 @@ export const collections = {
       books: z.array(book).superRefine(noDuplicates).optional(),
       notes: z.array(note).optional(),
       projects: z.array(linkRow).optional(),
+      selected: z.array(z.object({ post: z.string().min(1), note: z.string().min(1).optional() })).optional(),
     }),
   }),
 };

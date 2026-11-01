@@ -1,0 +1,25 @@
+---
+// Posts picked by hand, in the order given, each with a short note on what
+// it's about, laid out like the post lists. In MDX:
+//
+//   <SelectedPosts posts={frontmatter.selected} />
+//
+// where each one is { post: <its url without the slash>, note: … }.
+import { allPosts } from "../lib/posts.ts";
+import PostList from "./PostList.astro";
+
+interface Props {
+  posts?: { post: string; note?: string }[];
+}
+
+const { posts: picks = [] } = Astro.props;
+const all = await allPosts();
+const posts = picks.map(({ post }) => {
+  const found = all.find((p) => p.url === `/${post}`);
+  if (!found) throw new Error(`SelectedPosts: no post at /${post}`);
+  return found;
+});
+const notes = Object.fromEntries(picks.filter((p) => p.note).map((p) => [`/${p.post}`, p.note!]));
+---
+
+<PostList posts={posts} notes={notes} class="rows" />

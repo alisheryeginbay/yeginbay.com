@@ -1,6 +1,6 @@
 ---
 // Links laid out like the post lists and the tracklist on /music: each name,
-// with an optional short note after it, then dots across to the site it's
+// with an optional short note under it, then dots across to the site it's
 // on, with the site's logo for sites that have one (link-icons.ts). In MDX:
 //
 //   <LinkList links={frontmatter.people} />
@@ -22,9 +22,9 @@ const external = (href: string) => (isExternal(href) ? { target: "_blank", rel: 
       return (
         <li>
           <a href={url} {...external(url)}>
-            <span class="track-title">
-              {name}
-              {note && <span class="track-note">&nbsp;— {note}</span>}
+            <span class="track-text">
+              <span class="track-title">{name}</span>
+              {note && <span class="track-note">{note}</span>}
             </span>
             <span class="track-leader" aria-hidden="true" />
             <span class="track-time" style={site && brandStyle(site[1])}>

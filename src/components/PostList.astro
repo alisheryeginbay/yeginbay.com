@@ -1,26 +1,31 @@
 ---
 // A list of posts laid out like the tracklist on /music: the title, then
 // dots across to the date it was started, or with `updated`, when it last
-// changed.
+// changed. `notes` puts a short grey note under a post's title, by its url.
 import { isoDate, longDate } from "../lib/dates.ts";
 import type { Post } from "../lib/posts.ts";
 
 interface Props {
   posts: Post[];
   updated?: boolean;
+  notes?: Record<string, string>;
+  class?: string;
 }
 
-const { posts, updated = false } = Astro.props;
+const { posts, updated = false, notes = {}, class: className } = Astro.props;
 ---
 
-<ul class="tracks post-list">
+<ul class:list={["tracks post-list", className]}>
   {
     posts.map((post) => {
       const date = updated ? post.lastmod : post.date;
       return (
         <li>
           <a href={post.url}>
-            <span class="track-title">{post.title}</span>
+            <span class="track-text">
+              <span class="track-title">{post.title}</span>
+              {notes[post.url] && <span class="track-note">{notes[post.url]}</span>}
+            </span>
             <span class="track-leader" aria-hidden="true" />
             <time class="track-time" datetime={isoDate(date)} title={updated ? "Last updated" : undefined}>
               {longDate(date)}
