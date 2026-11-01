@@ -19,8 +19,31 @@ function ignoredRevs(): Set<string> {
   return ignored;
 }
 
+// Whether the full history is here. CI checkouts are often shallow (just the
+// newest commit), and then that commit looks like the last change to every
+// file, so every post would show the same date. Fetch the rest once; if that
+// fails, there are no dates from git at all and posts fall back to the dates
+// in their front matter.
+let fullHistory: boolean | undefined;
+function hasFullHistory(): boolean {
+  if (fullHistory !== undefined) return fullHistory;
+  const git = (...args: string[]) => execFileSync("git", args, { cwd: ROOT, encoding: "utf8", stdio: "pipe" }).trim();
+  try {
+    if (git("rev-parse", "--is-shallow-repository") === "true") {
+      console.warn("git: shallow clone, fetching full history for post dates");
+      git("fetch", "--unshallow", "--quiet");
+    }
+    fullHistory = true;
+  } catch (err) {
+    console.warn(`git: no full history, so posts use their front matter dates (${(err as Error).message.split("\n")[0]})`);
+    fullHistory = false;
+  }
+  return fullHistory;
+}
+
 // `file` is relative to the repository root.
 export function lastCommitDate(file: string): Date | undefined {
+  if (!hasFullHistory()) return undefined;
   const paths = [file];
   if (/\.mdx$/.test(file)) {
     paths.push(file.replace(/\.mdx$/, ".org"));
