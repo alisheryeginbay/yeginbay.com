@@ -1,28 +1,31 @@
 ---
-// The `people` in a post's front matter, laid out like the post lists and
-// the tracklist on /music: each name, then dots across to their website,
-// with the site's logo for sites that have one (link-icons.ts). In the post:
+// Links laid out like the post lists and the tracklist on /music: each name,
+// with an optional short note after it, then dots across to the site it's
+// on, with the site's logo for sites that have one (link-icons.ts). In MDX:
 //
-//   <People people={frontmatter.people} />
+//   <LinkList links={frontmatter.people} />
 import { brandStyle, iconHtml, normalizeHost, siteFor } from "../lib/markdown/link-icons.ts";
 import { isExternal } from "../lib/markdown/rehype-links.ts";
 
 interface Props {
-  people?: { name: string; url: string }[];
+  links?: { name: string; note?: string; url: string }[];
 }
 
-const { people = [] } = Astro.props;
+const { links = [] } = Astro.props;
 const external = (href: string) => (isExternal(href) ? { target: "_blank", rel: "noopener noreferrer" } : {});
 ---
 
 <ul class="tracks post-list rows">
   {
-    people.map(({ name, url }) => {
+    links.map(({ name, note, url }) => {
       const site = siteFor(url);
       return (
         <li>
           <a href={url} {...external(url)}>
-            <span class="track-title">{name}</span>
+            <span class="track-title">
+              {name}
+              {note && <span class="track-note">&nbsp;— {note}</span>}
+            </span>
             <span class="track-leader" aria-hidden="true" />
             <span class="track-time" style={site && brandStyle(site[1])}>
               {site ? site[0] : normalizeHost(url)}

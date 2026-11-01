@@ -15,7 +15,7 @@ import { typstLoader } from "./lib/typst.ts";
 //   aliases: [/k3]                 # old addresses that redirect here
 //   dropcap: false                 # no floriated initial
 //   description: …                 # default: the opening paragraphs
-//   people:                        # for <People />, see src/components/People.astro
+//   people:                        # for <LinkList />, see src/components/LinkList.astro
 //     - { name: Richard Feynman, url: https://en.wikipedia.org/wiki/Richard_Feynman }
 //   references:                    # what the post draws on, cited as [@li2022]
 //     - { key: li2022, title: Emergent World Representations, author: Kenneth Li et al., year: 2022, url: https://arxiv.org/abs/2210.13382 }
@@ -26,6 +26,9 @@ import { typstLoader } from "./lib/typst.ts";
 //
 // Both lists are shown after the post (src/components/Sources.astro).
 // Posts written in Typst give the same fields in their #metadata.
+
+// A row of <LinkList />: a name, an optional short note, and where it links.
+const linkRow = z.object({ name: z.string().min(1), note: z.string().min(1).optional(), url: z.string().url() });
 
 // A work in `references` or `further`: a link alone, or the work described.
 // A reference with a `key` can be cited in the text (remark-citations.ts).
@@ -63,7 +66,7 @@ const post = z.object({
   aliases: z.array(z.string()).default([]),
   dropcap: z.boolean().default(true),
   description: z.string().optional(),
-  people: z.array(z.object({ name: z.string().min(1), url: z.string().url() })).optional(),
+  people: z.array(linkRow).optional(),
   references: z.array(citable).superRefine(uniqueKeys).default([]),
   further: z.array(work).default([]),
   // Left out of the built site, but shown by `astro dev`.
@@ -130,6 +133,7 @@ export const collections = {
       title: z.string(),
       books: z.array(book).superRefine(noDuplicates).optional(),
       notes: z.array(note).optional(),
+      projects: z.array(linkRow).optional(),
     }),
   }),
 };
