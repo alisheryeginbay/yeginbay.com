@@ -2,6 +2,7 @@
 title: Connect 4 Probes
 date: 2026-10-09T03:13:25+05:00
 status: notes
+dropcap: False
 tags: [interpretability]
 references:
   - key: li2022
@@ -27,7 +28,13 @@ Wherein we explore interpretable world models in Connect 4. [Repository](https:/
 ## Current understanding
 A while ago I read the [Othello GPT paper](https://arxiv.org/abs/2210.13382) [@li2022] and decided that it would be interesting to reproduce it. But I thought that reusing Othello would be a bit boring, so I decided to try the game of [Connect 4](https://en.wikipedia.org/wiki/Connect_Four) instead. Although Connect 4 is much simpler, I think we'll still be able to find something gripping (I hope).
 
-<Viz is="connect4" moves="$game" caption="Against uniformly random moves, like the generated training games. Below the board is the game as the model reads it." />
+### 2 November 2026
+
+I'm back at this project. So the first thing I want to address is that Connect 4 isn't rich enough to build a world model as in the Kenneth Li et al. But I think we still can play around the trained model's internals!
+
+The reason why Connect 4 isn't rich enough is that it can just compute the heights directly. I pass the input tokens that are just column indices, so from e.g. 11122 it might just sum up that the 1st column has 3 circles and that 2nd column has 2 circles.
+
+The first thing I want to probe is whether the model holds the representation of those heights.
 
 ## Open questions
 - Is the design of the game inviting enough for the model to build a world model at all?
