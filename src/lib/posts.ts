@@ -58,7 +58,8 @@ let cache: Promise<Post[]> | undefined;
 // Every post, newest first. Drafts (`draft: true`) only under `astro dev`.
 export function allPosts(): Promise<Post[]> {
   cache ??= (async () => {
-    const sections: Section[] = ["posts", "proofs"];
+    // Proofs (content/proofs/) are kept, but not published for now.
+    const sections: Section[] = ["posts"];
     const posts = (
       await Promise.all(sections.map(async (section) => (await getCollection(section)).map((entry) => toPost(section, entry))))
     ).flat();

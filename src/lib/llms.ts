@@ -16,7 +16,6 @@ export async function postDescription(post: Post): Promise<string> {
 
 const SECTIONS: { section: Post["section"]; heading: string; note: string }[] = [
   { section: "posts", heading: "Posts", note: "Essays and notes. Each links to its MDX source." },
-  { section: "proofs", heading: "Proofs", note: "Worked proofs, written in Typst. Each links to its Typst source." },
 ];
 
 const meta = (post: Post) =>
@@ -41,7 +40,7 @@ export async function llmsTxt(): Promise<Response> {
 
 > ${SITE.description}
 
-Every post is published as its source next to the page: ${abs("/about")} has its source at ${abs("/about.mdx")} (or ${abs("/about.md")}), and ${abs("/proofs/ladr")} at ${abs("/proofs/ladr.typ")}. Every listed post's source, in one file: ${abs("/llms-full.txt")}. The writing is under the licence at ${abs("/LICENSE")}.
+Every post is published as its source next to the page: ${abs("/about")} has its source at ${abs("/about.mdx")} (or ${abs("/about.md")}). Every listed post's source, in one file: ${abs("/llms-full.txt")}. The writing is under the licence at ${abs("/LICENSE")}.
 
 ${sections.filter(Boolean).join("\n\n")}
 
@@ -81,7 +80,7 @@ export async function llmsFullTxt(): Promise<Response> {
   );
   return text(`# ${SITE.title}: everything
 
-> ${SITE.description} Every listed post, newest first, as its source (MDX or Typst). Posts are separated by a line of = signs.
+> ${SITE.description} Every listed post, newest first, as its MDX source. Posts are separated by a line of = signs.
 
 ${parts.join("\n\n" + "=".repeat(80) + "\n\n")}
 `);

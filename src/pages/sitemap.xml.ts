@@ -12,7 +12,6 @@ export async function GET() {
     ["/books", undefined],
     ["/photos", undefined],
     ["/posts", newest(posts.filter((p) => p.section === "posts"))],
-    ["/proofs", newest(posts.filter((p) => p.section === "proofs"))],
     ["/tags", newest(posts)],
     ...[...(await tags())].map(([tag, ps]): [string, Date | undefined] => [`/tags/${tag}`, newest(ps)]),
     ...posts.map((p): [string, Date | undefined] => [p.url, p.lastmod]),
