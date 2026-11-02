@@ -1,8 +1,12 @@
-// RSS feeds of posts: the whole site's at /index.xml, and each tag's at
-// /tags/<tag>/index.xml.
+// RSS feeds of posts, each with its full text: the whole site's at
+// /index.xml, and each tag's at /tags/<tag>/index.xml.
 import { SITE } from "../site.ts";
 import { rfc822 } from "./dates.ts";
+import { postHtml } from "./post-html.ts";
 import { renderPost, type Post } from "./posts.ts";
+
+// CDATA can hold anything but its own end, "]]>", which is split across two.
+const cdata = (s: string) => `<![CDATA[${s.replaceAll("]]>", "]]]]><![CDATA[>")}]]>`;
 
 const escape = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -20,12 +24,13 @@ export async function feed({ title, path, posts }: { title?: string; path: strin
       <pubDate>${rfc822(post.date)}</pubDate>
       <guid>${url}</guid>
       <description>${escape(summary)}</description>
+      <content:encoded>${cdata(await postHtml(post))}</content:encoded>
     </item>`;
     }),
   );
   const lastmod = posts.reduce<Date | undefined>((max, p) => (!max || p.lastmod > max ? p.lastmod : max), undefined);
   const xml = `<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>${escape(title ? `${title} on ${SITE.title}` : SITE.title)}</title>
     <link>${link}</link>

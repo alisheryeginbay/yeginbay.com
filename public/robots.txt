@@ -1,0 +1,7 @@
+# Everything here may be crawled, indexed, used to answer questions, and
+# used to train AI models. Content signals: https://contentsignals.org
+User-agent: *
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+Allow: /
+
+Sitemap: https://yeginbay.com/sitemap.xml
