@@ -12,9 +12,35 @@ interface Props {
   hasMath?: boolean;
   // Typst's styles for the MathML in a post written in Typst.
   typstCss?: string;
+  // Pages with no address of their own, such as the 404, have no canonical.
+  canonical?: boolean;
+  ogType?: "website" | "article";
+  // The page's source in plain text, offered to scrapers and models.
+  source?: { href: string; type: string };
+  // Structured data (schema.org), written as JSON-LD.
+  jsonLd?: object;
 }
 
-const { title, description, authors = [SITE.author], noindex = false, dropCap = false, hasMath = false, typstCss } = Astro.props;
+const {
+  title,
+  description,
+  authors = [SITE.author],
+  noindex = false,
+  dropCap = false,
+  hasMath = false,
+  typstCss,
+  canonical = true,
+  ogType = "website",
+  source,
+  jsonLd,
+} = Astro.props;
+
+const fullTitle = title ? `${title} · ${SITE.title}` : SITE.title;
+const pageDescription = description || SITE.description;
+// Pages are served without a trailing slash (wrangler.toml).
+const pageUrl = new URL(Astro.url.pathname.replace(/(.)\/$/, "$1"), SITE.url).href;
+// JSON in a <script> can't contain "</script>", so "<" is escaped.
+const ld = jsonLd && JSON.stringify(jsonLd).replace(/</g, "\\u003c");
 
 // Source Han Serif KR for Hangul. Built sites use the subsets that
 // scripts/subset-korean.ts writes before `astro build`; `astro dev` uses the
@@ -35,10 +61,19 @@ const koreanFaces = Object.entries(koreanFonts)
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title ? `${title} · ${SITE.title}` : SITE.title}</title>
+    <title>{fullTitle}</title>
     {noindex && <meta name="robots" content="noindex" />}
     <meta name="author" content={authors.join(", ")} />
-    <meta name="description" content={description || SITE.description} />
+    <meta name="description" content={pageDescription} />
+    {canonical && <link rel="canonical" href={pageUrl} />}
+    <meta property="og:title" content={title ?? SITE.title} />
+    <meta property="og:description" content={pageDescription} />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content={SITE.title} />
+    {canonical && <meta property="og:url" content={pageUrl} />}
+    {source && <link rel="alternate" type={source.type} href={source.href} title="Source" />}
+    <link rel="alternate" type="text/plain" href="/llms.txt" title="For language models" />
+    {ld && <script type="application/ld+json" is:inline set:html={ld} />}
     <!-- 🐠 as Apple's emoji draws it. -->
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" href="/favicon.png" type="image/png" sizes="192x192" />

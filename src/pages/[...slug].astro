@@ -9,10 +9,11 @@ import Show from "../components/viz/Show.astro";
 import Var from "../components/viz/Var.astro";
 import Viz from "../components/viz/Viz.astro";
 import Base from "../layouts/Base.astro";
-import { isoDate, longDate } from "../lib/dates.ts";
+import { isoDate, isoDateTime, longDate } from "../lib/dates.ts";
 import { allPosts, hasDropCap, renderPost, type Post } from "../lib/posts.ts";
 import { isExternal } from "../lib/markdown/rehype-links.ts";
 import { AUTHOR_LINKS, SITE } from "../site.ts";
+import type { Work } from "../content.config.ts";
 
 export async function getStaticPaths() {
   const posts = await allPosts();
@@ -50,6 +51,42 @@ const byline = post && post.authors.join(",") !== SITE.author ? post.authors : [
 const started = post && isoDate(post.date);
 const updated = post && isoDate(post.lastmod);
 const history = post && `${SITE.repo}/commits/main/${post.source}`;
+// Posts without a description of their own are described by their opening.
+const description = post && rendered && (post.description ?? (rendered.summary || undefined));
+const source = post && {
+  href: post.sourceUrl,
+  type: post.sourceUrl.endsWith(".mdx") ? "text/markdown" : "text/plain",
+};
+// The post as schema.org describes it, for search engines and models.
+const abs = (path: string) => new URL(path, SITE.url).href;
+const jsonLd = post && {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  headline: post.title,
+  description,
+  url: abs(post.url),
+  mainEntityOfPage: abs(post.url),
+  datePublished: isoDateTime(post.date),
+  dateModified: isoDateTime(post.lastmod),
+  inLanguage: "en",
+  keywords: post.tags.length ? post.tags.join(", ") : undefined,
+  author: post.authors.map((name) =>
+    name === SITE.author ? { "@type": "Person", name, url: SITE.url } : { name, url: AUTHOR_LINKS[name] && abs(AUTHOR_LINKS[name]) },
+  ),
+  publisher: { "@type": "Person", name: SITE.author, url: SITE.url },
+  license: abs("/LICENSE"),
+  isPartOf: { "@type": "WebSite", name: SITE.title, url: SITE.url },
+  encoding: { "@type": "MediaObject", contentUrl: abs(post.sourceUrl), encodingFormat: source!.type },
+  citation: post.entry.data.references.length
+    ? post.entry.data.references.map((w: Work) => ({
+        "@type": "CreativeWork",
+        name: w.title,
+        author: w.author,
+        datePublished: w.year?.toString(),
+        url: w.url,
+      }))
+    : undefined,
+};
 ---
 
 {
@@ -67,7 +104,10 @@ const history = post && `${SITE.repo}/commits/main/${post.source}`;
     rendered && (
       <Base
         title={post.title}
-        description={post.description}
+        description={description}
+        ogType="article"
+        source={source}
+        jsonLd={jsonLd}
         authors={post.authors}
         noindex={post.noindex}
         dropCap={hasDropCap(post, rendered)}
