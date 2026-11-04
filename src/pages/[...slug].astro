@@ -24,6 +24,8 @@ export async function getStaticPaths() {
 type Props = { post: Post; redirect?: undefined } | { post?: undefined; redirect: string };
 
 const { post, redirect } = Astro.props;
+// The refresh goes to the post's path, so it stays on whichever host serves
+// the alias (localhost in dev); only the canonical link names the real site.
 const target = redirect && new URL(redirect, SITE.url).href;
 
 const rendered = post && (await renderPost(post));
@@ -90,7 +92,7 @@ const jsonLd = post && {
         <title>{target}</title>
         <link rel="canonical" href={target} />
         <meta charset="utf-8" />
-        <meta http-equiv="refresh" content={`0; url=${target}`} />
+        <meta http-equiv="refresh" content={`0; url=${redirect}`} />
       </head>
     </html>
   ) : (
