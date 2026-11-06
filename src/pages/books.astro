@@ -79,7 +79,7 @@ const undated = read.filter((b) => !b.finished);
         toRead.length > 0 && (
           <details class="book-shelf">
             <summary>
-              <Heading level={2} text="Want to read" html={`Want to read <span class="book-count">${toRead.length}</span>`} unlinked />
+              <Heading level={2} text="Antilibrary" html={`Antilibrary <span class="book-count">${toRead.length}</span>`} unlinked />
             </summary>
             <BookList books={toRead} />
           </details>
