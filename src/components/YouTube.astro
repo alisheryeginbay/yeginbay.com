@@ -1,0 +1,122 @@
+---
+// A YouTube video in the text: a still from it in the site's greys, which
+// takes its colour when pointed at, and under it its title, dots across, and
+// its channel, as the lists of links are laid out. Nothing is loaded from
+// YouTube until the still is clicked: the still is fetched and optimized as
+// the site is built, and the title and channel are asked of YouTube's oEmbed
+// then too. Clicked, the still gives way to the player (youtube-nocookie.com),
+// already playing. Without scripts, or in a feed, the still is a link to the
+// video. In MDX, with the video's address in any of YouTube's forms, or its
+// ID:
+//
+//   <YouTube url="https://www.youtube.com/watch?v=NXPQsHD-iYI" />
+//   <YouTube id="NXPQsHD-iYI" start={90} caption="From 1:30, the second round." />
+import { getImage } from "astro:assets";
+
+interface Props {
+  url?: string;
+  id?: string;
+  /** Else the video's own title. */
+  title?: string;
+  caption?: string;
+  /** Seconds into the video to start at; else the URL's t= or start=. */
+  start?: number;
+}
+
+const { url, caption } = Astro.props;
+
+// The ID and start time from watch?v=, youtu.be/, /embed/, /shorts/ and
+// /live/ addresses.
+function parse(href: string): { id?: string; start?: number } {
+  const u = new URL(href);
+  const id = u.hostname.endsWith("youtu.be")
+    ? u.pathname.slice(1)
+    : (u.searchParams.get("v") ?? u.pathname.match(/^\/(?:embed|shorts|live)\/([^/]+)/)?.[1]);
+  // t= may be 90, 90s or 1m30s.
+  const t = u.searchParams.get("t") ?? u.searchParams.get("start");
+  const m = t?.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s?)?$/);
+  const start = m ? Number(m[1] ?? 0) * 3600 + Number(m[2] ?? 0) * 60 + Number(m[3] ?? 0) : undefined;
+  return { id: id || undefined, start: start || undefined };
+}
+
+const parsed = url ? parse(url) : {};
+const id = Astro.props.id ?? parsed.id;
+const start = Astro.props.start ?? parsed.start;
+if (!id || !/^[\w-]{11}$/.test(id)) throw new Error(`<YouTube>: no video ID in ${JSON.stringify(url ?? Astro.props.id)}`);
+
+const watch = `https://www.youtube.com/watch?v=${id}${start ? `&t=${start}s` : ""}`;
+const embed = new URL(`https://www.youtube-nocookie.com/embed/${id}`);
+embed.searchParams.set("autoplay", "1");
+if (start) embed.searchParams.set("start", String(start));
+
+// The title and channel. A video that's private or gone, or a build without
+// the network, goes without them.
+type Info = { title?: string; channel?: string };
+async function info(): Promise<Info> {
+  try {
+    const res = await fetch(`https://www.youtube.com/oembed?format=json&url=${encodeURIComponent(`https://www.youtube.com/watch?v=${id}`)}`);
+    if (!res.ok) return {};
+    const json = (await res.json()) as { title?: string; author_name?: string };
+    return { title: json.title, channel: json.author_name };
+  } catch {
+    return {};
+  }
+}
+
+// The largest still there is: maxresdefault only exists for HD uploads.
+async function still(): Promise<string> {
+  const max = `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`;
+  try {
+    if ((await fetch(max, { method: "HEAD" })).ok) return max;
+  } catch {}
+  return `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+}
+
+const [meta, poster] = await Promise.all([info(), still()]);
+const title = Astro.props.title ?? meta.title ?? "A video on YouTube";
+const image = await getImage({ src: poster, inferSize: true, widths: [480, 736, 1104], sizes: "(max-width: 46rem) 100vw, 46rem", format: "webp" });
+
+const clock = (s: number) => {
+  const [h, m, sec] = [Math.floor(s / 3600), Math.floor((s % 3600) / 60), s % 60];
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return h ? `${h}:${pad(m)}:${pad(sec)}` : `${m}:${pad(sec)}`;
+};
+---
+
+<figure class="youtube">
+  <a class="youtube-poster" href={watch} data-embed={embed.href} data-title={title} target="_blank" rel="noopener noreferrer" aria-label={`Play ${title}`}>
+    <img src={image.src} srcset={image.srcSet.attribute} sizes={image.attributes.sizes} alt="" loading="lazy" decoding="async" />
+    <svg class="youtube-play" viewBox="0 0 64 64" aria-hidden="true">
+      <circle cx="32" cy="32" r="31" />
+      <path d="M26 21.5v21l17-10.5z" />
+    </svg>
+    {start && <span class="youtube-start">from {clock(start)}</span>}
+  </a>
+  <figcaption>
+    <span class="youtube-line">
+      <span class="youtube-title">{title}</span>
+      <span class="track-leader" aria-hidden="true"></span>
+      <span class="youtube-channel">{meta.channel ?? "YouTube"}</span>
+    </span>
+    {caption && <span class="youtube-caption">{caption}</span>}
+  </figcaption>
+</figure>
+
+<script>
+  // A click on the still plays the video in its place. A click with a
+  // modifier key still opens it on YouTube.
+  for (const poster of document.querySelectorAll<HTMLAnchorElement>("a.youtube-poster")) {
+    poster.addEventListener("click", (e) => {
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      const frame = document.createElement("iframe");
+      frame.src = poster.dataset.embed!;
+      frame.title = poster.dataset.title!;
+      frame.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+      frame.referrerPolicy = "strict-origin-when-cross-origin";
+      frame.allowFullscreen = true;
+      poster.replaceWith(frame);
+      frame.focus();
+    });
+  }
+</script>

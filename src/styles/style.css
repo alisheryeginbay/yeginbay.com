@@ -700,6 +700,99 @@ input.margin-toggle { display: none; }
   margin-top: 0.5rem;
 }
 
+/* Videos, from src/components/YouTube.astro: a still in greys until it's
+   pointed at, then in colour, and the player in its place once clicked. */
+.post-content .youtube { margin: 2rem 0; }
+
+.youtube-poster,
+.youtube iframe {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--rule);
+}
+
+.youtube-poster img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(1) contrast(1.05) brightness(1.04);
+  transform: scale(1.01);
+  transition: filter 500ms ease, transform 700ms ease;
+}
+
+.youtube-poster:hover img,
+.youtube-poster:focus-visible img {
+  filter: none;
+  transform: scale(1.03);
+}
+
+.youtube-poster:focus-visible { outline: 2px solid var(--link); outline-offset: 3px; }
+
+.youtube-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4rem;
+  height: 4rem;
+  translate: -50% -50%;
+  transition: scale 200ms ease;
+}
+
+.youtube-play circle {
+  fill: color-mix(in srgb, var(--bg) 82%, transparent);
+  stroke: color-mix(in srgb, var(--fg) 12%, transparent);
+  stroke-width: 1;
+}
+
+.youtube-play path { fill: var(--fg); }
+
+.youtube-poster:hover .youtube-play { scale: 1.08; }
+
+.youtube-start {
+  position: absolute;
+  right: 0.6rem;
+  bottom: 0.6rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+}
+
+.post-content .youtube figcaption { text-align: left; }
+
+.youtube-line {
+  display: grid;
+  grid-template-columns: minmax(0, max-content) minmax(1.5rem, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.youtube-title {
+  overflow: hidden;
+  color: var(--fg);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.youtube-channel { font-style: italic; }
+
+.youtube-caption { display: block; margin-top: 0.25rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .youtube-poster img,
+  .youtube-play { transition: none; }
+  .youtube-poster:hover img,
+  .youtube-poster:focus-visible img { transform: scale(1.01); }
+}
+
 /* Interactive figures, from src/components/viz/Viz.astro. Their insides are
    styled within the components in src/viz/. */
 .viz {

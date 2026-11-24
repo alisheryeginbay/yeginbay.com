@@ -58,6 +58,9 @@ export default defineConfig({
   // files and git history, and their images are optimized as they're built.
   adapter: cloudflare({ prerenderEnvironment: "node", imageService: "compile" }),
   session: false,
+  // Stills of the videos in posts (src/components/YouTube.astro), fetched and
+  // optimized as they're built.
+  image: { domains: ["i.ytimg.com"] },
   integrations: [mdx(), svelte(), mdRedirects],
   markdown: {
     processor: unified({ remarkPlugins, rehypePlugins, smartypants }),

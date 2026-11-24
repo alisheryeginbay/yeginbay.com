@@ -5,5 +5,6 @@ import SetWords from "./viz/Set.astro";
 import Show from "./viz/Show.astro";
 import Var from "./viz/Var.astro";
 import Viz from "./viz/Viz.astro";
+import YouTube from "./YouTube.astro";
 
-export const postComponents = { LinkList, Set: SetWords, Show, Var, Viz };
+export const postComponents = { LinkList, Set: SetWords, Show, Var, Viz, YouTube };
